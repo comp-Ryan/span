@@ -8,6 +8,7 @@ const COMPANY = 'company-020'
 const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
 const LIVE = new URLSearchParams(location.search).has('live')
 const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
+const RUN = new URLSearchParams(location.search).get('run')
 
 /* ---------- icons ---------- */
 const I = {
@@ -25,6 +26,7 @@ const I = {
 }
 const AV_COLORS = ['#0077C5', '#7A5AF8', '#E08A00', '#2CA01C', '#D52B1E']
 const initials = (s: string) => s.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+const plain = (t: string) => (t || '').replace(/[#*_`>]+/g, '').replace(/\n{2,}/g, ' ').replace(/\s+/g, ' ').trim()
 const fmtDate = (s?: string) => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
 
 /* ---------- nodes ---------- */
@@ -281,6 +283,30 @@ function Conversations({ actions }: { actions: GraphNode[]; decisions?: Decision
 }
 
 /* ---------- a thread = one run ---------- */
+function ToolNode({ n }: { n: GraphNode }) {
+  const icon = n.type === 'scoring' ? I.people : n.type === 'forecast' ? I.trend : n.type === 'levers' ? I.star : I.book
+  const d = n.data || {}
+  const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
+  return <div className={`node ${n.status}`}><h3><span className={`ic ${n.type === 'scoring' ? 'green' : n.type === 'forecast' ? 'dark' : 'blue'}`}>{icon}</span>{n.title}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
+    {d.question && <div className="fine">“{d.question}”</div>}
+    {facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{typeof v === 'number' && Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}
+    {d.spoken && <div style={{ fontSize: 14, lineHeight: '20px' }}>{plain(d.spoken)}</div>}
+  </div>
+}
+function PlannerThread({ run }: { run: RunState }) {
+  const nodes = run.order.map(id => run.nodes[id])
+  const ans = nodes.find(n => n.type === 'answer')
+  const tools = nodes.filter(n => n.type !== 'answer')
+  return <section className="thread">
+    <div className="workspace">
+      <aside className="live"><div className="card status pending" style={{ borderStyle: ans ? 'solid' : 'dashed' }}><div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Answer</div><div style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{ans ? plain(ans.title) : 'Working it out…'}</div>{ans?.data.spoken && plain(ans.data.spoken) !== plain(ans.title) && <div className="fine" style={{ fontSize: 13, lineHeight: '18px' }}>{plain(ans.data.spoken)}</div>}</div></aside>
+      <div className="steps">
+        {tools.map((n, i) => <div key={n.node_id}>{i > 0 && <div className="vconn" />}<div className="vstep"><ToolNode n={n} /></div></div>)}
+        {!ans && <div className="thinking" style={{ marginTop: 14 }}><i/><i/><i/> {BRAND} is thinking</div>}
+      </div>
+    </div>
+  </section>
+}
 function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean }) {
   const byType = (t: string) => run.order.map(id => run.nodes[id]).find(n => n.type === t)
   const ctx = byType('context'), sc = byType('scoring'), fc = byType('forecast'), ans = byType('answer'), lv = byType('levers')
@@ -391,6 +417,13 @@ export default function App() {
   const playing = useRef(false)
   const play = async (s = speed) => { stopRef.current(); setRuns([]); playing.current = true; const stop = await playFixture('/fixture.json', apply, s); stopRef.current = () => { playing.current = false; stop() } }
   useEffect(() => {
+    if (RUN) {
+      const seen = new Set<string>()
+      const ingest = (ev: RawEvent) => { const d = ev.data; if (d.run_id !== RUN && !(d.parent_run_id === RUN)) return; if (d.id && seen.has(d.id)) return; if (d.id) seen.add(d.id); apply(ev) }
+      const off = subscribe(COMPANY, ingest)
+      replay(RUN).then(evs => { for (const e of evs) ingest(e) }).catch(() => {})
+      return off
+    }
     if (LIVE) {
       let cancelled = false, ready = false
       const accepted = new Set<string>(), seen = new Set<string>(), pending: RawEvent[] = []
@@ -468,7 +501,9 @@ export default function App() {
           <div className="eyebrow"><span className="av">R</span><span>Ryan · by {main.source === 'call' ? 'phone' : main.source} · Sat 3:52 PM</span><span className="sep" /><span>Thread 1 of 3 today</span><span className="sep" /><span className="link">Through Oct 20</span></div>
           <h1 className="q">{main.question}</h1>
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
-        {runs.map((r, i) => <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
+        {runs.map((r, i) => (r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => id === 'n2' || id === 'n3' || id === 'f3')))
+          ? <PlannerThread key={r.run_id} run={r} />
+          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
       </main>
     </div>
     {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} />}
