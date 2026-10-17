@@ -176,6 +176,7 @@ data: { "run_id": "run-0001", "report_id": "rep-0001", "url": "/reports/rep-0001
 event: run.end
 data: { "run_id": "run-0001", "status": "open" | "closed" }
 ```
+- `speech.audio_url` may be `null` when TTS is not configured; text is still emitted.
 - `type`: `"context" | "scoring" | "forecast" | "answer" | "levers" | "action"`. Six node types; the canvas needs no others.
 - `status`: `"running" | "done" | "failed" | "waiting"`.
 - `parent` defines edges. A node with `parent: null` is a root. Multiple children of one parent are siblings (branches).
