@@ -98,24 +98,30 @@ function VerdictNode({ n, fc }: { n: GraphNode; fc?: GraphNode }) {
     <div className="fine">{risk > 0 ? `${money(risk)} short if the slow payers slip` : cushion < 0 ? 'even if the usual payers pay' : 'covered even if the slow payers slip'}</div>
   </div>
 }
-function LeverCard({ l, rec, decision, onChoose, chosen }: { l: Lever; rec: boolean; decision?: Decision; onChoose: (opt: string) => void; chosen?: string }) {
+function LeverCard({ l, rec, decision, onChoose, chosen }: { l: Lever; rec: boolean; decision?: Decision; onChoose: (opt: string, selected?: string[]) => void; chosen?: string }) {
   const icon = l.id === 'chase' ? I.chat : l.id === 'defer_bill' ? I.cal : I.person
   const zero = !l.recovers
   const primary = decision?.options.find(o => o.id === 'yes') || decision?.options[0]
+  const [sel, setSel] = useState<Record<string, boolean>>({})
+  const targets = l.targets || []
+  const isOn = (id: string) => sel[id] !== false
+  const picked = targets.filter(t => isOn(t.customer_id))
+  const recovers = targets.length ? picked.reduce((a, t) => a + t.amount, 0) : l.recovers
+  const label = targets.length && picked.length !== targets.length ? `Text ${picked.length} of ${targets.length} late payers` : l.label
   return <div className={`lever ${rec ? 'rec' : ''} ${zero ? 'dim' : ''}`}>
     <div>
-      <div className="head"><b><span className={`ic ${rec ? 'green' : 'grey'}`}>{icon}</span>{l.label}</b><span className="amt" style={zero ? { color: 'var(--muted2)' } : undefined}>+ {money(l.recovers)}</span></div>
-      {l.targets && <div className="chips" style={{ marginTop: 10 }}>{l.targets.map((t, i) => <span className="chip" key={t.customer_id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(t.customer)}</span>{money(t.amount)}</span>)}</div>}
+      <div className="head"><b><span className={`ic ${rec ? 'green' : 'grey'}`}>{icon}</span>{label}</b><span className="amt" style={zero ? { color: 'var(--muted2)' } : undefined}>+ {money(recovers)}</span></div>
+      {targets.length > 0 && <div className="chips" style={{ marginTop: 10 }}>{targets.map((t, i) => <button type="button" className={`chip pick ${isOn(t.customer_id) ? 'on' : 'off'}`} key={t.customer_id} disabled={!!chosen} onClick={() => setSel(x => ({ ...x, [t.customer_id]: !isOn(t.customer_id) }))} title={t.reason || t.customer}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(t.customer)}</span>{t.customer.split(' ')[0]} · {money(t.amount)}<span className="tick">{I.check}</span></button>)}</div>}
       {l.bills && <div className="chips" style={{ marginTop: 10 }}>{l.bills.map(b => <span className="chip plain" key={b.bill_id}>{b.vendor} · {money(b.amount)}</span>)}</div>}
       <div className="fine" style={{ marginTop: 10, display: 'flex', gap: 6, alignItems: 'center' }}>
-        {l.targets && <><i className="dot" />payment history supports chasing; collection is not guaranteed</>}
+        {targets.length > 0 && <><i className="dot" />{chosen ? 'sent to the ones you picked' : 'tap a name to leave them out'}</>}
         {l.bills && <><i className="dot" />both have taken late payment before, no fee</>}
         {zero && 'Nothing scheduled this month, so nothing to hold.'}
       </div>
     </div>
     {rec && primary ? (
-      chosen ? <button className="btn done" disabled>{I.check} {chosen === 'no' ? 'Not now' : 'Texting them'}</button>
-        : <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" onClick={() => onChoose(primary.id)}>{primary.label}</button>{decision!.options.filter(o => o.id !== primary.id).slice(0, 1).map(o => <button key={o.id} className="btn" onClick={() => onChoose(o.id)}>{o.label}</button>)}</div>
+      chosen ? <button className="btn done" disabled>{I.check} {chosen === 'no' ? 'Not now' : `Texting ${picked.length}`}</button>
+        : <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" disabled={targets.length > 0 && picked.length === 0} onClick={() => onChoose(primary.id, picked.map(t => t.customer_id))}>{targets.length ? `Yes, text ${picked.length === targets.length ? 'them' : picked.length}` : primary.label}</button>{decision!.options.filter(o => o.id !== primary.id).slice(0, 1).map(o => <button key={o.id} className="btn" onClick={() => onChoose(o.id, picked.map(t => t.customer_id))}>{o.label}</button>)}</div>
     ) : rec ? <div className="thinking"><i/><i/><i/> weighing options</div>
       : zero ? <button className="btn ghost" disabled>Not needed</button> : <button className="btn">Add this too</button>}
   </div>
@@ -275,7 +281,7 @@ function Conversations({ actions }: { actions: GraphNode[]; decisions?: Decision
 }
 
 /* ---------- a thread = one run ---------- */
-function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: Decision, opt: string) => void; isFollowUp?: boolean }) {
+function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean }) {
   const byType = (t: string) => run.order.map(id => run.nodes[id]).find(n => n.type === t)
   const ctx = byType('context'), sc = byType('scoring'), fc = byType('forecast'), ans = byType('answer'), lv = byType('levers')
   const actions = run.order.map(id => run.nodes[id]).filter(n => n.type === 'action')
@@ -294,6 +300,11 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
           ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
           : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} W={420} />)}
         {sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
+        <div className={`card report ${run.report_id ? 'ready' : ''}`}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>
+          <div className="fine">{run.report_id ? 'Ready. Share it with your bookkeeper or print it.' : 'Builds itself from this run as it goes.'}</div>
+          {run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : <div className="thinking"><i/><i/><i/> writing</div>}
+        </div>
       </aside>
       <div className="steps" ref={contRef}>
         {ctx && <div className="vstep"><BooksNode n={ctx} /></div>}
@@ -302,12 +313,11 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
         {ans && <><div className="vconn" /><div className="vstep" ref={verdictRef}><VerdictNode n={ans} fc={fc} /></div></>}
         {levers.length > 0 && <>
           <Fork fromRef={verdictRef} toRefs={leverRefs} containerRef={contRef} />
-          <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={opt => decision && onDecide(decision, opt)} /></div>)}</div>
+          <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={(opt, selected) => decision && onDecide(decision, opt, selected)} /></div>)}</div>
         </>}
         {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
         {actions.length > 0 && <><div className="vconn" style={{ marginTop: 4 }} /><Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} /></>}
         {payments.length > 0 && <><div className="vconn" /><Outcome fc={fc} payments={payments} levers={levers} /></>}
-        {run.report_id && <a className="rlink" href={`/report/${run.report_id}`}>Open one-page report</a>}
       </div>
     </div>
   </section>

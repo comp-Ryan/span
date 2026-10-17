@@ -7,8 +7,8 @@ export async function startRun(company: string, question: string, source = 'web'
   if (!r.ok) throw new Error((await r.json()).error?.message || 'Request failed')
   return r.json() as Promise<{ run_id: string; intent: string }>
 }
-export async function resolveDecision(decisionId: string, optionId: string, company: string) {
-  const r = await fetch(`${BASE}/decisions/${decisionId}?company=${encodeURIComponent(company)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ option_id: optionId }) })
+export async function resolveDecision(decisionId: string, optionId: string, company: string, selected?: string[]) {
+  const r = await fetch(`${BASE}/decisions/${decisionId}?company=${encodeURIComponent(company)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ option_id: optionId, note: selected ? JSON.stringify({ selected_customers: selected }) : undefined, selected_customers: selected }) })
   if (!r.ok) throw new Error((await r.json()).error?.message || 'Request failed')
   return r.json()
 }
