@@ -57,7 +57,7 @@ function ScoredNode({ n }: { n: GraphNode }) {
 function CashNode({ n, ctx }: { n: GraphNode; ctx?: GraphNode }) {
   const d = n.data; const bank = d.bank_balance ?? ctx?.data.bank_balance ?? 0, inn = bank + (d.expected_by_target || 0)
   const pay = d.payroll_due_by_target ?? ctx?.data.payroll_due_by_target ?? ctx?.data.payroll_amount ?? 0, bills = d.bills_due_by_target ?? ctx?.data.bills_due_by_target ?? 0
-  const out = d.need ?? (pay + bills); const max = Math.max(inn, out, 1)
+  const out = pay + bills + (d.owner_draw_by_target || 0); const max = Math.max(inn, out, 1)
   return <div className={`node ${n.status}`} style={{ width: 330 }}>
     <h3><span className="ic dark">{I.trend}</span>Cash on {fmtDate(d.target_date || ctx?.data.target_date || ctx?.data.payroll_date)}</h3>
     {n.status === 'running' && !d.expected_by_target ? <div className="thinking"><i/><i/><i/> forecasting</div> : <>
@@ -85,14 +85,15 @@ function Gauge({ cushion, need }: { cushion: number; need: number }) {
   </svg>
 }
 function VerdictNode({ n, fc }: { n: GraphNode; fc?: GraphNode }) {
-  const gap = n.data.gap ?? 0; const cushion = fc?.data.cash_at_target ?? -gap; const need = fc?.data.need ?? 20000
+  const gap = fc?.data.gap ?? n.data.gap ?? 0; const need = fc?.data.need ?? 0; const cushion = fc ? (fc.data.cash_at_target ?? 0) - need : -gap
+  const risk = fc?.data.pessimistic?.gap
   const cls = cushion < 0 ? 'bad' : cushion < need * 0.1 ? '' : 'ok'
   const word = cushion < 0 ? 'No.' : cushion < need * 0.1 ? 'Barely.' : 'Yes.'
   return <div className={`node verdict ${cls}`} style={{ width: 270 }}>
     <Gauge cushion={cushion} need={need} />
     <div className="big">{word}</div>
     <div className="sub">{cushion < 0 ? `${money(-cushion)} short` : `${money(cushion)} to spare`}</div>
-    <div className="fine">{cushion < 0 ? 'even if the usual payers pay' : 'if the usual payers pay'}</div>
+    <div className="fine">{risk > 0 ? `${money(risk)} short if the slow payers slip` : cushion < 0 ? 'even if the usual payers pay' : 'covered even if the slow payers slip'}</div>
   </div>
 }
 function LeverCard({ l, rec, decision, onChoose, chosen }: { l: Lever; rec: boolean; decision?: Decision; onChoose: (opt: string) => void; chosen?: string }) {

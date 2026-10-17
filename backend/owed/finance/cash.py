@@ -7,23 +7,15 @@ from fastapi import APIRouter, HTTPException
 
 from owed.config import settings
 from owed.finance import queries as q
+from owed.finance.scenarios import PESSIMISTIC_THRESHOLD, expected_receipt, reliable
 from owed.runs import require_company
 from owed.runs.payroll import snapshot
 
 router = APIRouter()
-PESSIMISTIC_THRESHOLD = 0.7
 
 
 def money(value):
     return Decimal(str(value)).quantize(Decimal('0.01'))
-
-
-def expected_receipt(row):
-    return q.f(row['open_balance']) * row['p_paid_by_target']
-
-
-def reliable(row):
-    return row['p_paid_by_target'] >= PESSIMISTIC_THRESHOLD
 
 
 def projection(snap, target, never_pays=None, top3_pay_this_week=False):

@@ -16,6 +16,7 @@ from owed.db import conn
 from owed.events import emit
 from owed.finance import queries as q
 from owed.finance.model import band, load
+from owed.finance.scenarios import answer_title, pessimistic_forecast
 from owed.runs import create, finish
 
 router = APIRouter()
@@ -58,7 +59,8 @@ def snapshot(company: str, target: date):
     expected = round(sum(q.f(r['open_balance']) * r['p_paid_by_target'] for r in scored), 2)
     bills_total = round(sum(q.f(b['open_amount']) for b in bills), 2)
     cash = round(bank + expected - bills_total - draw_due, 2)
-    forecast = {'owed_total': round(sum(q.f(r['open_balance']) for r in scored), 2),
+    forecast = {'as_of': q.AS_OF_DEFAULT.isoformat(), 'target_date': target.isoformat(),
+                'owed_total': round(sum(q.f(r['open_balance']) for r in scored), 2),
                 'expected_by_target': expected, 'bills_due_by_target': bills_total,
                 'cash_at_target': cash, 'need': payroll['due_by_target'],
                 'gap': round(max(0, payroll['due_by_target'] - cash), 2)}
@@ -66,6 +68,7 @@ def snapshot(company: str, target: date):
     conservative_cash = round(bank+conservative_in-bills_total-draw_due,2)
     forecast['conservative'] = {'assumption': 'No amber or red invoice pays by target; green invoices remain probability-weighted.',
         'cash_at_target': conservative_cash, 'gap': round(max(0,payroll['due_by_target']-conservative_cash),2)}
+    forecast['pessimistic'] = pessimistic_forecast(scored, bank, bills_total, draw_due, payroll['due_by_target'])
     forecast['owner_draw_by_target'] = draw_due
     return {'draw':draw_due,'company': company_row, 'bank': bank, 'payroll': payroll, 'bills': bills,
             'scored': scored, 'forecast': forecast}
@@ -105,7 +108,9 @@ async def run_payroll(run_id: str, company: str, target: date):
         snap = await asyncio.to_thread(snapshot, company, target)
         await event('node.update', {'node_id': 'n1', 'status': 'done', 'data': {
             'company': snap['company']['display_name'], 'payroll_date': target.isoformat(),
-            'payroll_amount': snap['payroll']['due_by_target'], 'bank_balance': snap['bank']}})
+            'payroll_amount': snap['payroll']['due_by_target'], 'bank_balance': snap['bank'],
+            'target_date': target.isoformat(), 'as_of': q.AS_OF_DEFAULT.isoformat(),
+            'headcount': snap['payroll']['headcount'], 'bills_due_by_target': snap['forecast']['bills_due_by_target']}})
         current = 'n2'
         await event('node.create', {'node_id': 'n2', 'type': 'scoring', 'title': f"Scoring {len(snap['scored'])} open invoices", 'status': 'running', 'parent': 'n1'})
         for i, row in enumerate(snap['scored'], 1):
@@ -120,10 +125,7 @@ async def run_payroll(run_id: str, company: str, target: date):
         await event('node.create', {'node_id': 'n3', 'type': 'forecast', 'title': f'Forecasting {target.isoformat()}', 'status': 'running', 'parent': 'n2'})
         await event('node.update', {'node_id': 'n3', 'status': 'done', 'data': snap['forecast']})
         gap = snap['forecast']['gap']
-        title = f'No. ${gap:,.0f} short.' if gap else 'Yes. Payroll is covered in this forecast.'
-        risk = snap['forecast']['conservative']['gap']
-        if not gap and risk>0:
-            title = f"Covered, but ${risk:,.0f} short if slower payers slip."
+        title = answer_title(snap['forecast'])
         spoken = f"{title} This estimate uses payment history and bills due by {target.isoformat()}."
         await event('node.create', {'node_id': 'n4', 'type': 'answer', 'title': title, 'status': 'done', 'parent': 'n3',
                                    'data': {'answer': 'no' if gap else 'yes', 'gap': gap, 'spoken': spoken}})
