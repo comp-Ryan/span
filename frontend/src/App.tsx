@@ -108,7 +108,7 @@ function LeverCard({ l, rec, decision, onChoose, chosen }: { l: Lever; rec: bool
       {l.targets && <div className="chips" style={{ marginTop: 10 }}>{l.targets.map((t, i) => <span className="chip" key={t.customer_id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(t.customer)}</span>{money(t.amount)}</span>)}</div>}
       {l.bills && <div className="chips" style={{ marginTop: 10 }}>{l.bills.map(b => <span className="chip plain" key={b.bill_id}>{b.vendor} · {money(b.amount)}</span>)}</div>}
       <div className="fine" style={{ marginTop: 10, display: 'flex', gap: 6, alignItems: 'center' }}>
-        {l.targets && <><i className="dot" />all usually pay within a week of a nudge</>}
+        {l.targets && <><i className="dot" />payment history supports chasing; collection is not guaranteed</>}
         {l.bills && <><i className="dot" />both have taken late payment before, no fee</>}
         {zero && 'Nothing scheduled this month, so nothing to hold.'}
       </div>
