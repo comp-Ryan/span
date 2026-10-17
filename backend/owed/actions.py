@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from psycopg.types.json import Jsonb
 
-from owed.channels.photon import send_reminder
+from owed.channels.photon import send_reminder, simulated_reply
 from owed.db import conn
 from owed.events import emit
 from owed.finance import queries as q
@@ -34,15 +34,18 @@ async def execute_decision(row):
     if payload.get('kind')=='defer_bill':
         await asyncio.to_thread(defer_bill,run_id,company,payload['bill_id'],parent,row['decision_id'])
         return
+    sent = []
     for lever in approved_levers(row):
         if lever['id']=='chase':
             for target in lever['targets']:
-                await send_reminder(run_id,company,target['invoice_id'],parent,operation_id=row['decision_id']+'-'+target['invoice_id'])
+                sent.append(await send_reminder(run_id,company,target['invoice_id'],parent,operation_id=row['decision_id']+'-'+target['invoice_id']))
         elif lever['id']=='defer_bill' and option=='yes':
             await asyncio.to_thread(defer_bill,run_id,company,lever['bill_id'],parent,row['decision_id'])
         elif lever['id']=='hold_draw' and option=='yes':
             await asyncio.to_thread(hold_draw,run_id,company,parent,row['decision_id'])
     await asyncio.to_thread(refresh_forecasts,company)
+    if sent:
+        await simulated_reply(run_id, company, sent[0])
 
 
 def defer_bill(run_id,company,bill_id,parent,operation_id):
@@ -100,7 +103,9 @@ async def settle_negotiation(row):
         installments=[]
         for i,amount in enumerate(amounts):
             token=create_pay_token(c,row['company_id'],neg['invoice_id'],amount,run_id=row['run_id'],negotiation_id=neg['negotiation_id'])
-            installments.append({'amount':float(amount),'due':(q.AS_OF_DEFAULT+timedelta(days=14*i)).isoformat(),'pay_token':token})
+            from owed.config import settings
+            installments.append({'amount':float(amount),'due':(q.AS_OF_DEFAULT+timedelta(days=14*i)).isoformat(),
+                                 'pay_token':token, 'pay_link':settings.public_base_url.rstrip('/')+'/pay/'+token})
         agreement={'installments':installments}
         c.execute("update negotiations set status='agreed',agreement=%s where negotiation_id=%s",(Jsonb(agreement),neg['negotiation_id']))
         emit(row['run_id'],'node.update',{'node_id':row['node_id'],'status':'waiting','data':{'agreement':agreement}},connection=c)

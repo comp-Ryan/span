@@ -14,6 +14,7 @@ from psycopg.types.json import Jsonb
 from owed.config import settings
 from owed.db import conn
 from owed.events import emit
+from owed.finance import queries as q
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -49,53 +50,77 @@ class Photon:
 
 
 async def send_reminder(run_id, company, invoice_id, parent='n5', channel='sms', operation_id=None):
-    # Deterministic operation ID makes retries reuse the same provider idempotency key.
+    from owed.channels.drafter import draft_reminder
+    from owed.payments import create_pay_token
     reminder_id = 'rem-' + (operation_id or uuid4().hex)
     node = 'action-' + reminder_id
     with conn() as c:
         prior = c.execute('select * from reminders where reminder_id=%s and company_id=%s', (reminder_id, company)).fetchone()
-        if prior and prior['sent_at']:
-            return dict(prior)
-        row = c.execute('''select f.invoice_id,f.open_balance,c.display_name,c.id customer_id,c.phone,c.email
-            from invoice_facts f join customers c on c.company_id=f.company_id and c.id=f.customer_id
-            where f.company_id=%s and f.invoice_id=%s and f.open_balance>0''', (company, invoice_id)).fetchone()
-        if not row:
-            raise ValueError('Open invoice not found')
-        recipient = settings.photon_demo_recipient or row['email' if channel == 'email' else 'phone']
-        if not recipient:
-            raise ValueError('Customer has no channel address')
-        # Synthetic dataset addresses must be deliberately mapped to a real demo recipient.
-        if not settings.photon_demo_recipient:
-            raise ValueError('Set PHOTON_DEMO_RECIPIENT to a demo phone/email before sending dataset reminders')
-        try:
-            from owed.payments import create_pay_token
-        except ImportError as exc:
-            raise ValueError('Pay-link module has not landed yet') from exc
+        row = c.execute('''select f.invoice_id,f.customer_id,cu.display_name customer_name,
+            (%s-f.due_date) days_past_due,
+            f.open_balance-coalesce((select sum(p.amount) from payments p where p.company_id=f.company_id and p.invoice_id=f.invoice_id),0) open_balance
+            from invoice_facts f join customers cu on cu.company_id=f.company_id and cu.id=f.customer_id
+            where f.company_id=%s and f.invoice_id=%s''', (q.AS_OF_DEFAULT, company, invoice_id)).fetchone()
+    if not row:
+        raise ValueError('Open invoice not found')
+    if prior and prior['sent_at']:
+        return {**dict(prior), 'customer_name': row['customer_name'],
+                'pay_link': settings.public_base_url.rstrip('/') + '/pay/' + prior['pay_token']}
+    if row['open_balance'] <= 0:
+        raise ValueError('Invoice is already paid')
+    sender = settings.photon_email_sender_id if channel == 'email' else settings.photon_sms_sender_id
+    live = bool(settings.photon_api_key and settings.photon_project_id and sender)
+    if live and not settings.photon_demo_recipient:
+        raise ValueError('Set PHOTON_DEMO_RECIPIENT before sending synthetic dataset reminders')
+    actual_channel = channel if live else 'simulated'
+    recipient = settings.photon_demo_recipient if live else 'simulated:' + row['customer_id']
+    draft = await draft_reminder(row) if not prior else {'body': prior['body'], 'tone': prior['tone'], 'source': prior['draft_source']}
+    with conn() as c:
         token = prior['pay_token'] if prior else create_pay_token(c, company, invoice_id, row['open_balance'], run_id=run_id)
         link = settings.public_base_url.rstrip('/') + '/pay/' + token
-        body = f"Hi {row['display_name']}, ${float(row['open_balance']):,.2f} is outstanding on invoice {invoice_id}. Could you confirm a payment date? Pay here: {link}"
-        c.execute('''insert into reminders(reminder_id,run_id,company_id,invoice_id,customer_id,channel,body,tone,draft_source,pay_token,node_id,recipient)
-            values (%s,%s,%s,%s,%s,%s,%s,'friendly','template',%s,%s,%s) on conflict(reminder_id) do nothing''',
-            (reminder_id, run_id, company, invoice_id, row['customer_id'], channel, body, token, node, recipient))
-    if not prior:
-        await asyncio.to_thread(emit, run_id, 'node.create', {'node_id': node, 'type': 'action', 'title': f"Texting {row['display_name']}",
-            'status': 'running', 'parent': parent, 'data': {'kind': 'reminder', 'invoice_id': invoice_id, 'channel': channel,
-            'draft': {'body': body, 'tone': 'friendly', 'source': 'template'}}})
+        body = prior['body'] if prior else f"{draft['body']} Invoice {invoice_id}: ${float(row['open_balance']):,.2f}. Pay here: {link}"
+        draft['body'] = body
+        inserted = c.execute('''insert into reminders(reminder_id,run_id,company_id,invoice_id,customer_id,channel,body,tone,draft_source,pay_token,node_id,recipient)
+            values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) on conflict(reminder_id) do nothing returning reminder_id''',
+            (reminder_id, run_id, company, invoice_id, row['customer_id'], actual_channel, body, draft['tone'], draft['source'], token, node, recipient)).fetchone()
+        if inserted:
+            emit(run_id, 'node.create', {'node_id': node, 'type': 'action', 'title': f"Texting {row['customer_name']}",
+                'status': 'running', 'parent': parent, 'data': {'kind': 'reminder', 'invoice_id': invoice_id,
+                'customer_id': row['customer_id'], 'customer': row['customer_name'], 'channel': actual_channel, 'draft': draft}}, connection=c)
     try:
-        receipt = await Photon().send(recipient, body, channel, reminder_id)
+        receipt = await Photon().send(recipient, body, channel, reminder_id) if live else {
+            'provider_message_id': None, 'space_id': None, 'provider_status': 'simulated'}
         now = datetime.now(UTC)
+        result = {'sent_at': now.isoformat(), 'reminder_id': reminder_id, 'pay_link': link,
+                  'channel': actual_channel, **receipt}
         with conn() as c:
-            c.execute("update reminders set sent_at=%s,status='sent',provider_message_id=%s,space_id=%s where reminder_id=%s",
-                (now, receipt['provider_message_id'], receipt['space_id'], reminder_id))
-        result = {'sent_at': now.isoformat(), 'reminder_id': reminder_id, 'pay_link': link, **receipt}
-        await asyncio.to_thread(emit, run_id, 'node.update', {'node_id': node, 'status': 'done', 'data': result})
-        return result
+            c.execute('''update reminders set sent_at=%s,status=%s,provider_message_id=%s,space_id=%s where reminder_id=%s''',
+                (now, 'sent' if live else 'simulated', receipt['provider_message_id'], receipt['space_id'], reminder_id))
+            emit(run_id, 'node.update', {'node_id': node, 'status': 'done', 'data': result}, connection=c)
+        return {**result, 'node_id': node, 'invoice_id': invoice_id, 'customer_id': row['customer_id'], 'customer_name': row['customer_name']}
     except Exception:
         log.exception('Photon reminder failed: %s', reminder_id)
         with conn() as c:
             c.execute("update reminders set status='failed' where reminder_id=%s", (reminder_id,))
-        await asyncio.to_thread(emit, run_id, 'node.update', {'node_id': node, 'status': 'failed', 'data': {'error': 'Photon did not accept this reminder'}})
+            emit(run_id, 'node.update', {'node_id': node, 'status': 'failed', 'data': {'error': 'Photon did not accept this reminder'}}, connection=c)
         raise
+
+
+async def simulated_reply(run_id, company, reminder):
+    """One disclosed synthetic customer replies; actual outbound channels wait for webhooks."""
+    if reminder['channel'] != 'simulated':
+        return
+    from owed.agents.negotiation import negotiate
+    node = 'reply-' + reminder['reminder_id']
+    with conn() as c:
+        prior = c.execute("select 1 from events where run_id=%s and event='node.create' and data->>'node_id'=%s", (run_id, node)).fetchone()
+        if not prior:
+            emit(run_id, 'node.create', {'node_id': node, 'type': 'action',
+                'title': f"{reminder['customer_name']} replied", 'status': 'done', 'parent': reminder['node_id'],
+                'data': {'kind': 'reply', 'customer_id': reminder['customer_id'], 'customer': reminder['customer_name'],
+                         'channel': 'simulated', 'simulated': True, 'text': 'Can we split this into two payments?',
+                         'classification': 'wants_plan'}}, connection=c)
+    await negotiate(run_id, company, reminder['invoice_id'], node)
 
 
 async def classify_reply(text):

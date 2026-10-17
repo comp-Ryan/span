@@ -168,6 +168,7 @@ def post_pay(token: str, body: dict = Body(...)):
                "title": f"{customer} paid ${amount:,.2f}", "status": "done", "parent": parent,
                "data": {"kind": "payment", "receipt": receipt, "card_id": card_id, "invoice_id": tok["invoice_id"], "doc_number": tok["doc_number"],
                         "customer": customer, "amount": amount, "rail": rail, "payment_id": payment_id,
+                        "customer_id": tok["customer_id"], "customer": customer, "invoice_id": tok["invoice_id"],
                         "sandbox_mode": receipt.get("sandbox_mode", "devnet" if rail == "solana" else None)}})
         con.commit()
     return {"payment_id": payment_id, "status": "paid", "receipt": receipt}

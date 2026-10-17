@@ -5,7 +5,7 @@ type Day = { date: string; inflow: number; outflow: number; balance: number }
 type Cash = { start: string; target: string; opening_balance: number; days: Day[]; pessimistic_days: Day[]; payroll_dates: string[] }
 
 /** Live mode draws API numbers only; failed requests never substitute a synthetic line. */
-export default function DailyCashChart({ company, target, revision, neverPays }: { company: string; target: string; revision: number; neverPays?: string }) {
+export default function DailyCashChart({ company, target, revision, neverPays }: { company: string; target: string; revision: number | string; neverPays?: string }) {
   const [cash, setCash] = useState<Cash | null>(null)
   const [error, setError] = useState('')
   useEffect(() => {
