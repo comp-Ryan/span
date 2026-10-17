@@ -129,6 +129,11 @@ def ask(body: Ask, tasks: BackgroundTasks, company: str = settings.demo_company)
     if not body.question.strip():
         raise HTTPException(422, 'Question must not be blank')
     target = target_for(body.question)
-    run_id = create(company, body.question, body.source, 'payroll_check')
-    tasks.add_task(run_payroll, run_id, company, target)
-    return {'run_id': run_id, 'intent': 'payroll_check', 'target_date': target.isoformat()}
+    from owed.planner import route_intent, run_planner
+    intent = route_intent(body.question)
+    run_id = create(company, body.question, body.source, intent)
+    if intent == 'payroll_check':
+        tasks.add_task(run_payroll, run_id, company, target)
+    else:
+        tasks.add_task(run_planner, run_id, company, body.question, target)
+    return {'run_id': run_id, 'intent': intent, 'target_date': target.isoformat()}
