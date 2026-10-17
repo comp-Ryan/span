@@ -247,3 +247,41 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .status .sub{font-size:14px;font-weight:600;color:var(--amber-dk)}.status.ok .sub{color:var(--green)}.status.bad .sub{color:var(--red)}
 .status svg{flex-shrink:0;width:120px;height:auto}
 .rlink{display:inline-block;margin-top:16px;color:var(--blue);font-weight:600;font-size:13px}
+
+/* ---------- home ---------- */
+.home{display:flex;flex-direction:column;gap:20px;padding-bottom:40px}
+.hhead{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+.hhead .eyebrow{font-size:13px;max-width:760px}
+.switcher{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.switcher select{height:36px;border-radius:18px;border:1px solid var(--muted2);background:var(--card);color:var(--text);font:500 13px var(--font);padding:0 32px 0 14px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='none' stroke='%23393A3D' stroke-width='1.8'%3E%3Cpath d='M3 6l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;max-width:320px;text-overflow:ellipsis}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.tile{display:flex;flex-direction:column;gap:6px;padding:16px;min-height:112px}
+.tile .tl{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.tile .tv{font-size:28px;line-height:34px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.hgrid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:stretch}
+.card.err{border-color:var(--red);color:var(--red);display:flex;align-items:center;font-size:13px}
+.ask{padding:20px}
+.ask h2{margin:0 0 4px;font-size:18px;font-weight:700;letter-spacing:-.01em}
+.big-input{display:flex;align-items:center;gap:8px;margin-top:14px;padding:6px 6px 6px 16px;border:1px solid var(--muted2);border-radius:26px;background:var(--card)}
+.big-input:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(44,160,28,.15)}
+.big-input input{flex:1;border:0;outline:0;font:inherit;font-size:16px;color:var(--text);background:transparent;min-width:0;height:36px}
+.big-input .mic{width:36px;height:36px;border-radius:18px;border:0;background:var(--line2);color:var(--text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.big-input .mic:hover{background:var(--line)}
+.spark{display:flex;flex-direction:column;gap:8px;padding:16px}
+.spark svg{flex:1;max-height:170px}
+.spark .head,.threads .head{display:flex;align-items:center;justify-content:space-between}
+.spark .head b,.threads .head b{font-size:14px;font-weight:600}
+.threads{display:flex;flex-direction:column;gap:4px;padding:16px}
+.threads .head{margin-bottom:6px}
+.thread-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto auto 14px;align-items:center;gap:12px;padding:10px 8px;border-radius:8px;color:var(--text);text-decoration:none;border-top:1px solid var(--line2)}
+.thread-row:hover{background:var(--bg)}
+.thread-row .tq{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thread-row .when{white-space:nowrap}
+.thread-row .go{color:var(--muted2)}
+.pill-v{display:inline-block;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:var(--line2);color:var(--muted)}
+.pill-v.green{background:var(--green-bg);color:var(--green)}.pill-v.amber{background:var(--amber-bg);color:var(--amber-dk)}.pill-v.red{background:#FFF1F0;color:var(--red)}
+@media (max-width:1100px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.hgrid{grid-template-columns:1fr}}
+.ask .sugg{display:flex;gap:8px;flex-wrap:wrap}
+.ask .sugg button{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:7px 12px;font:13px var(--font);color:var(--text);cursor:pointer}
+.ask .sugg button:hover{border-color:var(--green);color:var(--green)}
+.ask .sugg button:disabled{opacity:.6;cursor:default}

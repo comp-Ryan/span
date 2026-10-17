@@ -4,10 +4,11 @@ import { emptyRun, k, money, reduce } from './events'
 import { playFixture, replay, resolveDecision, startRun, subscribe } from './api'
 import DailyCashChart from './DailyCashChart'
 
-const COMPANY = 'company-020'
+const PARAMS = new URLSearchParams(location.search)
+const COMPANY = PARAMS.get('company') || 'company-020'
 const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
-const LIVE = new URLSearchParams(location.search).has('live')
-const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
+const LIVE = PARAMS.has('live') || PARAMS.has('run')  // /?run=<id> (from /home) replays that run against the backend
+const SPEED = Number(PARAMS.get('speed') || 1)
 
 /* ---------- icons ---------- */
 const I = {
@@ -452,7 +453,7 @@ export default function App() {
     </header>
     <div className="body">
       <nav className="rail">
-        <a className="on">{I.chat}Ask</a><a>{I.book}Home</a><a>{I.card}Get paid</a><a>{I.trend}Reports</a><a>{I.person}Customers</a>
+        <a className="on" href="/">{I.chat}Ask</a><a href="/home">{I.book}Home</a><a>{I.card}Get paid</a><a>{I.trend}Reports</a><a>{I.person}Customers</a>
       </nav>
       <main className="main">
         {error && <div role="alert">{error}</div>}
