@@ -197,13 +197,19 @@ The generated one-page report as JSON the Paper template renders:
 { "report_id": "rep-0001", "run_id": "run-0001", "generated_at": "...", "company": "Hearthloaf Bakeries",
   "question": "Am I making payroll Friday?", "answer": "No, $6,200 short at the time of asking; $5,812 short now.",
   "numbers": { "bank_balance": 11000.00, "payroll": 18000.00, "owed": 26100.00, "expected_by_target": 4200.00, "gap_then": 6200.00, "gap_now": 5811.95 },
-  "workflow": { "nodes": [ ... ], "edges": [ ... ] },
+  "workflow": { "nodes": [ { "id": "n1", "type": "context", "title": "Pulling up context", "status": "done", "parent": null, "data": { "...": "merged node.update data" } } ],
+                "edges": [ { "from": "n1", "to": "n2" } ],
+                "svg": "<svg ...>server-rendered workflow picture</svg>" },
   "actions": [ { "title": "Texted Gallagher Apothecary", "result": "Agreed to 2 installments; $388.05 paid" } ],
   "open_items": [ "Lowry & Daughters: no reply yet", "Okonkwo bill deferral pending owner confirmation" ],
   "narrative": "Two paragraphs written by the planner.",
   "disclosures": [ "Customer agents simulated from payment history", "Scoring by Jev" | "Scoring by Owed model (held-out MAE 6.4 days)" ],
   "pdf_url": "https://api.<domain>/reports/rep-0001.pdf" }
 ```
+- Built by replaying the run's events. `workflow.nodes` are each `node.create` with every later `node.update` folded in: `status`/`title` replaced, `data` shallow-merged, scoring `row`s collected into `data.rows`, negotiation `round`s into `data.rounds`, `progress` into `data.progress`. `gap_then` is the first forecast `gap`, `gap_now` the latest.
+- `POST /reports/generate?run_id=` builds and stores a report, sets `runs.report_id`, emits `report.ready`, and returns the report JSON (201). 404 if the run does not exist.
+- `GET /reports/{report_id}.pdf` returns the same report as a one-page Letter PDF. `pdf_url` is prefixed with `PUBLIC_BASE_URL` (relative when unset).
+- Sample replay of a full Palletbay payroll run: `backend/tests/fixtures/run_palletbay.json` (same shape as `GET /runs/{run_id}`).
 
 ## POST /decisions/{decision_id}?company=
 Request: `{ "option_id": "yes", "note": "optional" }` → `{ "decision_id": "d1", "resolved": "yes" }`

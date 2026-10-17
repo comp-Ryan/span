@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     photon_api_key: str = ""
     planner: str = "gemini"            # gemini | jev
     finance_tools: str = "owed_model"  # owed_model | jev
+    public_base_url: str = ""          # e.g. https://api.<domain>; prefixes report pdf_url
 
 
 settings = Settings()
