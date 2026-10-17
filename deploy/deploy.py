@@ -30,6 +30,7 @@ def main():
     run(['ssh',args.host,'mkdir -p /opt/owed/backend /opt/owed/deploy && chmod 700 /opt/owed'])
     run(['rsync','-az','--exclude=.env','--exclude=.venv','--exclude=*.log','--exclude=__pycache__',str(ROOT/'backend')+'/',args.host+':/opt/owed/backend/'])
     run(['rsync','-az','--exclude=.env',str(ROOT/'deploy')+'/',args.host+':/opt/owed/deploy/'])
+    run(['rsync','-az','--exclude=node_modules','--exclude=dist','--exclude=.env','--exclude=.env.*',str(ROOT/'frontend')+'/',args.host+':/opt/owed/frontend/'])
     run(['rsync','-az',str(ROOT/'docs')+'/',args.host+':/opt/owed/docs/'])
     run(['scp',str(ROOT/'.dockerignore'),args.host+':/opt/owed/.dockerignore'])
     run(['scp',str(ROOT/'backend/.env'),args.host+':/opt/owed/backend/.env'])
@@ -44,7 +45,9 @@ if [ "$exists" = "f" ]; then
   docker compose exec -T db pg_restore -U owed -d owed --no-owner < ../deploy.dump
 fi
 docker compose up -d --build --wait api agents caddy
-curl --fail --retry 12 --retry-delay 5 http://127.0.0.1:8000/health
+curl --fail --retry 12 --retry-delay 5 http://127.0.0.1:8000/api/health
+curl --fail http://127.0.0.1:8000/ > /dev/null
+curl --fail http://127.0.0.1:8000/hub/api/doc/contract > /dev/null
 '''
     run(['ssh',args.host,'sh','-s'],input=script,text=True)
     print('Remote services started. Verify the public domain and provider callbacks before claiming deployment complete.')

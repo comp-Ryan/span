@@ -23,9 +23,9 @@ def _write_json(p: Path, data):
     p.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
-@router.get("/", include_in_schema=False)
+@router.get("/hub", include_in_schema=False)
 def home():
-    return RedirectResponse("/timeline")
+    return RedirectResponse("/hub/timeline")
 
 
 for _page in ("timeline", "questions", "architecture", "spec"):
@@ -35,6 +35,7 @@ for _page in ("timeline", "questions", "architecture", "spec"):
         view.__name__ = f"page_{page}"
         return view
     router.add_api_route(f"/{_page}", _make(_page), methods=["GET"], include_in_schema=False)
+    router.add_api_route(f"/hub/{_page}", _make(_page), methods=["GET"], include_in_schema=False)
 
 
 @router.get("/hub/api/timeline")

@@ -15,3 +15,6 @@ backend/server.log
 backend/uagents_core.log
 frontend/node_modules/
 frontend/dist/
+
+# Compiled Vite product (npm run build)
+/backend/owed/static/

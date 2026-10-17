@@ -7,3 +7,9 @@
 **/*.log
 data
 backend/tests
+
+frontend/node_modules
+frontend/dist
+backend/owed/static
+
+**/.env.*

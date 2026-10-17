@@ -48,16 +48,11 @@ app = FastAPI(title="Owed", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/hub/static", StaticFiles(directory=HUB_STATIC), name="hub-static")
 app.include_router(hub_router)
-app.include_router(product_router)
-app.include_router(cash_router)
-app.include_router(events_router)
-app.include_router(runs_router)
-app.include_router(payroll_router)
-app.include_router(voice_router)
-app.include_router(photon_router)
-app.include_router(decisions_router)
-app.include_router(negotiation_router)
-app.include_router(reports_router)
+for router in (product_router, cash_router, events_router, runs_router, payroll_router,
+               voice_router, photon_router, decisions_router, negotiation_router, reports_router,
+               pay_router):
+    app.include_router(router)
+    app.include_router(router, prefix='/api')
 
 
 @app.exception_handler(HTTPException)
@@ -68,7 +63,6 @@ async def http_error(request: Request, exc: HTTPException):
 @app.exception_handler(RequestValidationError)
 async def validation_error(request: Request, exc: RequestValidationError):
     return JSONResponse({"error": {"code": "validation_error", "message": "Invalid request parameters"}}, status_code=422)
-app.include_router(pay_router)
 
 
 @app.get("/health")
@@ -81,3 +75,10 @@ def health():
             "visa": "sandbox" if visa.configured() else "simulated", "solana": "devnet",
             "agentverse": bool(settings.agentverse_api_key and settings.agent_public_endpoint), "jev": False,
             "planner": settings.planner, "finance_tools": settings.finance_tools}
+
+
+app.add_api_route('/api/health', health, methods=['GET'])
+
+from owed.web import install_frontend
+
+install_frontend(app)
