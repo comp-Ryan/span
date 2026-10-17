@@ -288,3 +288,6 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .report{display:flex;flex-direction:column;gap:10px;border-style:dashed}
 .report.ready{border-style:solid;border-color:var(--green)}
 .report .btn{align-self:flex-start;text-decoration:none;height:34px}
+
+.live>*{min-width:0;max-width:100%}
+.status,.status *{overflow-wrap:anywhere;white-space:normal}

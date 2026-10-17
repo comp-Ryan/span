@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type React from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
 import { emptyRun, k, money, reduce } from './events'
 import { playFixture, replay, resolveDecision, startRun, subscribe } from './api'
@@ -283,25 +284,53 @@ function Conversations({ actions }: { actions: GraphNode[]; decisions?: Decision
 }
 
 /* ---------- a thread = one run ---------- */
-function ToolNode({ n }: { n: GraphNode }) {
-  const icon = n.type === 'scoring' ? I.people : n.type === 'forecast' ? I.trend : n.type === 'levers' ? I.star : I.book
-  const d = n.data || {}
-  const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
-  return <div className={`node ${n.status}`}><h3><span className={`ic ${n.type === 'scoring' ? 'green' : n.type === 'forecast' ? 'dark' : 'blue'}`}>{icon}</span>{n.title}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
-    {d.question && <div className="fine">“{d.question}”</div>}
-    {facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{typeof v === 'number' && Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}
-    {d.spoken && <div style={{ fontSize: 14, lineHeight: '20px' }}>{plain(d.spoken)}</div>}
+function HistoryStrip({ history }: { history: { amount: number; status: string; days_late: number | null; due_date: string }[] }) {
+  const paid = history.filter(h => h.status === 'paid'); const avg = paid.length ? paid.reduce((a, h) => a + (h.days_late || 0), 0) / paid.length : 0
+  const col = (h: { status: string; days_late: number | null }) => h.status === 'written_off' ? 'var(--red)' : (h.days_late ?? 0) <= 7 ? 'var(--green)' : (h.days_late ?? 0) <= 30 ? 'var(--amber)' : 'var(--red)'
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div className="dots">{history.slice(-36).map((h, i) => <i key={i} style={{ background: col(h), height: 11 + Math.min(14, Math.max(0, (h.days_late ?? 0) / 3)), borderRadius: 3, width: 8 }} title={`${h.due_date} · ${h.days_late ?? '—'} days late · ${money(h.amount)}`} />)}</div>
+    <div className="kv"><span style={{ color: 'var(--muted)' }}>{paid.length} invoices paid, usually {Math.round(avg)} days late</span><b>{history.filter(h => h.status === 'written_off').length ? `${history.filter(h => h.status === 'written_off').length} written off` : 'never written off'}</b></div>
+    <div className="legend"><span><i style={{ background: 'var(--green)' }} />on time-ish</span><span><i style={{ background: 'var(--amber)' }} />late</span><span><i style={{ background: 'var(--red)' }} />very late / lost</span></div>
   </div>
 }
-function PlannerThread({ run }: { run: RunState }) {
+function ToolNode({ n }: { n: GraphNode }) {
+  const d = n.data || {}
+  const head = (icon: React.ReactNode, cls: string, title: string, extra?: React.ReactNode) => <h3><span className={`ic ${cls}`}>{icon}</span>{title}{extra}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
+  if (n.type === 'context' && d.question && !d.company && !d.customers) return <div className={`node ${n.status}`}>{head(I.chat, 'grey', 'Heard the question')}<div style={{ fontSize: 14 }}>“{d.question}”</div></div>
+  if (d.company) { const c = d.company; return <div className={`node ${n.status}`}>{head(I.book, 'blue', 'Looked up the company')}<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div className="kv"><span style={{ color: 'var(--muted)' }}>{c.display_name} · {c.industry_title}</span><b>{c.distressed ? 'cash-strained' : 'healthy'}</b></div>
+    <div className="kv"><span style={{ color: 'var(--muted)' }}>In the bank</span><b>{money(c.cash)}</b></div><div className="kv"><span style={{ color: 'var(--muted)' }}>Owed to you</span><b>{money(c.receivables)}</b></div><div className="kv"><span style={{ color: 'var(--muted)' }}>You owe</span><b>{money(c.payables)}</b></div></div></div> }
+  if (d.customers) return <div className={`node ${n.status}`}>{head(I.people, 'blue', `Looked up ${d.customers.length} customers`)}<div className="chips">{d.customers.slice(0, 8).map((c: any, i: number) => <span className="chip" key={c.id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(c.display_name)}</span>{c.display_name.split(' ').slice(0, 2).join(' ')}</span>)}{d.customers.length > 8 && <span className="fine">+{d.customers.length - 8} more</span>}</div></div>
+  if (d.history) return <div className={`node ${n.status}`}>{head(I.people, 'green', 'Checked their payment history')}<HistoryStrip history={d.history} /></div>
+  if (n.type === 'forecast' || d.cash_at_target != null) return <CashNode n={{ ...n, title: 'Cash on ' + fmtDate(d.target_date) }} />
+  if (d.levers) return null
+  const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
+  return <div className={`node ${n.status}`}>{head(I.book, 'grey', n.title)}{facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}</div>
+}
+function PlannerThread({ run, onAsk }: { run: RunState; onAsk: (q: string) => void }) {
   const nodes = run.order.map(id => run.nodes[id])
   const ans = nodes.find(n => n.type === 'answer')
   const tools = nodes.filter(n => n.type !== 'answer')
+  const fcNode = nodes.find(n => n.data?.cash_at_target != null)
+  const leverNode = nodes.find(n => n.data?.levers)
+  const levers: Lever[] = leverNode?.data.levers || []
+  const [chosen, setChosen] = useState<string | undefined>()
+  const fakeDecision: Decision | undefined = levers.length ? { decision_id: 'ask-' + run.run_id, node_id: leverNode!.node_id, prompt: 'Text them?', options: [{ id: 'yes', label: 'Yes, text them' }, { id: 'no', label: 'Not now' }], auto_resolves_in_s: null } : undefined
+  const ctxLike: GraphNode | undefined = fcNode ? { ...fcNode, data: { ...fcNode.data, payroll_due_by_target: fcNode.data.need } } : undefined
   return <section className="thread">
     <div className="workspace">
-      <aside className="live"><div className="card status pending" style={{ borderStyle: ans ? 'solid' : 'dashed' }}><div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Answer</div><div style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{ans ? plain(ans.title) : 'Working it out…'}</div>{ans?.data.spoken && plain(ans.data.spoken) !== plain(ans.title) && <div className="fine" style={{ fontSize: 13, lineHeight: '18px' }}>{plain(ans.data.spoken)}</div>}</div></aside>
+      <aside className="live">
+        <div className={`card status ${ans ? 'ok' : 'pending'}`} style={{ borderColor: ans ? 'var(--green)' : undefined, background: ans ? 'var(--green-bg)' : undefined }}>
+          <div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Answer</div>
+          <div style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{ans ? plain(ans.data.spoken || ans.title) : 'Working it out…'}</div>
+        </div>
+        {ctxLike && <CashChart ctx={ctxLike} fc={fcNode} W={420} />}
+        <div className={`card report ${run.report_id ? 'ready' : ''}`}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>{run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : <div className="fine">Builds itself from this run.</div>}</div>
+      </aside>
       <div className="steps">
-        {tools.map((n, i) => <div key={n.node_id}>{i > 0 && <div className="vconn" />}<div className="vstep"><ToolNode n={n} /></div></div>)}
+        {tools.map((n, i) => { const el = <ToolNode n={n} />; if (el === null && !n.data?.levers) return null; return <div key={n.node_id}>{i > 0 && <div className="vconn" />}{n.data?.levers
+          ? <div className="levers">{(n.data.levers as Lever[]).map((l, li) => <div key={l.id} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={li === 0} decision={fakeDecision} chosen={chosen} onChoose={(opt, selected) => { setChosen(opt); if (opt !== 'no') { const names = (l.targets || []).filter(t => !selected || selected.includes(t.customer_id)).map(t => t.customer.split(' ')[0]); onAsk(`Yes, text ${names.join(', ')} with a pay link.`) } }} /></div>)}</div>
+          : <div className="vstep">{el}</div>}</div> })}
         {!ans && <div className="thinking" style={{ marginTop: 14 }}><i/><i/><i/> {BRAND} is thinking</div>}
       </div>
     </div>
@@ -502,7 +531,7 @@ export default function App() {
           <h1 className="q">{main.question}</h1>
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
         {runs.map((r, i) => (r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => id === 'n2' || id === 'n3' || id === 'f3')))
-          ? <PlannerThread key={r.run_id} run={r} />
+          ? <PlannerThread key={r.run_id} run={r} onAsk={followUp} />
           : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
       </main>
     </div>
