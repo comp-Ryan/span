@@ -62,9 +62,9 @@ def put_questions(data: dict = Body(...)):
     labels = [("inspiration", "Inspiration"), ("what_it_does", "What it does"), ("how_we_built_it", "How we built it"),
               ("company_challenges", "How it applies to company challenges"), ("challenges", "Challenges we ran into"),
               ("accomplishments", "Accomplishments that we're proud of"), ("what_we_learned", "What we learned"),
-              ("whats_next", "What's next for Owed"), ("sentry_bug_writeup", "Sentry: the bug a trace found"),
+              ("whats_next", "What's next for Span"), ("sentry_bug_writeup", "Sentry: the bug a trace found"),
               ("disclosures", "Disclosures"), ("built_with", "Built with")]
-    md = [f"# {data.get('title','Owed')}", "", f"_{data.get('tagline','')}_", ""]
+    md = [f"# {data.get('title','Span')}", "", f"_{data.get('tagline','')}_", ""]
     for k, label in labels:
         if s.get(k):
             md += [f"## {label}", "", s[k], ""]

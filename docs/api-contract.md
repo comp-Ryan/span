@@ -1,4 +1,4 @@
-# Owed API Contract v3 (workflow events)
+# Span API Contract v3 (workflow events)
 
 Single source of truth between the Paper frontend and the backend. Change this file before changing any endpoint.
 
@@ -218,7 +218,7 @@ The generated one-page report as JSON the Paper template renders:
   "actions": [ { "title": "Texted Gallagher Apothecary", "result": "Agreed to 2 installments; $388.05 paid" } ],
   "open_items": [ "Lowry & Daughters: no reply yet", "Okonkwo bill deferral pending owner confirmation" ],
   "narrative": "Two paragraphs written by the planner.",
-  "disclosures": [ "Customer agents simulated from payment history", "Scoring by Jev" | "Scoring by Owed model (held-out MAE 6.4 days)" ],
+  "disclosures": [ "Customer agents simulated from payment history", "Scoring by Jev" | "Scoring by Span model (held-out MAE 6.4 days)" ],
   "pdf_url": "https://api.<domain>/reports/rep-0001.pdf" }
 ```
 - Built by replaying the run's events. `workflow.nodes` are each `node.create` with every later `node.update` folded in: `status`/`title` replaced, `data` shallow-merged, scoring `row`s collected into `data.rows`, negotiation `round`s into `data.rounds`, `progress` into `data.progress`. `gap_then` is the first forecast `gap`, `gap_now` the latest.
@@ -306,7 +306,7 @@ Shown in the footer and the write-up.
 Photon's published voice API exposes SIP destinations, not a bidirectional websocket; this endpoint currently implements the authorized Twilio fallback protocol.
 Websocket messages follow Twilio Media Streams: `connected`, `start` (customParameters: `token`, `company`; mediaFormat: mono `audio/x-mulaw`, 8000 Hz), `media` (base64 payload), `stop`.
 Backend sends `media` and `clear` (barge-in). Wrong credentials close with 1008; missing configuration closes with 1013.
-Gemini native audio output transcription feeds ElevenLabs Flash v2.5. When ElevenLabs is unconfigured, Gemini native audio is used. Caller transcript fragments are `node.update.data.caller_text` on the call context node; Owed transcript fragments are `speech` events.
+Gemini native audio output transcription feeds ElevenLabs Flash v2.5. When ElevenLabs is unconfigured, Gemini native audio is used. Caller transcript fragments are `node.update.data.caller_text` on the call context node; Span transcript fragments are `speech` events.
 
 ### Photon 2.0 callback setup
 `POST /inbound/photon?token=<PHOTON_WEBHOOK_TOKEN>` accepts the provider event envelope with `data.id` or `data.message.id` identifying the message. The token can alternatively be sent as `X-Owed-Webhook-Token`. Until Beta signature headers are verified, this callback token plus an authenticated fetch of the canonical Photon message protects ingestion. Disable access logging of callback query strings.
@@ -400,3 +400,7 @@ The development/submission hub is at `/hub` → `/hub/timeline`, with `/hub/ques
 `/hub/architecture`, `/hub/spec`, `/hub/static/*`, and `/hub/api/*`. Legacy hub page URLs
 (`/timeline`, `/questions`, `/architecture`, `/spec`) are retained. With no product build,
 `/` redirects to `/hub` rather than serving a broken app. Build/restart before production.
+
+Product branding is **Span**. Python packages, `owed_model`, negotiation speaker `owed`,
+and the compatibility header `X-Owed-Webhook-Token` retain their existing identifiers.
+The repository is `https://github.com/comp-Ryan/span`; endpoint and event shapes are unchanged.
