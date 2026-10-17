@@ -86,7 +86,11 @@ function Gauge({ cushion, need }: { cushion: number; need: number }) {
   </svg>
 }
 function VerdictNode({ n, fc }: { n: GraphNode; fc?: GraphNode }) {
-  const gap = fc?.data.gap ?? n.data.gap ?? 0; const need = fc?.data.need ?? 0; const cushion = fc ? (fc.data.cash_at_target ?? 0) - need : -gap
+  const gap = fc?.data.gap ?? n.data.gap ?? 0; const need = fc?.data.need ?? 0
+  const d = fc?.data || {}
+  // cushion = cash left on the target date after payroll and bills.
+  // Backend semantics: need = payroll, cash_at_target = bank + expected − bills, gap = max(0, need − cash). Fixture: cash_at_target already net.
+  const cushion = gap > 0 ? -gap : (d.cushion ?? (d.need != null && (d.cash_at_target ?? 0) >= d.need ? d.cash_at_target - d.need : (d.cash_at_target ?? 0)))
   const risk = fc?.data.pessimistic?.gap
   const cls = cushion < 0 ? 'bad' : cushion < need * 0.1 ? '' : 'ok'
   const word = cushion < 0 ? 'No.' : cushion < need * 0.1 ? 'Barely.' : 'Yes.'
@@ -137,8 +141,8 @@ function Fork({ fromRef, toRefs, containerRef }: { fromRef: React.RefObject<HTML
     {geo.to.map(x => <path key={x} d={`M${x - 5} 45l5 5 5-5`} />)}
   </svg>
 }
-function buildSeries(ctx?: GraphNode, sc?: GraphNode, fc?: GraphNode) {
-  const bank = ctx?.data.bank_balance ?? 0
+function buildSeries(ctx?: GraphNode, sc?: GraphNode, fc?: GraphNode, received = 0) {
+  const bank = (ctx?.data.bank_balance ?? 0) + received
   const target = fc?.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date
   const asOf = sc?.rows.length ? undefined : undefined; void asOf
   const days = 14
@@ -156,9 +160,9 @@ function buildSeries(ctx?: GraphNode, sc?: GraphNode, fc?: GraphNode) {
   const walk = (inf: number[]) => { let v = bank; const pts = [v]; for (let d = 1; d <= days; d++) { v += inf[d] - out[d]; pts.push(v) } return pts }
   return { good: walk(inflowGood), bad: walk(inflowBad), days, target, pay, bank }
 }
-function CashChart({ ctx, sc, fc }: { ctx?: GraphNode; sc?: GraphNode; fc?: GraphNode }) {
-  const W = 760, H = 200, base = 156, top = 14
-  const { good, bad, days, target, pay, bank } = useMemo(() => buildSeries(ctx, sc, fc), [ctx, sc, fc])
+function CashChart({ ctx, sc, fc, received = 0 }: { ctx?: GraphNode; sc?: GraphNode; fc?: GraphNode; received?: number }) {
+  const W = 1240, H = 200, base = 156, top = 14
+  const { good, bad, days, target, pay, bank } = useMemo(() => buildSeries(ctx, sc, fc, received), [ctx, sc, fc, received])
   const step = W / days, mid = Math.floor(days / 2)
   const maxV = Math.max(...good, 1) * 1.08, minV = Math.min(...bad, 0)
   const y = (v: number) => base - ((v - minV) / (maxV - minV)) * (base - top)
@@ -173,7 +177,7 @@ function CashChart({ ctx, sc, fc }: { ctx?: GraphNode; sc?: GraphNode; fc?: Grap
       <path d={path(good)} stroke="#2CA01C" strokeWidth="2.5" strokeLinejoin="round" />
       <path d={`M${mid * step} ${top} V${base} M${W - 1} ${top} V${base}`} stroke="#8D9096" strokeWidth="1" strokeDasharray="3 4" />
       <circle cx={W - 2} cy={y(endG)} r="5" fill="#fff" stroke="#2CA01C" strokeWidth="2.5" /><circle cx={W - 2} cy={y(endB)} r="5" fill="#fff" stroke="#E08A00" strokeWidth="2" />
-      <text x="0" y={H - 6} fontSize="11" fill="#6B6C72">Today · ${k(bank)}</text>
+      <text x="0" y={H - 6} fontSize="11" fill="#6B6C72">Today · ${k(bank)}{received ? " incl. payments" : ""}</text>
       <text x={mid * step} y={H - 6} fontSize="11" fontWeight="600" fill="#393A3D" textAnchor="middle">{fmtDate(shift(target, -7))} · payday</text>
       <text x={W - 4} y={H - 6} fontSize="11" fontWeight="600" fill="#393A3D" textAnchor="end">{fmtDate(target)} · payday</text>
       <text x={W - 12} y={Math.min(y(endG), y(endB) - 16) - 8} fontSize="12" fontWeight="700" fill="#2CA01C" textAnchor="end">{endG >= 0 ? '+' : '−'}${k(Math.abs(endG))}</text>
@@ -187,7 +191,7 @@ function Outcome({ fc, payments, levers }: { fc?: GraphNode; payments: GraphNode
   const need = fc?.data.need || 1
   const Bar = ({ v, c, label }: { v: number; c: string; label: string }) => <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><div className="kv"><span style={{ color: 'var(--muted)' }}>{label}</span><b style={{ color: v < 0 ? 'var(--red)' : undefined }}>{v < 0 ? '−' : '+'}{money(Math.abs(v))}</b></div><div className="bar"><i style={{ width: `${Math.min(100, Math.max(2, 100 * Math.abs(v) / (need * 0.3)))}%`, background: c }} /></div></div>
   return <div className="card outcome">
-    <b style={{ fontSize: 14 }}>Where you stand now</b>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="ic green" style={{ width: 22, height: 22 }}>{I.check}</span><b style={{ fontSize: 14 }}>Where you stand now</b><span className="fine" style={{ marginLeft: 'auto' }}>end of this run · keeps updating as payments land</span></div>
     <Bar v={before} c="var(--amber)" label="Cushion when you asked" />
     <Bar v={now} c={now >= 0 ? 'var(--green)' : 'var(--red)'} label="Cushion now" />
     {payments.length > 0 && <div className="fine" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="ic green" style={{ width: 18, height: 18 }}>{I.check}</span>{payments.length} payment{payments.length > 1 ? 's' : ''} landed · {money(got)}</div>}
@@ -234,6 +238,7 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
   const byType = (t: string) => run.order.map(id => run.nodes[id]).find(n => n.type === t)
   const ctx = byType('context'), sc = byType('scoring'), fc = byType('forecast'), ans = byType('answer'), lv = byType('levers')
   const actions = run.order.map(id => run.nodes[id]).filter(n => n.type === 'action')
+  const payments = actions.filter(a => a.data.kind === 'payment'); const received = payments.reduce((a, p) => a + (p.data.amount || 0), 0)
   const levers: Lever[] = lv?.data.levers || []
   const decision = Object.values(run.decisions).find(d => d.node_id === lv?.node_id)
   const chosen = decision?.resolved
@@ -253,8 +258,11 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
       <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex' }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={opt => decision && onDecide(decision, opt)} /></div>)}</div>
     </>}
     {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
+    {fc && fc.status === 'done' && (LIVE
+      ? <div className="chart-wrap"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={fc.data.cash_at_target} neverPays={fc.data.excluded_customer_id} /></div>
+      : <div className="chart-wrap"><CashChart ctx={ctx} sc={sc} fc={fc} received={received} /></div>)}
     {actions.length > 0 && <Conversations actions={actions} />}
-    {fc && fc.status === 'done' && <div className="split">{LIVE ? <DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={fc.data.cash_at_target} neverPays={fc.data.excluded_customer_id} /> : <CashChart ctx={ctx} sc={sc} fc={fc} />}<Outcome fc={fc} payments={actions.filter(a => a.data.kind === 'payment')} levers={levers} /></div>}
+    {(payments.length > 0 || run.status === 'closed') && <Outcome fc={fc} payments={payments} levers={levers} />}
   </section>
 }
 
@@ -285,7 +293,7 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay }: { run: R
       </div>
       <div className="sugg">{['What if Evergreen doesn’t pay?', 'Show me who’s late', 'Can I afford a hire in January?'].map(q => <button key={q} onClick={() => onAsk(q)}>{q}</button>)}</div>
       <div className="dinput"><input placeholder={`Ask ${BRAND} a follow-up, or just say it…`} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }} /><button className="btn primary" style={{ height: 32, padding: '0 14px' }} onClick={send}>Ask</button></div>
-      {!live && <div className="controls" style={{ justifyContent: 'flex-end' }}>demo · <button onClick={() => onReplay(1)}>replay</button><button onClick={() => onReplay(3)}>3×</button><a href="?live" style={{ color: 'var(--blue)' }}>go live</a></div>}
+      {!live && <div className="controls" style={{ justifyContent: 'flex-end' }}>demo replay · <button onClick={() => onReplay(1)}>restart</button><button onClick={() => onReplay(3)}>3× speed</button><a href="?live">connect live</a></div>}
     </div>}
     {!open && preview && <div className="preview" onClick={() => setOpen(true)}><span className="av">{BRAND[0]}</span><span>{preview}</span></div>}
     {!open && <button className="bubble" onClick={() => setOpen(true)}>
