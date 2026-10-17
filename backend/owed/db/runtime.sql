@@ -10,3 +10,5 @@ create table if not exists channel_inbox (
   status text not null default 'pending', created_at timestamptz default now()
 );
 alter table channel_inbox add column if not exists claimed_at timestamptz;
+alter table pay_tokens add column if not exists run_id text;
+create unique index if not exists payments_solana_signature on payments ((receipt->>'signature')) where rail='solana';

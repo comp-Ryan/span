@@ -12,3 +12,4 @@ backend/server.log
 # nested working copies of other sessions (Devin/Astra clones)
 /owed/
 /owed-*/
+backend/uagents_core.log

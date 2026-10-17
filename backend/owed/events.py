@@ -18,17 +18,22 @@ def envelope(row):
             'company_id': row['company_id'], 'run_id': row['run_id']}
 
 
-def emit(run_id: str, event: str, data: dict) -> dict:
-    with conn() as c:
-        # Serialize allocation through commit so reconnect cursors cannot skip a late commit.
-        c.execute('select pg_advisory_xact_lock(781204)')
-        run = c.execute('select company_id from runs where run_id=%s', (run_id,)).fetchone()
-        if not run:
-            raise ValueError(f'Unknown run: {run_id}')
-        row = c.execute('''insert into events(run_id,company_id,event,data) values (%s,%s,%s,%s)
-                           returning *''', (run_id, run['company_id'], event,
-                                           Jsonb(jsonable_encoder(data)))).fetchone()
+def _write_event(c, run_id, event, data):
+    c.execute('select pg_advisory_xact_lock(781204)')
+    run = c.execute('select company_id from runs where run_id=%s', (run_id,)).fetchone()
+    if not run:
+        raise ValueError(f'Unknown run: {run_id}')
+    row = c.execute('''insert into events(run_id,company_id,event,data) values (%s,%s,%s,%s)
+                       returning *''', (run_id, run['company_id'], event, Jsonb(jsonable_encoder(data)))).fetchone()
     return envelope(row)
+
+
+def emit(run_id: str, event: str, data: dict, *, connection=None) -> dict:
+    """Optional connection makes a payment and its emitted events one atomic commit."""
+    if connection is not None:
+        return _write_event(connection, run_id, event, data)
+    with conn() as c:
+        return _write_event(c, run_id, event, data)
 
 
 def read_events(company: str, after: int | None = None, limit: int = 500):

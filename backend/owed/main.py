@@ -16,6 +16,8 @@ from owed.channels.photon import router as photon_router
 from owed.db import apply_runtime
 from owed.config import settings
 from owed.hub import STATIC as HUB_STATIC, router as hub_router
+from owed.payments import router as pay_router
+from owed.payments import visa
 
 if settings.sentry_dsn:
     import sentry_sdk
@@ -46,8 +48,10 @@ async def http_error(request: Request, exc: HTTPException):
 @app.exception_handler(RequestValidationError)
 async def validation_error(request: Request, exc: RequestValidationError):
     return JSONResponse({"error": {"code": "validation_error", "message": "Invalid request parameters"}}, status_code=422)
+app.include_router(pay_router)
 
 
 @app.get("/health")
 def health():
-    return {"ok": True, "planner": settings.planner, "finance_tools": settings.finance_tools}
+    return {"ok": True, "planner": settings.planner, "finance_tools": settings.finance_tools,
+            "visa": "sandbox" if visa.configured() else "simulated", "solana": "devnet"}

@@ -183,8 +183,9 @@ create table if not exists payments (
 );
 create table if not exists pay_tokens (
   pay_token text primary key, company_id text, invoice_id text, amount numeric(14,2), status text default 'unpaid',
-  negotiation_id text, created_at timestamptz default now()
+  negotiation_id text, run_id text, created_at timestamptz default now()
 );
+alter table pay_tokens add column if not exists run_id text;
 create table if not exists generated_reports (
   report_id text primary key, run_id text, company_id text, generated_at timestamptz default now(), doc jsonb
 );
