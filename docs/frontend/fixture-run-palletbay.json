@@ -1,0 +1,6821 @@
+{
+ "meta": {
+  "company": "Palletbay Storage & Warehousing",
+  "as_of": "2026-10-06",
+  "target": "2026-10-20",
+  "question": "Am I going to make payroll these next two weeks?",
+  "generated_from": "real queries + trained model (scripts/make_fixture.py)",
+  "peers": {
+   "dso_days": 22,
+   "peer_median_dso_days": 52,
+   "peer_count": 20
+  },
+  "history_samples": {
+   "cust-customer-66": [
+    {
+     "invoice_id": "inv-01617",
+     "amount": 496.8,
+     "due_date": "2026-04-23",
+     "days_late": 15,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01682",
+     "amount": 430.56,
+     "due_date": "2026-04-30",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01767",
+     "amount": 115.92,
+     "due_date": "2026-05-07",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01866",
+     "amount": 463.68,
+     "due_date": "2026-05-15",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01944",
+     "amount": 387.45,
+     "due_date": "2026-05-21",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02022",
+     "amount": 137.76,
+     "due_date": "2026-05-26",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02117",
+     "amount": 103.32,
+     "due_date": "2026-06-02",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02198",
+     "amount": 241.08,
+     "due_date": "2026-06-08",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02291",
+     "amount": 252.84,
+     "due_date": "2026-06-17",
+     "days_late": 15,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02355",
+     "amount": 343.14,
+     "due_date": "2026-06-24",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02441",
+     "amount": 171.57,
+     "due_date": "2026-07-03",
+     "days_late": 15,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02513",
+     "amount": 126.42,
+     "due_date": "2026-07-10",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02582",
+     "amount": 219.12,
+     "due_date": "2026-07-17",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02673",
+     "amount": 219.12,
+     "due_date": "2026-07-27",
+     "days_late": 15,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02771",
+     "amount": 136.95,
+     "due_date": "2026-08-06",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02849",
+     "amount": 114.96,
+     "due_date": "2026-08-13",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02917",
+     "amount": 95.8,
+     "due_date": "2026-08-20",
+     "days_late": 15,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02982",
+     "amount": 86.22,
+     "due_date": "2026-08-27",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03085",
+     "amount": 344.88,
+     "due_date": "2026-09-08",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03197",
+     "amount": 234.75,
+     "due_date": "2026-09-18",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03290",
+     "amount": 187.8,
+     "due_date": "2026-09-29",
+     "days_late": null,
+     "status": "open"
+    }
+   ],
+   "cust-customer-20": [
+    {
+     "invoice_id": "inv-02438",
+     "amount": 225.75,
+     "due_date": "2026-07-02",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02482",
+     "amount": 126.42,
+     "due_date": "2026-07-07",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02509",
+     "amount": 216.72,
+     "due_date": "2026-07-09",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02552",
+     "amount": 182.6,
+     "due_date": "2026-07-14",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02594",
+     "amount": 109.56,
+     "due_date": "2026-07-20",
+     "days_late": 17,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02644",
+     "amount": 209.99,
+     "due_date": "2026-07-23",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02676",
+     "amount": 209.99,
+     "due_date": "2026-07-28",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02716",
+     "amount": 191.73,
+     "due_date": "2026-07-30",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02746",
+     "amount": 237.38,
+     "due_date": "2026-08-04",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02785",
+     "amount": 255.64,
+     "due_date": "2026-08-07",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02825",
+     "amount": 134.12,
+     "due_date": "2026-08-12",
+     "days_late": 17,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02862",
+     "amount": 172.44,
+     "due_date": "2026-08-14",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02896",
+     "amount": 76.64,
+     "due_date": "2026-08-19",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02924",
+     "amount": 182.02,
+     "due_date": "2026-08-20",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02959",
+     "amount": 95.8,
+     "due_date": "2026-08-25",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03008",
+     "amount": 344.88,
+     "due_date": "2026-08-31",
+     "days_late": 17,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03038",
+     "amount": 86.22,
+     "due_date": "2026-09-02",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03082",
+     "amount": 354.46,
+     "due_date": "2026-09-08",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03125",
+     "amount": 159.63,
+     "due_date": "2026-09-11",
+     "days_late": 17,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03173",
+     "amount": 356.82,
+     "due_date": "2026-09-16",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03217",
+     "amount": 347.43,
+     "due_date": "2026-09-21",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03267",
+     "amount": 197.19,
+     "due_date": "2026-09-25",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03303",
+     "amount": 281.7,
+     "due_date": "2026-09-30",
+     "days_late": null,
+     "status": "open"
+    },
+    {
+     "invoice_id": "inv-03330",
+     "amount": 159.63,
+     "due_date": "2026-10-01",
+     "days_late": null,
+     "status": "open"
+    }
+   ],
+   "cust-customer-7": [
+    {
+     "invoice_id": "inv-02205",
+     "amount": 284.13,
+     "due_date": "2026-06-09",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02252",
+     "amount": 288.96,
+     "due_date": "2026-06-15",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02309",
+     "amount": 279.93,
+     "due_date": "2026-06-19",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02365",
+     "amount": 198.66,
+     "due_date": "2026-06-25",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02420",
+     "amount": 72.24,
+     "due_date": "2026-06-30",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02460",
+     "amount": 108.36,
+     "due_date": "2026-07-06",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02506",
+     "amount": 243.81,
+     "due_date": "2026-07-09",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02549",
+     "amount": 127.82,
+     "due_date": "2026-07-14",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02604",
+     "amount": 136.95,
+     "due_date": "2026-07-21",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02653",
+     "amount": 200.86,
+     "due_date": "2026-07-24",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02704",
+     "amount": 109.56,
+     "due_date": "2026-07-29",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02755",
+     "amount": 273.9,
+     "due_date": "2026-08-04",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02811",
+     "amount": 219.12,
+     "due_date": "2026-08-11",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02852",
+     "amount": 114.96,
+     "due_date": "2026-08-13",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02910",
+     "amount": 325.72,
+     "due_date": "2026-08-20",
+     "days_late": 13,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02951",
+     "amount": 287.4,
+     "due_date": "2026-08-25",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03006",
+     "amount": 76.64,
+     "due_date": "2026-08-31",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03055",
+     "amount": 325.72,
+     "due_date": "2026-09-03",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03091",
+     "amount": 239.5,
+     "due_date": "2026-09-08",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03137",
+     "amount": 225.36,
+     "due_date": "2026-09-14",
+     "days_late": 14,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03190",
+     "amount": 319.26,
+     "due_date": "2026-09-17",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03240",
+     "amount": 197.19,
+     "due_date": "2026-09-23",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03287",
+     "amount": 281.7,
+     "due_date": "2026-09-29",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03345",
+     "amount": 338.04,
+     "due_date": "2026-10-05",
+     "days_late": null,
+     "status": "open"
+    }
+   ],
+   "cust-customer-14": [
+    {
+     "invoice_id": "inv-01465",
+     "amount": 347.76,
+     "due_date": "2026-04-10",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01525",
+     "amount": 521.64,
+     "due_date": "2026-04-16",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01602",
+     "amount": 140.76,
+     "due_date": "2026-04-23",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01680",
+     "amount": 554.76,
+     "due_date": "2026-04-30",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01748",
+     "amount": 207.0,
+     "due_date": "2026-05-06",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01837",
+     "amount": 405.72,
+     "due_date": "2026-05-13",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01943",
+     "amount": 215.25,
+     "due_date": "2026-05-21",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02034",
+     "amount": 275.52,
+     "due_date": "2026-05-27",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02118",
+     "amount": 111.93,
+     "due_date": "2026-06-02",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02219",
+     "amount": 68.88,
+     "due_date": "2026-06-10",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02292",
+     "amount": 54.18,
+     "due_date": "2026-06-17",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02373",
+     "amount": 270.9,
+     "due_date": "2026-06-26",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02442",
+     "amount": 117.39,
+     "due_date": "2026-07-03",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02514",
+     "amount": 153.51,
+     "due_date": "2026-07-10",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02611",
+     "amount": 82.17,
+     "due_date": "2026-07-21",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02718",
+     "amount": 292.16,
+     "due_date": "2026-07-31",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02787",
+     "amount": 136.95,
+     "due_date": "2026-08-07",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02897",
+     "amount": 95.8,
+     "due_date": "2026-08-19",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02964",
+     "amount": 210.76,
+     "due_date": "2026-08-25",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03039",
+     "amount": 354.46,
+     "due_date": "2026-09-02",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03120",
+     "amount": 300.48,
+     "due_date": "2026-09-10",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03204",
+     "amount": 122.07,
+     "due_date": "2026-09-21",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03282",
+     "amount": 366.21,
+     "due_date": "2026-09-28",
+     "days_late": null,
+     "status": "open"
+    },
+    {
+     "invoice_id": "inv-03351",
+     "amount": 122.07,
+     "due_date": "2026-10-05",
+     "days_late": null,
+     "status": "open"
+    }
+   ],
+   "cust-customer-61": [
+    {
+     "invoice_id": "inv-01181",
+     "amount": 624.56,
+     "due_date": "2026-03-18",
+     "days_late": 10,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01326",
+     "amount": 219.44,
+     "due_date": "2026-03-30",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01424",
+     "amount": 339.48,
+     "due_date": "2026-04-07",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01516",
+     "amount": 389.16,
+     "due_date": "2026-04-15",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01601",
+     "amount": 513.36,
+     "due_date": "2026-04-23",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01668",
+     "amount": 587.88,
+     "due_date": "2026-04-29",
+     "days_late": 10,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01773",
+     "amount": 115.92,
+     "due_date": "2026-05-07",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01877",
+     "amount": 157.32,
+     "due_date": "2026-05-15",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-01967",
+     "amount": 241.08,
+     "due_date": "2026-05-22",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02062",
+     "amount": 327.18,
+     "due_date": "2026-05-28",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02132",
+     "amount": 232.47,
+     "due_date": "2026-06-03",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02199",
+     "amount": 232.47,
+     "due_date": "2026-06-08",
+     "days_late": 10,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02282",
+     "amount": 117.39,
+     "due_date": "2026-06-16",
+     "days_late": 10,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02362",
+     "amount": 252.84,
+     "due_date": "2026-06-25",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02463",
+     "amount": 135.45,
+     "due_date": "2026-07-06",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02560",
+     "amount": 301.29,
+     "due_date": "2026-07-15",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02659",
+     "amount": 219.12,
+     "due_date": "2026-07-27",
+     "days_late": 10,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02737",
+     "amount": 273.9,
+     "due_date": "2026-08-03",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02836",
+     "amount": 114.96,
+     "due_date": "2026-08-12",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02945",
+     "amount": 210.76,
+     "due_date": "2026-08-24",
+     "days_late": 11,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03026",
+     "amount": 306.56,
+     "due_date": "2026-09-01",
+     "days_late": 10,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03097",
+     "amount": 143.7,
+     "due_date": "2026-09-09",
+     "days_late": 12,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03203",
+     "amount": 197.19,
+     "due_date": "2026-09-21",
+     "days_late": 10,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03310",
+     "amount": 93.9,
+     "due_date": "2026-09-30",
+     "days_late": null,
+     "status": "partial"
+    }
+   ],
+   "cust-customer-50": [
+    {
+     "invoice_id": "inv-02188",
+     "amount": 129.15,
+     "due_date": "2026-06-08",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02238",
+     "amount": 297.99,
+     "due_date": "2026-06-11",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02278",
+     "amount": 261.87,
+     "due_date": "2026-06-16",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02324",
+     "amount": 162.54,
+     "due_date": "2026-06-22",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02359",
+     "amount": 126.42,
+     "due_date": "2026-06-24",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02412",
+     "amount": 261.87,
+     "due_date": "2026-06-30",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02471",
+     "amount": 325.08,
+     "due_date": "2026-07-07",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02520",
+     "amount": 180.6,
+     "due_date": "2026-07-10",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02574",
+     "amount": 255.64,
+     "due_date": "2026-07-16",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02630",
+     "amount": 146.08,
+     "due_date": "2026-07-22",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02692",
+     "amount": 136.95,
+     "due_date": "2026-07-28",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02752",
+     "amount": 91.3,
+     "due_date": "2026-08-04",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02801",
+     "amount": 200.86,
+     "due_date": "2026-08-10",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02844",
+     "amount": 296.98,
+     "due_date": "2026-08-13",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02903",
+     "amount": 268.24,
+     "due_date": "2026-08-19",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02944",
+     "amount": 258.66,
+     "due_date": "2026-08-24",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02988",
+     "amount": 249.08,
+     "due_date": "2026-08-27",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03024",
+     "amount": 153.28,
+     "due_date": "2026-09-01",
+     "days_late": 21,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03081",
+     "amount": 316.14,
+     "due_date": "2026-09-08",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03124",
+     "amount": 319.26,
+     "due_date": "2026-09-11",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03162",
+     "amount": 206.58,
+     "due_date": "2026-09-15",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03215",
+     "amount": 244.14,
+     "due_date": "2026-09-21",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03258",
+     "amount": 178.41,
+     "due_date": "2026-09-24",
+     "days_late": null,
+     "status": "open"
+    },
+    {
+     "invoice_id": "inv-03308",
+     "amount": 309.87,
+     "due_date": "2026-09-30",
+     "days_late": null,
+     "status": "open"
+    }
+   ],
+   "cust-customer-65": [
+    {
+     "invoice_id": "inv-02405",
+     "amount": 144.48,
+     "due_date": "2026-06-30",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02439",
+     "amount": 288.96,
+     "due_date": "2026-07-02",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02485",
+     "amount": 279.93,
+     "due_date": "2026-07-07",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02539",
+     "amount": 100.43,
+     "due_date": "2026-07-13",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02579",
+     "amount": 155.21,
+     "due_date": "2026-07-16",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02625",
+     "amount": 219.12,
+     "due_date": "2026-07-22",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02657",
+     "amount": 228.25,
+     "due_date": "2026-07-24",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02696",
+     "amount": 173.47,
+     "due_date": "2026-07-29",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02725",
+     "amount": 164.34,
+     "due_date": "2026-07-31",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02766",
+     "amount": 54.78,
+     "due_date": "2026-08-05",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02795",
+     "amount": 100.43,
+     "due_date": "2026-08-07",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02832",
+     "amount": 277.82,
+     "due_date": "2026-08-12",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02883",
+     "amount": 268.24,
+     "due_date": "2026-08-18",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02921",
+     "amount": 268.24,
+     "due_date": "2026-08-20",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02953",
+     "amount": 67.06,
+     "due_date": "2026-08-25",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03001",
+     "amount": 67.06,
+     "due_date": "2026-08-28",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03036",
+     "amount": 182.02,
+     "due_date": "2026-09-02",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03074",
+     "amount": 258.66,
+     "due_date": "2026-09-07",
+     "days_late": 20,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03115",
+     "amount": 112.68,
+     "due_date": "2026-09-10",
+     "days_late": 18,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03141",
+     "amount": 225.36,
+     "due_date": "2026-09-14",
+     "days_late": 19,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03191",
+     "amount": 93.9,
+     "due_date": "2026-09-17",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03241",
+     "amount": 84.51,
+     "due_date": "2026-09-23",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03288",
+     "amount": 347.43,
+     "due_date": "2026-09-29",
+     "days_late": null,
+     "status": "open"
+    },
+    {
+     "invoice_id": "inv-03320",
+     "amount": 131.46,
+     "due_date": "2026-10-01",
+     "days_late": null,
+     "status": "open"
+    }
+   ],
+   "cust-customer-37": [
+    {
+     "invoice_id": "inv-02475",
+     "amount": 171.57,
+     "due_date": "2026-07-07",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02523",
+     "amount": 234.78,
+     "due_date": "2026-07-10",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02566",
+     "amount": 73.04,
+     "due_date": "2026-07-15",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02618",
+     "amount": 228.25,
+     "due_date": "2026-07-21",
+     "days_late": 24,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02647",
+     "amount": 127.82,
+     "due_date": "2026-07-23",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02677",
+     "amount": 127.82,
+     "due_date": "2026-07-28",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02707",
+     "amount": 255.64,
+     "due_date": "2026-07-29",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02756",
+     "amount": 200.86,
+     "due_date": "2026-08-04",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02803",
+     "amount": 292.16,
+     "due_date": "2026-08-10",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02833",
+     "amount": 86.22,
+     "due_date": "2026-08-12",
+     "days_late": 24,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02873",
+     "amount": 229.92,
+     "due_date": "2026-08-17",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02905",
+     "amount": 143.7,
+     "due_date": "2026-08-19",
+     "days_late": 22,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02950",
+     "amount": 258.66,
+     "due_date": "2026-08-24",
+     "days_late": 24,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-02989",
+     "amount": 277.82,
+     "due_date": "2026-08-27",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03019",
+     "amount": 220.34,
+     "due_date": "2026-09-01",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03058",
+     "amount": 268.24,
+     "due_date": "2026-09-03",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03093",
+     "amount": 162.86,
+     "due_date": "2026-09-09",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03127",
+     "amount": 291.09,
+     "due_date": "2026-09-11",
+     "days_late": 23,
+     "status": "paid"
+    },
+    {
+     "invoice_id": "inv-03174",
+     "amount": 272.31,
+     "due_date": "2026-09-16",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03202",
+     "amount": 187.8,
+     "due_date": "2026-09-18",
+     "days_late": null,
+     "status": "partial"
+    },
+    {
+     "invoice_id": "inv-03247",
+     "amount": 122.07,
+     "due_date": "2026-09-23",
+     "days_late": null,
+     "status": "open"
+    },
+    {
+     "invoice_id": "inv-03280",
+     "amount": 338.04,
+     "due_date": "2026-09-28",
+     "days_late": null,
+     "status": "open"
+    },
+    {
+     "invoice_id": "inv-03319",
+     "amount": 309.87,
+     "due_date": "2026-10-01",
+     "days_late": null,
+     "status": "open"
+    },
+    {
+     "invoice_id": "inv-03349",
+     "amount": 215.97,
+     "due_date": "2026-10-05",
+     "days_late": null,
+     "status": "open"
+    }
+   ]
+  }
+ },
+ "events": [
+  {
+   "event": "run.start",
+   "ts_offset_s": 0,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "question": "Am I going to make payroll these next two weeks?",
+    "source": "call"
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 0.1,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n1",
+    "type": "context",
+    "title": "Pulling up context",
+    "status": "running",
+    "parent": null
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.5,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n1",
+    "status": "done",
+    "data": {
+     "company": "Palletbay Storage & Warehousing",
+     "profile": "wholesale",
+     "next_payroll_date": "2026-10-13",
+     "target_date": "2026-10-20",
+     "payroll_due_by_target": 13275.0,
+     "weekly_payroll": 6637.5,
+     "headcount": 6,
+     "bills_due_by_target": 9268.31,
+     "bank_balance": 6533.65
+    }
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 0.6,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "type": "scoring",
+    "title": "Scoring 204 open invoices",
+    "status": "running",
+    "parent": "n1"
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.63,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 1,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03396",
+     "customer": "Yamada & Daughters Movers",
+     "amount": 414.0,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.671,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.66,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 2,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03358",
+     "customer": "Hearth Trading Partners",
+     "amount": 384.99,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 18,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.69,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 3,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03423",
+     "customer": "Grimaldi & Sons Nursery",
+     "amount": 377.2,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.919,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 4,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03282",
+     "customer": "Brightwater Lantern Toyworks & Co.",
+     "amount": 366.21,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.32,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.75,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 5,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03390",
+     "customer": "Golden Florals Inc.",
+     "amount": 366.21,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 11,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.78,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 6,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03363",
+     "customer": "Yeoman Roasters Co.",
+     "amount": 347.43,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.002,
+     "p_never": 0.071,
+     "expected_days_to_pay": 21,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.81,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 7,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03288",
+     "customer": "Eastgate Cyclery & Co.",
+     "amount": 347.43,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.84,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 8,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03280",
+     "customer": "Evergreen Juniper Flats Removals",
+     "amount": 338.04,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.022,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.87,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 9,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03345",
+     "customer": "Grimaldi & Sons Nursery",
+     "amount": 338.04,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.916,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.9,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 10,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03289",
+     "customer": "Bright Pottery Co.",
+     "amount": 328.65,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.93,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 11,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03357",
+     "customer": "Eastgate Cyclery & Co.",
+     "amount": 328.65,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.002,
+     "p_never": 0.071,
+     "expected_days_to_pay": 19,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.96,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 12,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03381",
+     "customer": "Evergreen Fulfillment Group",
+     "amount": 328.65,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.646,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 0.99,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 13,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03413",
+     "customer": "Yeoman Roasters Co.",
+     "amount": 322.0,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 21,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.02,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 14,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03382",
+     "customer": "Foundry Oakhurst Movers",
+     "amount": 319.26,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.92,
+     "p_never": 0.071,
+     "expected_days_to_pay": 10,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.05,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 15,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03360",
+     "customer": "Ironclad Stonegate Provisions",
+     "amount": 319.26,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 20,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.08,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 16,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03319",
+     "customer": "Evergreen Juniper Flats Removals",
+     "amount": 309.87,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.02,
+     "p_never": 0.071,
+     "expected_days_to_pay": 18,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.11,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 17,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03308",
+     "customer": "Yeoman Roasters Co.",
+     "amount": 309.87,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.644,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.14,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 18,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03395",
+     "customer": "Hearth Trading Partners",
+     "amount": 300.48,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 18,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.17,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 19,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03356",
+     "customer": "Glenmoor Fulfillment LLC",
+     "amount": 291.09,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.2,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 20,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03420",
+     "customer": "Haddad & Daughters Brewing",
+     "amount": 285.2,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.23,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 21,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03303",
+     "customer": "Hearth Trading Partners",
+     "amount": 281.7,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.26,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 22,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03275",
+     "customer": "Marchetti Textiles Inc.",
+     "amount": 281.7,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.29,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 23,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03384",
+     "customer": "Grimaldi & Sons Nursery",
+     "amount": 281.7,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.914,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.32,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 24,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03313",
+     "customer": "Ironbridge Goods Holdings",
+     "amount": 281.7,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.35,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 25,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03344",
+     "customer": "Keystone Removals Group",
+     "amount": 272.31,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.922,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.38,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 26,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03368",
+     "customer": "Foundry Riverbend Movers",
+     "amount": 253.53,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 20,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.41,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 27,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03252",
+     "customer": "Eriksen Fulfillment Holdings",
+     "amount": 253.53,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.44,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 28,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03293",
+     "customer": "Foundry Riverbend Movers",
+     "amount": 244.14,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.92,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.47,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 29,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03411",
+     "customer": "Lindqvist & Daughters Provisions",
+     "amount": 239.2,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 21,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.5,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 30,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03405",
+     "customer": "Inlet Cove Juniper Florals Holdings",
+     "amount": 239.2,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.53,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 31,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03346",
+     "customer": "Lindqvist & Daughters Provisions",
+     "amount": 234.75,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 20,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.56,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 32,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03387",
+     "customer": "Whitlock & Sons Brewing",
+     "amount": 234.75,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.917,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.59,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 33,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03348",
+     "customer": "Okonkwo & Daughters Roasters",
+     "amount": 234.75,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 18,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.62,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 34,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03340",
+     "customer": "Juniper Quilting Company",
+     "amount": 234.75,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 17,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.65,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 35,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03377",
+     "customer": "Kingsmere Movers",
+     "amount": 225.36,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.632,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.68,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 36,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03228",
+     "customer": "Driftwood Pioneer Quilting Partners",
+     "amount": 225.36,
+     "days_past_due": 14,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.71,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 37,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03369",
+     "customer": "Copperfield Yeoman Bindery LLC",
+     "amount": 225.36,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.74,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 38,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03406",
+     "customer": "Bright Pottery Co.",
+     "amount": 220.8,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 20,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.77,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 39,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03431",
+     "customer": "Copperfield Yeoman Bindery LLC",
+     "amount": 220.8,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.8,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 40,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03337",
+     "customer": "Zielinski & Daughters Removals",
+     "amount": 215.97,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.83,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 41,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03349",
+     "customer": "Evergreen Juniper Flats Removals",
+     "amount": 215.97,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 22,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.86,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 42,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03309",
+     "customer": "Okonkwo & Daughters Roasters",
+     "amount": 215.97,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.89,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 43,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03304",
+     "customer": "Iversen Movers Company",
+     "amount": 215.97,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.92,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 44,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03299",
+     "customer": "Jarvis Trading LLC",
+     "amount": 215.97,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.95,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 45,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03409",
+     "customer": "Marchetti Textiles Inc.",
+     "amount": 211.6,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.299,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 1.98,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 46,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03432",
+     "customer": "Zephyr Thornbury Apothecary",
+     "amount": 211.6,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.002,
+     "p_never": 0.071,
+     "expected_days_to_pay": 21,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.01,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 47,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03311",
+     "customer": "Pemberton & Sons Goods",
+     "amount": 206.58,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.04,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 48,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03291",
+     "customer": "Ironclad Confections Holdings",
+     "amount": 206.58,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.07,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 49,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03415",
+     "customer": "Pemberton & Sons Goods",
+     "amount": 202.4,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.312,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.1,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 50,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03392",
+     "customer": "Zielinski & Daughters Removals",
+     "amount": 197.19,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.921,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.13,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 51,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03331",
+     "customer": "Delacroix & Daughters Movers",
+     "amount": 197.19,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.16,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 52,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03408",
+     "customer": "Eriksen Fulfillment Holdings",
+     "amount": 193.2,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 20,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.19,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 53,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03403",
+     "customer": "Oakhurst Copper Pottery Inc.",
+     "amount": 193.2,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.699,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.22,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 54,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03428",
+     "customer": "Keystone Removals Group",
+     "amount": 193.2,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 10,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.25,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 55,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03380",
+     "customer": "Haddad & Sons Nursery",
+     "amount": 187.8,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.603,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.28,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 56,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03333",
+     "customer": "Yeoman Fairhaven Brewing",
+     "amount": 187.8,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 11,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.31,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 57,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03297",
+     "customer": "Whitlock & Sons Brewing",
+     "amount": 187.8,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.34,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 58,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03290",
+     "customer": "Yamada & Daughters Movers",
+     "amount": 187.8,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.37,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 59,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03429",
+     "customer": "Brightwater Lantern Toyworks & Co.",
+     "amount": 184.0,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 22,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.4,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 60,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03412",
+     "customer": "Bellrock Sterling Florals Company",
+     "amount": 184.0,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 24,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.43,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 61,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03258",
+     "customer": "Yeoman Roasters Co.",
+     "amount": 178.41,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.46,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 62,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03355",
+     "customer": "Oakhurst Copper Pottery Inc.",
+     "amount": 178.41,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.62,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.49,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 63,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03327",
+     "customer": "Juniper Printworks Co.",
+     "amount": 178.41,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.921,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.52,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 64,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03342",
+     "customer": "Copper Outfitters Inc.",
+     "amount": 178.41,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.007,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.55,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 65,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03328",
+     "customer": "Haddad & Sons Nursery",
+     "amount": 178.41,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.58,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 66,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03422",
+     "customer": "Granite Bay Quilting Company",
+     "amount": 174.8,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 17,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.61,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 67,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03386",
+     "customer": "Ironclad Confections Holdings",
+     "amount": 169.02,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.011,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.64,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 68,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03283",
+     "customer": "Copper Outfitters Inc.",
+     "amount": 169.02,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.67,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 69,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03372",
+     "customer": "Juniper Printworks Co.",
+     "amount": 169.02,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 20,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.7,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 70,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03343",
+     "customer": "Keystone Orchards Co.",
+     "amount": 169.02,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.013,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.73,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 71,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03341",
+     "customer": "Marchetti Textiles Inc.",
+     "amount": 169.02,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.318,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.76,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 72,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03398",
+     "customer": "Balewa & Sons Toyworks",
+     "amount": 165.6,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 10,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.79,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 73,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03427",
+     "customer": "Delacroix & Daughters Movers",
+     "amount": 165.6,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.914,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.82,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 74,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03330",
+     "customer": "Hearth Trading Partners",
+     "amount": 159.63,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.915,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.85,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 75,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03374",
+     "customer": "Granite Bay Quilting Company",
+     "amount": 159.63,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 17,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.88,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 76,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03388",
+     "customer": "Iversen Movers Company",
+     "amount": 159.63,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.636,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.91,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 77,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03400",
+     "customer": "Haddad Creamery LLC",
+     "amount": 156.4,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.94,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 78,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03274",
+     "customer": "Glenmoor Confections",
+     "amount": 153.25,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 2.97,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 79,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03373",
+     "customer": "Bright Pottery Co.",
+     "amount": 150.24,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 20,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.0,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 80,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03281",
+     "customer": "Ironclad Stonegate Provisions",
+     "amount": 150.24,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.03,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 81,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03318",
+     "customer": "Ibarra Outfitters Group",
+     "amount": 150.24,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.06,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 82,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03354",
+     "customer": "Bellrock Golden Roasters & Co.",
+     "amount": 150.24,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.272,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.09,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 83,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03364",
+     "customer": "Inlet Cove Juniper Florals Holdings",
+     "amount": 150.24,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.12,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 84,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03366",
+     "customer": "Glenmoor Confections",
+     "amount": 150.24,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.313,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.15,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 85,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03394",
+     "customer": "Eastgate Cyclery & Co.",
+     "amount": 150.24,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 19,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.18,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 86,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03418",
+     "customer": "Yeoman Fairhaven Brewing",
+     "amount": 147.2,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.293,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.21,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 87,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03433",
+     "customer": "Juniper Printworks Co.",
+     "amount": 147.2,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 20,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.24,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 88,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03410",
+     "customer": "Copper Outfitters Inc.",
+     "amount": 147.2,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.006,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.27,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 89,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03339",
+     "customer": "Bright Pottery Co.",
+     "amount": 140.85,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.909,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.3,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 90,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03222",
+     "customer": "Foundry Riverbend Movers",
+     "amount": 136.35,
+     "days_past_due": 14,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.33,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 91,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03236",
+     "customer": "Lindqvist & Daughters Provisions",
+     "amount": 133.91,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.36,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 92,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03350",
+     "customer": "Balewa Orchards Company",
+     "amount": 131.46,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.921,
+     "p_never": 0.071,
+     "expected_days_to_pay": 11,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.39,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 93,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03213",
+     "customer": "Bellrock Sterling Florals Company",
+     "amount": 131.46,
+     "days_past_due": 15,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.42,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 94,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03320",
+     "customer": "Eastgate Cyclery & Co.",
+     "amount": 131.46,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.912,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.45,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 95,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03370",
+     "customer": "Zephyr Thornbury Apothecary",
+     "amount": 131.46,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 21,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.48,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 96,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03397",
+     "customer": "Juniper Nursery LLC",
+     "amount": 128.8,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 10,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.51,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 97,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03414",
+     "customer": "Ibarra Outfitters Group",
+     "amount": 128.8,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.918,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.54,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 98,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03419",
+     "customer": "Juniper Quilting Company",
+     "amount": 128.8,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 18,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.57,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 99,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03217",
+     "customer": "Hearth Trading Partners",
+     "amount": 128.55,
+     "days_past_due": 15,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.6,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 100,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03314",
+     "customer": "Glenmoor Fulfillment LLC",
+     "amount": 128.18,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.63,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 101,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03300",
+     "customer": "Bellrock Golden Roasters & Co.",
+     "amount": 122.07,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.922,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.66,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 102,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03294",
+     "customer": "Driftwood Pioneer Quilting Partners",
+     "amount": 122.07,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.141,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.69,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 103,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03257",
+     "customer": "Bellrock Sterling Florals Company",
+     "amount": 122.07,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 104,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03247",
+     "customer": "Evergreen Juniper Flats Removals",
+     "amount": 122.07,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 10,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.75,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 105,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03351",
+     "customer": "Brightwater Lantern Toyworks & Co.",
+     "amount": 122.07,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 21,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.78,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 106,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03278",
+     "customer": "Okonkwo & Daughters Roasters",
+     "amount": 122.07,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.913,
+     "p_never": 0.071,
+     "expected_days_to_pay": 11,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.81,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 107,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03286",
+     "customer": "Keystone Removals Group",
+     "amount": 120.2,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.84,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 108,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03251",
+     "customer": "Yeoman Fairhaven Brewing",
+     "amount": 114.38,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.896,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.87,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 109,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03391",
+     "customer": "Stonegate Works",
+     "amount": 112.68,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.9,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 110,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03389",
+     "customer": "Lowry & Sons Brewing",
+     "amount": 112.68,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.93,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 111,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03353",
+     "customer": "Jarvis Trading LLC",
+     "amount": 112.68,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.921,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.96,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 112,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03347",
+     "customer": "Granite Bay Quilting Company",
+     "amount": 112.68,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 3.99,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 113,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03383",
+     "customer": "Keystone Orchards Co.",
+     "amount": 103.29,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.017,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.02,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 114,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03266",
+     "customer": "Zephyr Thornbury Apothecary",
+     "amount": 103.29,
+     "days_past_due": 11,
+     "p_paid_by_target": 0.685,
+     "p_never": 0.071,
+     "expected_days_to_pay": 10,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.05,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 115,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03316",
+     "customer": "Zephyr Thornbury Apothecary",
+     "amount": 103.29,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.686,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.08,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 116,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03375",
+     "customer": "Adeyemi & Daughters Goods",
+     "amount": 103.29,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.586,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.11,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 117,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03242",
+     "customer": "Bright Pottery Co.",
+     "amount": 102.54,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.14,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 118,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03425",
+     "customer": "Hearth Trading Partners",
+     "amount": 101.2,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 18,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.17,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 119,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03174",
+     "customer": "Evergreen Juniper Flats Removals",
+     "amount": 100.76,
+     "days_past_due": 20,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.2,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 120,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03295",
+     "customer": "Kingsmere Movers",
+     "amount": 99.16,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.23,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 121,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03367",
+     "customer": "Mbeki Quilting Company",
+     "amount": 98.88,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.26,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 122,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03215",
+     "customer": "Yeoman Roasters Co.",
+     "amount": 97.66,
+     "days_past_due": 15,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.29,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 123,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03376",
+     "customer": "Driftwood Pioneer Quilting Partners",
+     "amount": 93.9,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 22,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.32,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 124,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03296",
+     "customer": "Lindqvist & Daughters Provisions",
+     "amount": 93.9,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.616,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.35,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 125,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03301",
+     "customer": "Oakhurst Copper Pottery Inc.",
+     "amount": 93.9,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.38,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 126,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03285",
+     "customer": "Keystone Orchards Co.",
+     "amount": 93.9,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.41,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 127,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03334",
+     "customer": "Eriksen Fulfillment Holdings",
+     "amount": 93.9,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.44,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 128,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03246",
+     "customer": "Dunmore Sterling Works Holdings",
+     "amount": 92.59,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.913,
+     "p_never": 0.071,
+     "expected_days_to_pay": 1,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.47,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 129,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03404",
+     "customer": "Glenmoor Fulfillment LLC",
+     "amount": 92.0,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.921,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.5,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 130,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03430",
+     "customer": "Balewa & Daughters Removals",
+     "amount": 92.0,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.896,
+     "p_never": 0.071,
+     "expected_days_to_pay": 5,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.53,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 131,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03402",
+     "customer": "Bellrock Golden Roasters & Co.",
+     "amount": 92.0,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.211,
+     "p_never": 0.071,
+     "expected_days_to_pay": 15,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.56,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 132,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03169",
+     "customer": "Lindqvist & Daughters Provisions",
+     "amount": 90.71,
+     "days_past_due": 21,
+     "p_paid_by_target": 0.913,
+     "p_never": 0.071,
+     "expected_days_to_pay": 18,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.59,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 133,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03385",
+     "customer": "Okonkwo & Daughters Roasters",
+     "amount": 84.51,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 19,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.62,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 134,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03365",
+     "customer": "Ibarra Outfitters Group",
+     "amount": 84.51,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.915,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.65,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 135,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03378",
+     "customer": "Ironbridge Goods Holdings",
+     "amount": 84.51,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.586,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.68,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 136,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03248",
+     "customer": "Bellrock Golden Roasters & Co.",
+     "amount": 84.42,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.71,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 137,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03359",
+     "customer": "Balewa & Daughters Removals",
+     "amount": 84.14,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.859,
+     "p_never": 0.071,
+     "expected_days_to_pay": 5,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.74,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 138,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03254",
+     "customer": "Juniper Quilting Company",
+     "amount": 83.39,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.77,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 139,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03416",
+     "customer": "Jasper Mill Hardware LLC",
+     "amount": 82.8,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 21,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.8,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 140,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03162",
+     "customer": "Yeoman Roasters Co.",
+     "amount": 82.64,
+     "days_past_due": 21,
+     "p_paid_by_target": 0.914,
+     "p_never": 0.071,
+     "expected_days_to_pay": 1,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.83,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 141,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03305",
+     "customer": "Lowry & Sons Brewing",
+     "amount": 76.72,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.922,
+     "p_never": 0.071,
+     "expected_days_to_pay": 2,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.86,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 142,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03323",
+     "customer": "Jasper Mill Hardware LLC",
+     "amount": 75.12,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.618,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.89,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 143,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03336",
+     "customer": "Evergreen Fulfillment Group",
+     "amount": 75.12,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 10,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.92,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 144,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03302",
+     "customer": "Granite Bay Quilting Company",
+     "amount": 75.12,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 11,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.95,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 145,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03324",
+     "customer": "Dunmore Sterling Works Holdings",
+     "amount": 75.12,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 4.98,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 146,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03399",
+     "customer": "Bright Granite Bay Warehousing",
+     "amount": 73.6,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.01,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 147,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03401",
+     "customer": "Jarvis Trading LLC",
+     "amount": 73.6,
+     "days_past_due": -3,
+     "p_paid_by_target": 0.919,
+     "p_never": 0.071,
+     "expected_days_to_pay": 13,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.04,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 148,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03417",
+     "customer": "Underwood Pottery & Co.",
+     "amount": 73.6,
+     "days_past_due": -6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 12,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.07,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 149,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03267",
+     "customer": "Hearth Trading Partners",
+     "amount": 72.97,
+     "days_past_due": 11,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.1,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 150,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03202",
+     "customer": "Evergreen Juniper Flats Removals",
+     "amount": 69.49,
+     "days_past_due": 18,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 5,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.13,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 151,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03171",
+     "customer": "Driftwood Pioneer Quilting Partners",
+     "amount": 65.92,
+     "days_past_due": 21,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 1,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.16,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 152,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03321",
+     "customer": "Lindqvist & Sons Nursery",
+     "amount": 65.73,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.635,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.19,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 153,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03307",
+     "customer": "Bellrock Sterling Florals Company",
+     "amount": 65.73,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.005,
+     "p_never": 0.071,
+     "expected_days_to_pay": 18,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.22,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 154,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03393",
+     "customer": "Evergreen Juniper Flats Removals",
+     "amount": 65.73,
+     "days_past_due": -2,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 23,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.25,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 155,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03424",
+     "customer": "Eastgate Cyclery & Co.",
+     "amount": 64.4,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.001,
+     "p_never": 0.071,
+     "expected_days_to_pay": 19,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.28,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 156,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03426",
+     "customer": "Dunmore Sterling Works Holdings",
+     "amount": 64.4,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.628,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.31,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 157,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03315",
+     "customer": "Copperfield Yeoman Bindery LLC",
+     "amount": 64.04,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 4,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.34,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 158,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03273",
+     "customer": "Zielinski & Daughters Removals",
+     "amount": 63.11,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 5,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.37,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 159,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03338",
+     "customer": "Foundry Oakhurst Movers",
+     "amount": 60.66,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.4,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 160,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03227",
+     "customer": "Keystone Orchards Co.",
+     "amount": 59.91,
+     "days_past_due": 14,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 2,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.43,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 161,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03379",
+     "customer": "Jasper Mill Creamery Partners",
+     "amount": 58.88,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.46,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 162,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03233",
+     "customer": "Jasper Mill Hardware LLC",
+     "amount": 56.34,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.49,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 163,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03268",
+     "customer": "Juniper Printworks Co.",
+     "amount": 56.34,
+     "days_past_due": 11,
+     "p_paid_by_target": 0.922,
+     "p_never": 0.071,
+     "expected_days_to_pay": 9,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.52,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 164,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03284",
+     "customer": "Adeyemi & Daughters Goods",
+     "amount": 54.94,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.55,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 165,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03157",
+     "customer": "Bellrock Sterling Florals Company",
+     "amount": 54.09,
+     "days_past_due": 21,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.58,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 166,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03223",
+     "customer": "Adeyemi & Daughters Goods",
+     "amount": 52.12,
+     "days_past_due": 14,
+     "p_paid_by_target": 0.903,
+     "p_never": 0.071,
+     "expected_days_to_pay": 1,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.61,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 167,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03352",
+     "customer": "Haddad Creamery LLC",
+     "amount": 48.83,
+     "days_past_due": 1,
+     "p_paid_by_target": 0.923,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.64,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 168,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03204",
+     "customer": "Brightwater Lantern Toyworks & Co.",
+     "amount": 48.83,
+     "days_past_due": 15,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.67,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 169,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03371",
+     "customer": "Lindqvist & Sons Nursery",
+     "amount": 46.95,
+     "days_past_due": -1,
+     "p_paid_by_target": 0.666,
+     "p_never": 0.071,
+     "expected_days_to_pay": 11,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.7,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 170,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03317",
+     "customer": "Inlet Cove Juniper Florals Holdings",
+     "amount": 44.14,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.922,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.73,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 171,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03287",
+     "customer": "Grimaldi & Sons Nursery",
+     "amount": 42.26,
+     "days_past_due": 7,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.76,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 172,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03231",
+     "customer": "Okonkwo & Daughters Roasters",
+     "amount": 42.26,
+     "days_past_due": 14,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 5,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.79,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 173,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03276",
+     "customer": "Foundry Oakhurst Movers",
+     "amount": 41.51,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 2,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.82,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 174,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03244",
+     "customer": "Delacroix & Daughters Movers",
+     "amount": 39.44,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.697,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.85,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 175,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03206",
+     "customer": "Juniper Quilting Company",
+     "amount": 38.22,
+     "days_past_due": 15,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.88,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 176,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03298",
+     "customer": "Haddad Creamery LLC",
+     "amount": 37.56,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.922,
+     "p_never": 0.071,
+     "expected_days_to_pay": 2,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.91,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 177,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03362",
+     "customer": "Bellrock Sterling Florals Company",
+     "amount": 37.56,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.0,
+     "p_never": 0.071,
+     "expected_days_to_pay": 24,
+     "band": "amber",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.94,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 178,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03259",
+     "customer": "Granite Bay Quilting Company",
+     "amount": 36.81,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 5,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 5.97,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 179,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03335",
+     "customer": "Bright Granite Bay Warehousing",
+     "amount": 36.81,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 8,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.0,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 180,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03421",
+     "customer": "Lindqvist & Sons Nursery",
+     "amount": 36.8,
+     "days_past_due": -7,
+     "p_paid_by_target": 0.745,
+     "p_never": 0.071,
+     "expected_days_to_pay": 11,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.03,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 181,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03182",
+     "customer": "Juniper Printworks Co.",
+     "amount": 32.12,
+     "days_past_due": 20,
+     "p_paid_by_target": 0.697,
+     "p_never": 0.071,
+     "expected_days_to_pay": 1,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.06,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 182,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03218",
+     "customer": "Juniper Printworks Co.",
+     "amount": 30.43,
+     "days_past_due": 14,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.09,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 183,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03210",
+     "customer": "Zephyr Thornbury Apothecary",
+     "amount": 29.58,
+     "days_past_due": 15,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.12,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 184,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03240",
+     "customer": "Grimaldi & Sons Nursery",
+     "amount": 29.58,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.697,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.15,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 185,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03271",
+     "customer": "Balewa Orchards Company",
+     "amount": 28.55,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 4,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.18,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 186,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03279",
+     "customer": "Ibarra Outfitters Group",
+     "amount": 27.89,
+     "days_past_due": 8,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 5,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.21,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 187,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03253",
+     "customer": "Ironbridge Goods Holdings",
+     "amount": 27.05,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.915,
+     "p_never": 0.071,
+     "expected_days_to_pay": 2,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.24,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 188,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03220",
+     "customer": "Granite Bay Quilting Company",
+     "amount": 24.98,
+     "days_past_due": 14,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.27,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 189,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03237",
+     "customer": "Whitlock & Sons Brewing",
+     "amount": 21.04,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.697,
+     "p_never": 0.071,
+     "expected_days_to_pay": 14,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.3,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 190,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03361",
+     "customer": "Haddad & Daughters Brewing",
+     "amount": 20.76,
+     "days_past_due": 0,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.33,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 191,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03312",
+     "customer": "Juniper Nursery LLC",
+     "amount": 19.72,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 4,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.36,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 192,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03249",
+     "customer": "Oakhurst Copper Pottery Inc.",
+     "amount": 19.72,
+     "days_past_due": 12,
+     "p_paid_by_target": 0.917,
+     "p_never": 0.071,
+     "expected_days_to_pay": 2,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.39,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 193,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03263",
+     "customer": "Evergreen Fulfillment Group",
+     "amount": 19.54,
+     "days_past_due": 11,
+     "p_paid_by_target": 0.915,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.42,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 194,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03310",
+     "customer": "Golden Florals Inc.",
+     "amount": 17.85,
+     "days_past_due": 6,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 5,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.45,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 195,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03262",
+     "customer": "Bright Granite Bay Warehousing",
+     "amount": 17.09,
+     "days_past_due": 11,
+     "p_paid_by_target": 0.697,
+     "p_never": 0.071,
+     "expected_days_to_pay": 1,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.48,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 196,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03187",
+     "customer": "Eriksen Fulfillment Holdings",
+     "amount": 14.56,
+     "days_past_due": 19,
+     "p_paid_by_target": 0.697,
+     "p_never": 0.071,
+     "expected_days_to_pay": 1,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.51,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 197,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03235",
+     "customer": "Pemberton & Sons Goods",
+     "amount": 13.53,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.922,
+     "p_never": 0.071,
+     "expected_days_to_pay": 2,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.54,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 198,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03332",
+     "customer": "Balewa & Sons Toyworks",
+     "amount": 13.53,
+     "days_past_due": 4,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.57,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 199,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03325",
+     "customer": "Underwood Pottery & Co.",
+     "amount": 12.96,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 7,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.6,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 200,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03270",
+     "customer": "Haddad & Sons Nursery",
+     "amount": 12.02,
+     "days_past_due": 11,
+     "p_paid_by_target": 0.914,
+     "p_never": 0.071,
+     "expected_days_to_pay": 3,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.63,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 201,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03230",
+     "customer": "Haddad & Sons Nursery",
+     "amount": 9.02,
+     "days_past_due": 14,
+     "p_paid_by_target": 0.915,
+     "p_never": 0.071,
+     "expected_days_to_pay": 1,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.66,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 202,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03191",
+     "customer": "Eastgate Cyclery & Co.",
+     "amount": 8.46,
+     "days_past_due": 19,
+     "p_paid_by_target": 0.697,
+     "p_never": 0.071,
+     "expected_days_to_pay": 16,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.69,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 203,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03241",
+     "customer": "Eastgate Cyclery & Co.",
+     "amount": 7.61,
+     "days_past_due": 13,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 6,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "progress": {
+     "done": 204,
+     "total": 204
+    },
+    "row": {
+     "invoice_id": "inv-03329",
+     "customer": "Stonegate Works",
+     "amount": 4.79,
+     "days_past_due": 5,
+     "p_paid_by_target": 0.924,
+     "p_never": 0.071,
+     "expected_days_to_pay": 4,
+     "band": "green",
+     "source": "owed_model"
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 6.77,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n2",
+    "status": "done"
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 6.82,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n3",
+    "type": "forecast",
+    "title": "Forecasting through Oct 20",
+    "status": "running",
+    "parent": "n2"
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 7.32,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n3",
+    "status": "done",
+    "data": {
+     "owed_total": 28508.72,
+     "expected_by_target": 17223.27,
+     "payroll_due_by_target": 13275.0,
+     "bills_due_by_target": 9268.31,
+     "bank_balance": 6533.65,
+     "cash_at_target": 1213.61,
+     "need": 22543.31,
+     "gap": 0
+    }
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 7.42,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n4",
+    "type": "answer",
+    "title": "Yes. You're covered.",
+    "status": "done",
+    "parent": "n3",
+    "data": {
+     "answer": "yes",
+     "gap": 0,
+     "spoken": "Yes, you're covered."
+    }
+   }
+  },
+  {
+   "event": "speech",
+   "ts_offset_s": 7.42,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "text": "Yes, you're covered.",
+    "audio_url": null
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 7.62,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n5",
+    "type": "levers",
+    "title": "What closes the gap",
+    "status": "running",
+    "parent": "n4"
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 9.12,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n5",
+    "status": "done",
+    "data": {
+     "levers": [
+      {
+       "id": "chase",
+       "label": "Text 3 reliable late payers",
+       "recovers": 2414.1,
+       "targets": [
+        {
+         "customer_id": "cust-customer-37",
+         "customer": "Evergreen Juniper Flats Removals",
+         "amount": 1156.2,
+         "n_invoices": 6,
+         "days_past_due": 20,
+         "p_paid_by_target": 0.924,
+         "reason": "20 days late on 6 invoices. Has paid 70 before, usually 23 days late, so a nudge works."
+        },
+        {
+         "customer_id": "cust-customer-20",
+         "customer": "Hearth Trading Partners",
+         "amount": 642.85,
+         "n_invoices": 4,
+         "days_past_due": 15,
+         "p_paid_by_target": 0.923,
+         "reason": "15 days late on 4 invoices. Has paid 68 before, usually 18 days late, so a nudge works."
+        },
+        {
+         "customer_id": "cust-customer-9",
+         "customer": "Okonkwo & Daughters Roasters",
+         "amount": 615.05,
+         "n_invoices": 4,
+         "days_past_due": 14,
+         "p_paid_by_target": 0.923,
+         "reason": "14 days late on 4 invoices. Has paid 69 before, usually 19 days late, so a nudge works."
+        }
+       ]
+      },
+      {
+       "id": "defer_bill",
+       "label": "Slide 2 tolerant vendor bills a week",
+       "recovers": 1101.53,
+       "bills": [
+        {
+         "bill_id": "bill-permit-03719",
+         "vendor": "Hollyhock Department of Revenue",
+         "amount": 500.0,
+         "due_date": "2026-10-06",
+         "vendor_tolerance": "medium"
+        },
+        {
+         "bill_id": "bill-interest-03672",
+         "vendor": "Lanternwood Community Bank",
+         "amount": 601.53,
+         "due_date": "2026-10-08",
+         "vendor_tolerance": "high"
+        }
+       ]
+      },
+      {
+       "id": "hold_draw",
+       "label": "Hold owner draw this month",
+       "recovers": 0
+      }
+     ],
+     "recommended": [
+      "chase",
+      "defer_bill"
+     ],
+     "ask_spoken": "If I text Evergreen, Hearth, Okonkwo and we slide two vendor bills a week, that covers about $3,516 of it. Want me to text them?"
+    }
+   }
+  },
+  {
+   "event": "speech",
+   "ts_offset_s": 9.12,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "text": "If I text Evergreen, Hearth, Okonkwo and we slide two vendor bills a week, that covers about $3,516 of it. Want me to text them?",
+    "audio_url": null
+   }
+  },
+  {
+   "event": "decision",
+   "ts_offset_s": 9.22,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "decision_id": "d1",
+    "node_id": "n5",
+    "prompt": "Text them?",
+    "options": [
+     {
+      "id": "yes",
+      "label": "Yes, text them"
+     },
+     {
+      "id": "chase_only",
+      "label": "Text, don't touch bills"
+     },
+     {
+      "id": "no",
+      "label": "Not now"
+     }
+    ],
+    "auto_resolves_in_s": null
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 12.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n6",
+    "type": "action",
+    "title": "Texting Evergreen Juniper Flats Removals",
+    "status": "running",
+    "parent": "n5",
+    "data": {
+     "kind": "reminder",
+     "customer_id": "cust-customer-37",
+     "amount": 1156.2,
+     "channel": "sms",
+     "draft": {
+      "tone": "firm",
+      "body": "Hi Evergreen team, this is Palletbay. 6 invoices totaling $1,156.20 are past due, the oldest by 20 days. Could you settle this week? Pay here: {pay_link}. Thanks, Palletbay",
+      "source": "qwen_veri"
+     }
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 13.32,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n6",
+    "status": "done",
+    "data": {
+     "sent_at": "...",
+     "reminder_id": "rem-0001",
+     "pay_link": "https://owed.example/pay/tok_1"
+    }
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 13.52,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n7",
+    "type": "action",
+    "title": "Texting Hearth Trading Partners",
+    "status": "running",
+    "parent": "n5",
+    "data": {
+     "kind": "reminder",
+     "customer_id": "cust-customer-20",
+     "amount": 642.85,
+     "channel": "sms",
+     "draft": {
+      "tone": "firm",
+      "body": "Hi Hearth team, this is Palletbay. 4 invoices totaling $642.85 are past due, the oldest by 15 days. Could you settle this week? Pay here: {pay_link}. Thanks, Palletbay",
+      "source": "qwen_veri"
+     }
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 14.12,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n7",
+    "status": "done",
+    "data": {
+     "sent_at": "...",
+     "reminder_id": "rem-0002",
+     "pay_link": "https://owed.example/pay/tok_2"
+    }
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 14.32,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n8",
+    "type": "action",
+    "title": "Texting Okonkwo & Daughters Roasters",
+    "status": "running",
+    "parent": "n5",
+    "data": {
+     "kind": "reminder",
+     "customer_id": "cust-customer-9",
+     "amount": 615.05,
+     "channel": "sms",
+     "draft": {
+      "tone": "firm",
+      "body": "Hi Okonkwo team, this is Palletbay. 4 invoices totaling $615.05 are past due, the oldest by 14 days. Could you settle this week? Pay here: {pay_link}. Thanks, Palletbay",
+      "source": "qwen_veri"
+     }
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 14.92,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n8",
+    "status": "done",
+    "data": {
+     "sent_at": "...",
+     "reminder_id": "rem-0003",
+     "pay_link": "https://owed.example/pay/tok_3"
+    }
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 52.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n9",
+    "type": "action",
+    "title": "Evergreen replied",
+    "status": "done",
+    "parent": "n6",
+    "data": {
+     "kind": "reply",
+     "text": "Can we split this into two payments?",
+     "classification": "wants_plan"
+    }
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 53.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n10",
+    "type": "action",
+    "title": "Negotiating with Evergreen's agent",
+    "status": "running",
+    "parent": "n9",
+    "data": {
+     "kind": "negotiation",
+     "negotiation_id": "neg-0001",
+     "rounds": []
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 54.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n10",
+    "data": {
+     "round": {
+      "n": 1,
+      "from": "owed",
+      "text": "Full payment of $1,156.20 by Oct 20.",
+      "cash_effect": 1156.2,
+      "p_honored": 0.92
+     }
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 56.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n10",
+    "data": {
+     "round": {
+      "n": 1,
+      "from": "customer",
+      "text": "Two payments of $578.10, Oct 20 and two weeks later.",
+      "cash_effect": 578.1,
+      "p_honored": 0.81
+     }
+    }
+   }
+  },
+  {
+   "event": "decision",
+   "ts_offset_s": 57.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "decision_id": "d2",
+    "node_id": "n10",
+    "prompt": "Accept two installments? (Evergreen has paid 70 invoices, 0% on time)",
+    "options": [
+     {
+      "id": "accept",
+      "label": "Accept"
+     },
+     {
+      "id": "decline",
+      "label": "Decline"
+     },
+     {
+      "id": "call",
+      "label": "Call them"
+     }
+    ],
+    "auto_resolves_in_s": 8,
+    "default": "accept"
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 65.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n10",
+    "status": "done",
+    "data": {
+     "agreement": {
+      "installments": [
+       {
+        "amount": 578.1,
+        "due": "2026-10-20",
+        "pay_token": "tok_a"
+       },
+       {
+        "amount": 578.1,
+        "due": "2026-11-03",
+        "pay_token": "tok_b"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "event": "node.create",
+   "ts_offset_s": 102.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n12",
+    "type": "action",
+    "title": "Evergreen paid $578.10",
+    "status": "done",
+    "parent": "n10",
+    "data": {
+     "kind": "payment",
+     "rail": "visa",
+     "amount": 578.1,
+     "receipt": {
+      "last4": "1111",
+      "paid_at": "..."
+     }
+    }
+   }
+  },
+  {
+   "event": "node.update",
+   "ts_offset_s": 102.92,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "node_id": "n3",
+    "data": {
+     "owed_total": 28508.72,
+     "expected_by_target": 17223.27,
+     "payroll_due_by_target": 13275.0,
+     "bills_due_by_target": 9268.31,
+     "bank_balance": 6533.65,
+     "cash_at_target": 1791.71,
+     "need": 22543.31,
+     "gap": 0
+    }
+   }
+  },
+  {
+   "event": "speech",
+   "ts_offset_s": 103.22,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "text": "Evergreen agreed to two payments. The first just landed. You're now about 0 short.",
+    "audio_url": null
+   }
+  },
+  {
+   "event": "report.ready",
+   "ts_offset_s": 103.72,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "report_id": "rep-demo-020",
+    "url": "/reports/rep-demo-020"
+   }
+  },
+  {
+   "event": "run.end",
+   "ts_offset_s": 103.82,
+   "run_id": "run-demo-020",
+   "company_id": "company-020",
+   "data": {
+    "status": "open"
+   }
+  }
+ ]
+}
