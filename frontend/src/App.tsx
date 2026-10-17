@@ -204,15 +204,18 @@ function Outcome({ fc, payments, levers }: { fc?: GraphNode; payments: GraphNode
 }
 const shift = (d?: string, days = 0) => { if (!d) return undefined; const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10) }
 function RiskPanel({ sc, fc }: { sc?: GraphNode; fc?: GraphNode }) {
-  const rows = (sc?.rows || []).filter(r => r.band !== 'green').sort((a, b) => b.amount - a.amount)
-  const atRisk = rows.reduce((a, r) => a + r.amount, 0)
+  const risky = (sc?.rows || []).filter(r => r.band !== 'green')
+  const byCust = new Map<string, { customer: string; amount: number; wp: number; n: number; band: string }>()
+  for (const r of risky) { const g = byCust.get(r.customer) || { customer: r.customer, amount: 0, wp: 0, n: 0, band: 'amber' }; g.amount += r.amount; g.wp += r.amount * r.p_paid_by_target; g.n++; if (r.band === 'red') g.band = 'red'; byCust.set(r.customer, g) }
+  const groups = [...byCust.values()].sort((a, b) => b.amount - a.amount)
+  const atRisk = groups.reduce((a, g) => a + g.amount, 0)
   const pess = fc?.data.pessimistic?.gap
   return <div className="card risk">
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="ic amber" style={{ width: 22, height: 22 }}>{I.trend}</span><b style={{ fontSize: 14 }}>If the slow payers slip</b></div>
-    <div className="kv" style={{ fontSize: 13 }}><span style={{ color: 'var(--muted)' }}>{rows.length} invoices not reliable by payday</span><b>{money(atRisk)} at risk</b></div>
+    <div className="kv" style={{ fontSize: 13 }}><span style={{ color: 'var(--muted)' }}>{risky.length} invoices from {groups.length} customers not reliable by payday</span><b>{money(atRisk)} at risk</b></div>
     <div className="risklist">
-      {rows.slice(0, 6).map((r, i) => <div className="riskrow" key={r.invoice_id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(r.customer)}</span><span className="nm">{r.customer}</span><span className="am">{money(r.amount)}</span><span className={`pc ${r.band}`}>{Math.round(r.p_paid_by_target * 100)}%</span></div>)}
-      {rows.length > 6 && <div className="fine">+ {rows.length - 6} more</div>}
+      {groups.slice(0, 6).map((g, i) => { const p = g.amount ? g.wp / g.amount : 0; return <div className="riskrow" key={g.customer}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(g.customer)}</span><span className="nm">{g.customer}<span className="fine"> · {g.n} inv</span></span><span className="am">{money(g.amount)}</span><span className={`pc ${p < 0.3 ? 'red' : 'amber'}`}>{Math.round(p * 100)}%</span></div> })}
+      {groups.length > 6 && <div className="fine">+ {groups.length - 6} more customers</div>}
     </div>
     {pess != null && <div className="fine" style={{ color: 'var(--amber-dk)', fontWeight: 600 }}>Worst case on payday: {pess > 0 ? `${money(pess)} short` : 'still covered'}</div>}
   </div>
