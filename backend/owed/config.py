@@ -12,6 +12,15 @@ class Settings(BaseSettings):
     photon_api_key: str = ""
     planner: str = "gemini"            # gemini | jev
     finance_tools: str = "owed_model"  # owed_model | jev
+    # pay rails (docs/devin/task-1-pay-page.md)
+    visa_user_id: str = ""
+    visa_password: str = ""
+    visa_cert_path: str = ""
+    visa_key_path: str = ""
+    visa_acquiring_bin: str = "408999"
+    solana_rpc_url: str = "https://api.devnet.solana.com"
+    solana_recipient: str = ""
+    solana_usdc_mint: str = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
 
 
 settings = Settings()
