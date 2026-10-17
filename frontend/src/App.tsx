@@ -205,6 +205,7 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
     {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
     {actions.length > 0 && <div className="actions">{actions.map(a => <ActionCard key={a.node_id} n={a} />)}</div>}
     {fc && fc.status === 'done' && <CashChart ctx={ctx} fc={fc} />}
+    {run.report_id && <a className="rlink" href={`/report/${run.report_id}`}>Open one-page report</a>}
   </section>
 }
 
