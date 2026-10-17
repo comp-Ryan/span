@@ -68,3 +68,13 @@ frontend changes from the main session (conversation layout and report page) wer
 merged without discarding the live accounting, simulation labels, or approval behavior.
 Public service/deployment credential limitations above still apply. No `.env` was
 re-copied during this update because a keys-ready instruction has not yet arrived.
+
+## Span rename and two-column sync
+
+Remote: `https://github.com/comp-Ryan/span`. Package/import paths stay `owed`; existing
+protocol identifiers and webhook-header compatibility are unchanged. API title, planner,
+public Agentverse name, PDF metadata, pay page, report UI and hub display Span. The
+right-column chart uses a compact SVG and readable HTML totals; its risk list uses the
+same `p_paid_by_target < 0.7` rule as the backend, not presentation color bands.
+Validation after the sync: 41 backend tests pass and the frontend builds. SSE connections
+have a bounded graceful-shutdown window so retired API workers cannot linger on restart.

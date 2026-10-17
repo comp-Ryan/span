@@ -33,5 +33,17 @@ def test_missing_build_redirect_and_real_api_aliases(tmp_path):
     assert client.get('/api/companies').json() == client.get('/companies').json()
     assert client.get('/api/cash?target=2026-10-09').json() == client.get('/cash?target=2026-10-09').json()
     assert client.get('/hub').status_code == 200
-    assert 'Owed API Contract' in client.get('/hub/api/doc/contract').text
+    assert 'Span API Contract' in client.get('/hub/api/doc/contract').text
     assert client.get('/api/pay/missing').status_code == 404
+
+
+def test_span_brand_preserves_package_and_protocol_identifiers():
+    from owed.agents.runtime import seed_for
+    from owed.config import settings
+    from owed.payments import PAGE
+    from owed.planner import system_prompt
+    from owed.finance import queries
+    assert app.title == 'Span'
+    assert 'You are Span' in system_prompt(settings.demo_company, queries.AS_OF_DEFAULT)
+    assert 'Secured by Span' in PAGE.read_text()
+    assert seed_for.__module__ == 'owed.agents.runtime'

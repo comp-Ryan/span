@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Owed · Architecture</title><link rel="stylesheet" href="/hub/static/hub.css">
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Span · Architecture</title><link rel="stylesheet" href="/hub/static/hub.css">
 <style>.mermaid svg{max-width:100%;height:auto}.err{color:var(--warn);font-family:var(--mono);white-space:pre-wrap}</style></head>
 <body><main>
 <h1>Architecture</h1><p class="sub">One assistant, three front doors, one event stream. Every tool call is a node on the canvas.</p>
@@ -27,7 +27,7 @@ G.g1 = `flowchart LR
   subgraph brain["Backend · FastAPI on Vultr · Sentry tracing"]
     LIVE["Gemini Live<br/>hear · think · call tools<br/>(text out)"]
     LOOP["Gemini tool loop<br/>(typed / SMS / ASI:One)"]
-    TOOLS["Finance tools<br/>forecast_cash · predict_payment<br/>score_customer · rank_chase · defer_bill<br/><b>Jev</b> or Owed model"]
+    TOOLS["Finance tools<br/>forecast_cash · predict_payment<br/>score_customer · rank_chase · defer_bill<br/><b>Jev</b> or Span model"]
     DRAFT["Drafter<br/>Qwen3-1.7B fine-tuned on Veri"]
     NEG["Negotiation<br/>owed-agent ⇄ customer agents<br/>uAgents on Agentverse"]
     PAY["Pay links<br/>Visa sandbox · Solana devnet"]
@@ -66,7 +66,7 @@ G.g2 = `sequenceDiagram
   participant P as Photon
   participant B as Backend
   participant G as Gemini Live
-  participant J as Jev / Owed model
+  participant J as Jev / Span model
   participant E as ElevenLabs
   participant C as Canvas (web)
   O->>P: calls the number

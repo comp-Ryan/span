@@ -44,7 +44,7 @@ class Photon:
         space = await self.request('POST', 'spaces', {'platform': channel, 'participantIds': [sender, user['id']]})
         payload = {'senderId': sender, 'spaceId': space['id'], 'content': {'type': 'text', 'format': 'plain', 'text': body}}
         if channel == 'email':
-            payload['email'] = {'subject': 'Payment reminder from Owed'}
+            payload['email'] = {'subject': 'Payment reminder from Span'}
         message = await self.request('POST', 'messages', payload, key)
         return {'provider_message_id': message['id'], 'space_id': space['id'], 'provider_status': message['status']}
 

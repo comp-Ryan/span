@@ -182,9 +182,9 @@ def _disclosures(nodes: dict) -> list[str]:
     else:
         try:
             mae = json.loads(METRICS.read_text())["mae_days_late"]
-            out.append(f"Scoring by Owed model (held-out MAE {mae:g} days)")
+            out.append(f"Scoring by Span model (held-out MAE {mae:g} days)")
         except (OSError, KeyError, ValueError):
-            out.append("Scoring by Owed model")
+            out.append("Scoring by Span model")
     if any(n["data"].get("kind") == "payment" and n["data"].get("rail") == "visa" for n in nodes.values()):
         simulated = any(n['data'].get('sandbox_mode')=='simulated' or n['data'].get('receipt',{}).get('sandbox_mode')=='simulated' for n in nodes.values())
         out.append("Card payments are simulated; no Visa transaction occurred" if simulated else "Card payments run in the Visa sandbox")

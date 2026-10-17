@@ -222,7 +222,7 @@ function StatusPanel({ ans, fc, payments }: { ans?: GraphNode; fc?: GraphNode; p
   </div>
 }
 function RiskPanel({ sc, fc }: { sc?: GraphNode; fc?: GraphNode }) {
-  const risky = (sc?.rows || []).filter(r => r.band !== 'green')
+  const risky = (sc?.rows || []).filter(r => r.p_paid_by_target < 0.7)
   const byCust = new Map<string, { customer: string; amount: number; wp: number; n: number; band: string }>()
   for (const r of risky) { const g = byCust.get(r.customer) || { customer: r.customer, amount: 0, wp: 0, n: 0, band: 'amber' }; g.amount += r.amount; g.wp += r.amount * r.p_paid_by_target; g.n++; if (r.band === 'red') g.band = 'red'; byCust.set(r.customer, g) }
   const groups = [...byCust.values()].sort((a, b) => b.amount - a.amount)
@@ -235,7 +235,7 @@ function RiskPanel({ sc, fc }: { sc?: GraphNode; fc?: GraphNode }) {
       {groups.slice(0, 6).map((g, i) => { const p = g.amount ? g.wp / g.amount : 0; return <div className="riskrow" key={g.customer}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(g.customer)}</span><span className="nm">{g.customer}<span className="fine"> · {g.n} inv</span></span><span className="am">{money(g.amount)}</span><span className={`pc ${p < 0.3 ? 'red' : 'amber'}`}>{Math.round(p * 100)}%</span></div> })}
       {groups.length > 6 && <div className="fine">+ {groups.length - 6} more customers</div>}
     </div>
-    {pess != null && <div className="fine" style={{ color: 'var(--amber-dk)', fontWeight: 600 }}>Worst case on payday: {pess > 0 ? `${money(pess)} short` : 'still covered'}</div>}
+    {pess != null && <div className="fine" style={{ color: 'var(--amber-dk)', fontWeight: 600 }}>Pessimistic scenario on payday: {pess > 0 ? `${money(pess)} short` : 'still covered'}</div>}
   </div>
 }
 function whoOf(n: GraphNode): string {

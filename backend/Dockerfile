@@ -18,4 +18,4 @@ COPY docs /app/docs
 RUN useradd --create-home owed && chown -R owed:owed /app
 USER owed
 EXPOSE 8000
-CMD ["python", "-m", "uvicorn", "owed.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+CMD ["python", "-m", "uvicorn", "owed.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log", "--timeout-graceful-shutdown", "5"]

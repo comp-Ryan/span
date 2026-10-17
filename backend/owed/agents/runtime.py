@@ -1,4 +1,4 @@
-"""Run: python -m owed.agents.runtime. Separate uAgents for Owed and each customer."""
+"""Run: python -m owed.agents.runtime. Separate uAgents for Span and each customer."""
 import asyncio
 import hashlib
 from datetime import UTC, datetime
@@ -101,7 +101,7 @@ def build():
                 on conflict(company_id,customer_id) do update set address=excluded.address''',
                 (settings.demo_company, row['customer_id'], agent.address))
     if settings.agentverse_api_key:
-        register_chat_agent(name='Owed — payroll and collections', endpoint=settings.agent_public_endpoint,
+        register_chat_agent(name='Span — payroll and collections', endpoint=settings.agent_public_endpoint,
             active=True, credentials=RegistrationRequestCredentials(agent_seed_phrase=seed_for(), agentverse_api_key=settings.agentverse_api_key),
             readme='Ask whether payroll is covered, inspect real payment-history forecasts, and request collection actions. Customer agents are simulated from dataset history.')
     bureau = Bureau(agents=agents, registration_policy=None if settings.agentverse_api_key else LocalBatch(), port=settings.agent_port, endpoint=settings.agent_public_endpoint or f'http://127.0.0.1:{settings.agent_port}/submit')
