@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     twilio_auth_token: str = ""
     gemini_model: str = "gemini-2.5-flash"
     gemini_api_key: str = ""
+    environment: str = "development"
+    release: str = "hackathon"
     sentry_dsn: str = ""
     agent_seed: str = ""
     agentverse_api_key: str = ""

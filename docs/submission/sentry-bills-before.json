@@ -1,0 +1,88 @@
+{
+  "capture": "local Sentry SDK transport; not uploaded to Sentry cloud",
+  "trace_id": "8dae112d0d2c4bff8eaabea386f5b08d",
+  "reported": 9268.31,
+  "actual": 10866.86,
+  "missing": 1598.55,
+  "transactions": [
+    {
+      "type": "transaction",
+      "transaction": "audit.payroll.bill_reconciliation",
+      "transaction_info": {
+        "source": "custom"
+      },
+      "contexts": {
+        "trace": {
+          "trace_id": "8dae112d0d2c4bff8eaabea386f5b08d",
+          "span_id": "887db1338b50ad83",
+          "parent_span_id": null,
+          "op": "finance.audit",
+          "description": null,
+          "origin": "manual",
+          "data": {
+            "thread.id": "8536859008",
+            "thread.name": "MainThread",
+            "reported_bills": 9268.31,
+            "actual_bills": 10866.86,
+            "missing_bills": 1598.55
+          }
+        }
+      },
+      "tags": {},
+      "timestamp": "2026-10-17T22:38:27.959623Z",
+      "start_timestamp": "2026-10-17T22:38:27.904818Z",
+      "spans": [
+        {
+          "trace_id": "8dae112d0d2c4bff8eaabea386f5b08d",
+          "span_id": "8e8b371c8b807886",
+          "parent_span_id": "887db1338b50ad83",
+          "same_process_as_parent": true,
+          "op": "finance.bills",
+          "description": "forecast bills helper",
+          "start_timestamp": "2026-10-17T22:38:27.930443Z",
+          "timestamp": "2026-10-17T22:38:27.957818Z",
+          "origin": "manual",
+          "data": {
+            "thread.id": "8536859008",
+            "thread.name": "MainThread",
+            "bills_total": 9268.31
+          }
+        },
+        {
+          "trace_id": "8dae112d0d2c4bff8eaabea386f5b08d",
+          "span_id": "a435845db2749609",
+          "parent_span_id": "887db1338b50ad83",
+          "same_process_as_parent": true,
+          "op": "finance.audit",
+          "description": "reconcile all unpaid bills through target",
+          "start_timestamp": "2026-10-17T22:38:27.957848Z",
+          "timestamp": "2026-10-17T22:38:27.959448Z",
+          "origin": "manual",
+          "data": {
+            "thread.id": "8536859008",
+            "thread.name": "MainThread",
+            "all_due_total": 10866.86,
+            "excluded_liabilities": 1598.55
+          }
+        }
+      ],
+      "measurements": {},
+      "event_id": "702de366785c4ba8bcc10e0410c72e81",
+      "release": "03bf5a45a4694e12191f67ff7514036a5d7e84ba",
+      "environment": "production",
+      "server_name": "MacBook-Air.local",
+      "sdk": {
+        "name": "sentry.python",
+        "version": "2.72.0",
+        "packages": [
+          {
+            "name": "pypi:sentry-sdk",
+            "version": "2.72.0"
+          }
+        ],
+        "integrations": []
+      },
+      "platform": "python"
+    }
+  ]
+}

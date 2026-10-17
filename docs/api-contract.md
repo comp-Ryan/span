@@ -292,3 +292,5 @@ The expected answer may be covered while its spoken text warns about the conserv
 Resolved decisions emit `node.update` with `data.decision_id`, `data.resolved`, and `data.note`; repeated identical choices return the original result, conflicting choices return 409. Actions are queued durably. Bill deferral updates the owner cash plan and explicitly reports `vendor_confirmed: false`; it does not claim vendor agreement. Customer negotiation personas are simulated from dataset history; only policy-compliant accepted proposals auto-resolve after eight seconds.
 
 Reports accept the standard `company` query parameter and are rebuilt from current events on read, preserving the report ID. Simulated card receipts are disclosed as simulation rather than a Visa sandbox transaction.
+
+`bills_due_by_target` includes every still-unpaid bill due on or before the target, including overdue liabilities. Earlier fixture estimates omitted overdue bills; current live forecasts correct that omission.

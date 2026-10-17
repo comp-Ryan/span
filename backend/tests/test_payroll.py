@@ -36,3 +36,9 @@ def test_payroll_complete_real_data():
 def test_target_uses_dataset_clock():
     assert target_for('payroll Friday') == date(2026, 10, 9)
     assert target_for('next two weeks') == date(2026, 10, 20)
+
+
+def test_forecast_includes_overdue_unpaid_bills():
+    snap = snapshot('company-020',date(2026,10,20))
+    assert snap['forecast']['bills_due_by_target'] == 10866.86
+    assert snap['forecast']['gap'] == 384.94

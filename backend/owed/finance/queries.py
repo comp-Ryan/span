@@ -68,7 +68,7 @@ def bills_due(con, company_id: str, as_of: date, target: date) -> list[dict]:
                   join bills bb on bb.company_id=ba.company_id and bb.id=ba.document_id
                   where bb.company_id=b.company_id and bb.vendor_id=b.vendor_id) hist_days_vs_due
         from bills b left join vendors v on v.company_id=b.company_id and v.id=b.vendor_id
-        where b.company_id=%s and b.due_date between %s and %s
+        where b.company_id=%s and b.txn_date<=%s and b.due_date<=%s
         order by b.due_date""", (company_id, as_of, target)).fetchall()
 
 
