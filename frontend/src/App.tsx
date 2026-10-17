@@ -187,19 +187,23 @@ function CashChart({ ctx, sc, fc, received = 0 }: { ctx?: GraphNode; sc?: GraphN
   </div>
 }
 function Outcome({ fc, payments, levers }: { fc?: GraphNode; payments: GraphNode[]; levers: Lever[] }) {
-  const now = fc?.data.cash_at_target ?? 0, got = payments.reduce((a, p) => a + (p.data.amount || 0), 0), before = now - got
-  const need = fc?.data.need || 1
-  const Bar = ({ v, c, label }: { v: number; c: string; label: string }) => <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><div className="kv"><span style={{ color: 'var(--muted)' }}>{label}</span><b style={{ color: v < 0 ? 'var(--red)' : undefined }}>{v < 0 ? '−' : '+'}{money(Math.abs(v))}</b></div><div className="bar"><i style={{ width: `${Math.min(100, Math.max(2, 100 * Math.abs(v) / (need * 0.3)))}%`, background: c }} /></div></div>
+  const d = fc?.data || {}
+  const need = d.need || 1
+  const nowC = d.gap > 0 ? -d.gap : (d.need != null && (d.cash_at_target ?? 0) >= d.need ? d.cash_at_target - d.need : (d.cash_at_target ?? 0))
+  const got = payments.reduce((a, p) => a + (p.data.amount || 0), 0), before = nowC - got
+  const pct = (v: number) => `${Math.min(100, Math.max(2, 100 * Math.abs(v) / (need * 0.3)))}%`
+  const fmt = (v: number) => `${v < 0 ? '−' : '+'}${money(Math.abs(v))}`
+  const left = levers.filter(l => l.recovers)
   return <div className="card outcome">
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="ic green" style={{ width: 22, height: 22 }}>{I.check}</span><b style={{ fontSize: 14 }}>Where you stand now</b><span className="fine" style={{ marginLeft: 'auto' }}>end of this run · keeps updating as payments land</span></div>
-    <Bar v={before} c="var(--amber)" label="Cushion when you asked" />
-    <Bar v={now} c={now >= 0 ? 'var(--green)' : 'var(--red)'} label="Cushion now" />
-    {payments.length > 0 && <div className="fine" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="ic green" style={{ width: 18, height: 18 }}>{I.check}</span>{payments.length} payment{payments.length > 1 ? 's' : ''} landed · {money(got)}</div>}
-    {levers.length > 0 && <div className="fine">Still on the table: {levers.filter(l => l.recovers).map(l => `${l.label} (+${money(l.recovers)})`).join(' · ')}</div>}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="ic green" style={{ width: 22, height: 22 }}>{I.check}</span><b style={{ fontSize: 14 }}>Where you stand now</b><span className="fine" style={{ marginLeft: 'auto' }}>{payments.length} payment{payments.length > 1 ? 's' : ''} landed · {money(got)}</span></div>
+    <div className="delta">
+      <div className="d-col"><span className="fine">when you asked</span><b style={{ color: before < 0 ? 'var(--red)' : 'var(--amber-dk)' }}>{fmt(before)}</b><div className="bar"><i style={{ width: pct(before), background: before < 0 ? 'var(--red)' : 'var(--amber)' }} /></div></div>
+      <div className="d-arrow">{I.arrow}</div>
+      <div className="d-col"><span className="fine">now</span><b style={{ color: nowC < 0 ? 'var(--red)' : 'var(--green)' }}>{fmt(nowC)}</b><div className="bar"><i style={{ width: pct(nowC), background: nowC < 0 ? 'var(--red)' : 'var(--green)' }} /></div></div>
+    </div>
+    {left.length > 0 && <div className="fine">Still on the table: {left.map(l => `${l.label} (+${money(l.recovers)})`).join(' · ')}</div>}
   </div>
 }
-const shift = (d?: string, days = 0) => { if (!d) return undefined; const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10) }
-
 function whoOf(n: GraphNode): string {
   const t = n.title || ''
   const m = t.match(/^Texting (.+)$/) || t.match(/^Negotiating with (.+?)['’]s agent$/) || t.match(/^(.+?) replied$/) || t.match(/^(.+?) paid /)
@@ -262,7 +266,7 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
       ? <div className="chart-wrap"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={fc.data.cash_at_target} neverPays={fc.data.excluded_customer_id} /></div>
       : <div className="chart-wrap"><CashChart ctx={ctx} sc={sc} fc={fc} received={received} /></div>)}
     {actions.length > 0 && <Conversations actions={actions} />}
-    {(payments.length > 0 || run.status === 'closed') && <Outcome fc={fc} payments={payments} levers={levers} />}
+    {payments.length > 0 && <Outcome fc={fc} payments={payments} levers={levers} />}
     {run.report_id && <a className="rlink" href={`/report/${run.report_id}`}>Open one-page report</a>}
   </section>
 }

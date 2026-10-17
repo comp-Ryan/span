@@ -204,3 +204,8 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
   .noprint{display:none!important}
   .wflow,.did,.open li,.stats{break-inside:avoid}
 }
+
+.delta{display:flex;align-items:flex-end;gap:16px}
+.delta .d-col{flex:1;display:flex;flex-direction:column;gap:4px}
+.delta .d-col b{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.delta .d-arrow{color:var(--muted2);padding-bottom:10px}
