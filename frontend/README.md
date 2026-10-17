@@ -30,3 +30,14 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Demo recorder
+
+`npm run record` drives the fixture replay in headless Chromium and writes the
+Devpost assets to `frontend/demo-out/`: `demo.webm` (1440x900), six stills
+(`01-question.png` … `06-followup.png`, 2x), and `thumbnail-1500x900.png`.
+
+The dev server must be reachable; if `BASE_URL` (default `http://127.0.0.1:5173`)
+is down, a vite server is started automatically. `SPEED=3` speeds up the replay.
+If the bundled Chromium is missing (`npx playwright install chromium`), the
+system Chrome is used. `demo.mp4` is produced when `ffmpeg` is installed.

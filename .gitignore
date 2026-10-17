@@ -18,3 +18,4 @@ frontend/dist/
 
 # Compiled Vite product (npm run build)
 /backend/owed/static/
+frontend/demo-out/
