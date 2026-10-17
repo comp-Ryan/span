@@ -241,10 +241,11 @@ export default function App() {
     if (ev.event === 'run.start' || idx < 0) return [...prev.filter(r => r.run_id !== rid), reduce(emptyRun(), ev)]
     const next = prev.slice(); next[idx] = reduce(prev[idx], ev); return next
   })
-  const play = async (s = speed) => { stopRef.current(); setRuns([]); stopRef.current = await playFixture('/fixture.json', apply, s) }
+  const playing = useRef(false)
+  const play = async (s = speed) => { stopRef.current(); setRuns([]); playing.current = true; const stop = await playFixture('/fixture.json', apply, s); stopRef.current = () => { playing.current = false; stop() } }
   useEffect(() => {
     if (LIVE) { const off = subscribe(COMPANY, apply); startRun(COMPANY, 'Am I going to make payroll these next two weeks?').catch(() => {}); return off }
-    play(); return () => stopRef.current()
+    if (!playing.current) play(); return () => stopRef.current()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => { const t = setInterval(() => setElapsed(e => e + 1), 1000); return () => clearInterval(t) }, [])
