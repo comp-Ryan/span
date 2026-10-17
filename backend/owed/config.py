@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     gemini_api_key: str = ""
     sentry_dsn: str = ""
+    agent_seed: str = ""
+    agentverse_api_key: str = ""
+    agent_public_endpoint: str = ""
+    agent_port: int = 8001
+    internal_api_url: str = "http://127.0.0.1:8000"
+    customer_agent_endpoint: str = "http://127.0.0.1:8001/submit"
     photon_project_id: str = ""
     photon_sms_sender_id: str = ""
     photon_email_sender_id: str = ""

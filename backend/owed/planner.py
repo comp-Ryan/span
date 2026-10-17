@@ -110,7 +110,7 @@ class ToolContext:
             bill = next((b for b in s['bills'] if b['bill_id'] == args.get('bill_id')), None)
             if not bill:
                 raise ValueError('Unpaid bill not found in forecast window')
-            return {'status': 'approval_required', 'bill_id': bill['bill_id'], 'message': 'Use the owner decision before applying a deferral.'}
+            return self.approval('defer_bill', {'bill_id':bill['bill_id']})
         row = next((r for r in s['scored'] if r['invoice_id'] == args.get('invoice_id')), None)
         if not row:
             raise ValueError('Open invoice not found in this company')
@@ -118,7 +118,13 @@ class ToolContext:
             return {'invoice': row}
         if name == 'draft_reminder':
             return {'invoice_id': row['invoice_id'], 'body': f"Hi {row['customer_name']}, a reminder that ${q.f(row['open_balance']):,.2f} is outstanding on invoice {row['invoice_id']}. Can you confirm a payment date?", 'tone': 'firm' if row['days_past_due'] > 30 else 'friendly', 'sent': False}
-        return {'status': 'approval_required', 'invoice_id': row['invoice_id'], 'message': 'Use the owner decision before sending.'}
+        return self.approval('send_message', {'invoice_id':row['invoice_id']})
+
+    def approval(self, kind, arguments):
+        from owed.decisions import request_decision
+        decision = request_decision(self.run_id,self.parent,'Approve this action?',
+            [{'id':'yes','label':'Approve'},{'id':'no','label':'Not now'}],{'kind':kind,**arguments})
+        return {'status':'approval_required','decision_id':decision,**arguments}
 
 
 def system_prompt(company, target):

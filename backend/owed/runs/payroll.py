@@ -40,15 +40,31 @@ def snapshot(company: str, target: date):
         payroll = q.payroll_due(c, company, q.AS_OF_DEFAULT, target)
         bills = [r for r in q.bills_due(c, company, q.AS_OF_DEFAULT, target) if q.f(r['open_amount']) > 0]
         invoices = q.open_invoices(c, company, q.AS_OF_DEFAULT)
+        payments = c.execute('select invoice_id,sum(amount) amount from payments where company_id=%s group by invoice_id',(company,)).fetchall()
+        paid = {r['invoice_id']: q.f(r['amount']) for r in payments}
+        bank = round(bank + sum(paid.values()), 2)
+        invoices = [{**r, 'open_balance': max(0, q.f(r['open_balance'])-paid.get(r['invoice_id'],0))} for r in invoices]
+        invoices = [r for r in invoices if r['open_balance']>0]
+        deferrals = {r['bill_id']: r['due_date'] for r in c.execute('select bill_id,due_date from bill_deferrals where company_id=%s',(company,)).fetchall()}
+        bills = [b for b in bills if deferrals.get(b['bill_id'],b['due_date'])<=target]
+        draw = q.owner_draw(c,company,q.AS_OF_DEFAULT)
+        held = c.execute('select amount from draw_holds where company_id=%s',(company,)).fetchone()
+        draw_due = 0 if held else draw
+
     scored = payment_model().score_open(invoices, (target - q.AS_OF_DEFAULT).days)
     expected = round(sum(q.f(r['open_balance']) * r['p_paid_by_target'] for r in scored), 2)
     bills_total = round(sum(q.f(b['open_amount']) for b in bills), 2)
-    cash = round(bank + expected - bills_total, 2)
+    cash = round(bank + expected - bills_total - draw_due, 2)
     forecast = {'owed_total': round(sum(q.f(r['open_balance']) for r in scored), 2),
                 'expected_by_target': expected, 'bills_due_by_target': bills_total,
                 'cash_at_target': cash, 'need': payroll['due_by_target'],
                 'gap': round(max(0, payroll['due_by_target'] - cash), 2)}
-    return {'company': company_row, 'bank': bank, 'payroll': payroll, 'bills': bills,
+    conservative_in = round(sum(q.f(r['open_balance'])*r['p_paid_by_target'] for r in scored if band(r['p_paid_by_target'],r['p_never'])=='green'),2)
+    conservative_cash = round(bank+conservative_in-bills_total-draw_due,2)
+    forecast['conservative'] = {'assumption': 'No amber or red invoice pays by target; green invoices remain probability-weighted.',
+        'cash_at_target': conservative_cash, 'gap': round(max(0,payroll['due_by_target']-conservative_cash),2)}
+    forecast['owner_draw_by_target'] = draw_due
+    return {'draw':draw_due,'company': company_row, 'bank': bank, 'payroll': payroll, 'bills': bills,
             'scored': scored, 'forecast': forecast}
 
 def levers_for(snap):
@@ -73,6 +89,8 @@ def levers_for(snap):
         bill = max(tolerant, key=lambda b: q.f(b['open_amount']))
         levers.append({'id': 'defer_bill', 'label': f"Request an 8-day deferral from {bill['vendor_name']}",
                        'recovers': q.f(bill['open_amount']), 'bill_id': bill['bill_id'], 'vendor_tolerance': 'high'})
+    if snap.get('draw',0)>0:
+        levers.append({'id':'hold_draw','label':'Hold estimated owner draw','recovers':snap['draw']})
     return levers
 
 async def run_payroll(run_id: str, company: str, target: date):
@@ -100,6 +118,9 @@ async def run_payroll(run_id: str, company: str, target: date):
         await event('node.update', {'node_id': 'n3', 'status': 'done', 'data': snap['forecast']})
         gap = snap['forecast']['gap']
         title = f'No. ${gap:,.0f} short.' if gap else 'Yes. Payroll is covered in this forecast.'
+        risk = snap['forecast']['conservative']['gap']
+        if not gap and risk>0:
+            title = f"Covered, but ${risk:,.0f} short if slower payers slip."
         spoken = f"{title} This estimate uses payment history and bills due by {target.isoformat()}."
         await event('node.create', {'node_id': 'n4', 'type': 'answer', 'title': title, 'status': 'done', 'parent': 'n3',
                                    'data': {'answer': 'no' if gap else 'yes', 'gap': gap, 'spoken': spoken}})
