@@ -1,7 +1,6 @@
 """Bounded Gemini tool loop. Finance access is company-scoped; actions require approval."""
 import asyncio
 import logging
-from datetime import date
 from uuid import uuid4
 
 from fastapi.encoders import jsonable_encoder
@@ -13,7 +12,7 @@ from owed.db import conn
 from owed.events import emit
 from owed.finance import queries as q
 from owed.runs import finish
-from owed.runs.payroll import snapshot, levers_for
+from owed.runs.payroll import levers_for, snapshot
 
 log = logging.getLogger(__name__)
 
@@ -75,7 +74,7 @@ class ToolContext:
             await asyncio.to_thread(emit, self.run_id, 'node.update', {'node_id': node, 'status': 'done', 'data': result})
             return result
         except Exception as exc:
-            log.warning('Tool %s failed: %s', name, type(exc).__name__)
+            log.exception('Tool %s failed', name)
             result = {'error': str(exc) if isinstance(exc, ValueError) else 'Tool unavailable'}
             await asyncio.to_thread(emit, self.run_id, 'node.update', {'node_id': node, 'status': 'failed', 'data': result})
             return result

@@ -263,3 +263,10 @@ Shown in the footer and the write-up.
 - Owner rules (server config, shown read-only in the footer): installments allowed if customer paid-rate ≥ 0.8; max discount 5%; disputes escalate to owner; max 4 negotiation rounds.
 - `DEMO_COMPANY=company-020` (Palletbay Storage & Warehousing).
 - Visa sandbox test card: `4111 1111 1111 1111`, any future expiry, any CVV (confirm against Visa's sandbox docs in hour one).
+
+## Voice transport (server-to-server)
+`POST /voice/twiml` validates `X-Twilio-Signature` and returns TwiML connecting a bidirectional stream to `WS /voice/photon`.
+Photon's published voice API exposes SIP destinations, not a bidirectional websocket; this endpoint currently implements the authorized Twilio fallback protocol.
+Websocket messages follow Twilio Media Streams: `connected`, `start` (customParameters: `token`, `company`; mediaFormat: mono `audio/x-mulaw`, 8000 Hz), `media` (base64 payload), `stop`.
+Backend sends `media` and `clear` (barge-in). Wrong credentials close with 1008; missing configuration closes with 1013.
+Gemini native audio output transcription feeds ElevenLabs Flash v2.5. When ElevenLabs is unconfigured, Gemini native audio is used. Caller transcript fragments are `node.update.data.caller_text` on the call context node; Owed transcript fragments are `speech` events.
