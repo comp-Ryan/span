@@ -10,5 +10,5 @@ backend/models/*.pkl
 .local/
 backend/server.log
 # nested working copies of other sessions (Devin/Astra clones)
-owed/
-owed-*/
+/owed/
+/owed-*/
