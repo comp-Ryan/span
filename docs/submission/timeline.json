@@ -1,0 +1,20 @@
+{
+  "tz": "America/Los_Angeles",
+  "deadline": "2026-10-18T12:00:00-07:00",
+  "milestones": [
+    {"id":"m1","when":"2026-10-17T11:30:00-07:00","title":"Hour one: keys + booth answers","owner":"Ryan","items":["Veri credits (DM @daniung)","Photon beta key, one SMS from code","Tiger Cloud, Gemini, Sentry, Vultr, Devin, Agentverse","Intuit booth: Jev API? tool calling?","Visa sandbox, Solana devnet wallet, Browser Use, Creao","Buy domain (GoDaddy)","Create Devpost submission NOW, edit later"],"done":false},
+    {"id":"m2","when":"2026-10-17T12:15:00-07:00","title":"Paper design + contract locked","owner":"Ryan / Claude","items":["Workflow canvas + 6 node types in Paper","api-contract v3 final","Brief Devin: Postgres loader tests"],"done":false},
+    {"id":"m3","when":"2026-10-17T14:00:00-07:00","title":"Data layer live","owner":"Claude","items":["100 companies in Postgres (done locally)","invoice_facts, cash queries","GET /companies /brief /runs"],"done":false},
+    {"id":"m4","when":"2026-10-17T15:30:00-07:00","title":"Drafter training data + Veri job submitted","owner":"Claude","items":["~2,000 JSONL rows from dataset via Gemini","veri jobs estimate; submit sft_text Qwen3-1.7B"],"done":false},
+    {"id":"m5","when":"2026-10-17T17:30:00-07:00","title":"Payment model + payroll run works end to end (web)","owner":"Claude","items":["Payment-behavior model, held-out MAE/AUC","/ask payroll_check → full node stream","Paper canvas renders a live run"],"done":false},
+    {"id":"m6","when":"2026-10-17T19:30:00-07:00","title":"Photon in/out + levers act","owner":"Claude","items":["SMS/email reminders out","Inbound webhook → reply node","Decision events + one-tap overrule"],"done":false},
+    {"id":"m7","when":"2026-10-17T22:00:00-07:00","title":"Agents + negotiation on Agentverse","owner":"Claude","items":["owed-agent + customer agents registered","Negotiation transcript streams","ASI:One answers payroll question"],"done":false},
+    {"id":"m8","when":"2026-10-17T23:30:00-07:00","title":"Visa pay link closes the gap (CUTOFF)","owner":"Claude / Devin","items":["Pay page with Visa sandbox","Payment → forecast node re-fires → gap ticks down","Fine-tuned drafter served or Gemini fallback recorded"],"done":false},
+    {"id":"m9","when":"2026-10-18T00:30:00-07:00","title":"Voice + Solana + deploy (CUTOFF)","owner":"Claude","items":["Phone call entry works (Photon voice)","Solana devnet rail","Deploy to Vultr, domain live","Feature freeze, sleep"],"done":false},
+    {"id":"m10","when":"2026-10-18T09:30:00-07:00","title":"Tier 3 + Sentry write-up","owner":"Claude / Ryan","items":["StepFun check photo (≤1.5h)","Browser Use mock portal (≤1.5h)","Creao landing page","Snowflake mirror","One bug found via Sentry trace, written up"],"done":false},
+    {"id":"m11","when":"2026-10-18T10:30:00-07:00","title":"Devpost assets","owner":"Ryan","items":["Logo (SVG + PNG)","Thumbnail 5:3 (1500×900)","2–3 min demo video recorded, uploaded to YouTube (leave processing time)","6 screenshots","Slides for Top 5 (3-min version)","Public GitHub repo, README","Devin session link, Veri job link, Paper file link, Sentry screenshots"],"done":false},
+    {"id":"m12","when":"2026-10-18T11:30:00-07:00","title":"SUBMIT + rehearse","owner":"Ryan","items":["Submit on Devpost (no buffer at 12:00)","Rehearse 2-min pitch twice","Table setup by 12:30"],"done":false},
+    {"id":"m13","when":"2026-10-18T12:30:00-07:00","title":"Science fair judging 12:30–1:45","owner":"Ryan","items":["2-min pitch + 3-min Q&A, many times","Cater pitch to the challenge judge in front of you","Photo of judge badges for contact share"],"done":false},
+    {"id":"m14","when":"2026-10-18T14:15:00-07:00","title":"Top 5 live demos 2:15–3:00 (if called)","owner":"Ryan","items":["3-min demo + 4-min Q&A","Report to stage immediately"],"done":false}
+  ]
+}

@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Owed · Devpost Questions</title><link rel="stylesheet" href="/hub/static/hub.css"></head>
+<body><main>
+<h1>Devpost questions</h1><p class="sub">Edit freely. Autosaves to <code>docs/submission/devpost.json</code> and exports <code>devpost.md</code>. Devpost: <a href="https://la-ai-hackathon-2026.devpost.com/" target="_blank">la-ai-hackathon-2026.devpost.com</a></p>
+<div class="bar"><button class="btn" onclick="save(true)">Save</button><button class="btn ghost" onclick="copyMd()">Copy as Markdown</button><span class="status" id="st"></span></div>
+<label>Title</label><input type="text" id="title">
+<label>Tagline <small>one line under the title</small></label><input type="text" id="tagline">
+<div id="fields"></div>
+<div class="card" style="margin-top:24px"><b>Submission requirements (from the LA Hacks deck)</b>
+<ul><li>Pick ONE main track (Model Learning) + opt into Agentverse + every applicable challenge.</li><li>PUBLIC GitHub repo. 2–3 minute demo video, must be a YouTube link, leave time to process.</li><li>Thumbnail image, 5:3 ratio (1500×900).</li><li>Team emails = the email you applied with on apply.lahacks.com.</li><li>Deadline 12:00 PM Sunday, no buffer. Create the submission early and edit.</li><li>Science fair: 2-min pitch + 3-min Q&A, many times. Top 5: 3-min demo + 4-min Q&A.</li><li>Rubric: technical depth · product thinking & impact · originality & insight · execution & polish. Demo is BIG.</li></ul></div>
+</main>
+<script src="/hub/static/nav.js"></script>
+<script>
+const FIELDS=[["inspiration","Inspiration","What is your story? Why this problem?"],["what_it_does","What it does","Plain words. Lead with the phone call."],["how_we_built_it","How we built it","Stack, data, models, the event stream."],["company_challenges","How it applies to company challenges","One line per challenge. Company judges may judge by Devpost alone."],["challenges","Challenges we ran into",""],["accomplishments","Accomplishments we're proud of",""],["what_we_learned","What we learned","Reflection."],["whats_next","What's next",""],["sentry_bug_writeup","Sentry: the bug a trace found","Required for the Sentry challenge."],["disclosures","Disclosures","Simulated agents, dataset edits (none)."],["built_with","Built with","comma separated"]];
+let data,t;
+async function load(){data=await (await fetch("/hub/api/questions")).json();
+  document.getElementById("title").value=data.title||"";document.getElementById("tagline").value=data.tagline||"";
+  document.getElementById("fields").innerHTML=FIELDS.map(([k,l,h])=>`<label>${l}<small>${h}</small></label><textarea id="f_${k}">${(data.sections||{})[k]||""}</textarea>`).join("");
+  document.querySelectorAll("input,textarea").forEach(el=>el.addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>save(false),800);}));}
+function collect(){data.title=document.getElementById("title").value;data.tagline=document.getElementById("tagline").value;data.sections=data.sections||{};
+  FIELDS.forEach(([k])=>data.sections[k]=document.getElementById("f_"+k).value);}
+async function save(loud){collect();await fetch("/hub/api/questions",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(data)});
+  document.getElementById("st").textContent="saved "+new Date().toLocaleTimeString();}
+function copyMd(){collect();const md=["# "+data.title,"","_"+data.tagline+"_",""].concat(FIELDS.flatMap(([k,l])=>data.sections[k]?["## "+l,"",data.sections[k],""]:[])).join("\n");
+  navigator.clipboard.writeText(md);document.getElementById("st").textContent="copied markdown";}
+load();
+</script></body></html>

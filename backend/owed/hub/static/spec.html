@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Owed · Spec</title><link rel="stylesheet" href="/hub/static/hub.css"></head>
+<body><main>
+<div class="bar"><button class="btn" onclick="show('spec')">Design spec</button><button class="btn ghost" onclick="show('contract')">API contract</button><button class="btn ghost" onclick="show('challenges')">Challenges</button><button class="btn ghost" onclick="show('ideas')">Idea history</button></div>
+<article class="md" id="md"></article>
+</main>
+<script src="/hub/static/nav.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
+<script>
+async function show(n){const t=await (await fetch("/hub/api/doc/"+n)).text();document.getElementById("md").innerHTML=marked.parse(t);
+  document.querySelectorAll(".bar .btn").forEach(b=>b.classList.toggle("ghost",!b.textContent.toLowerCase().startsWith(n==='spec'?'design':n==='contract'?'api':n==='challenges'?'chal':'idea')));}
+show("spec");
+</script></body></html>

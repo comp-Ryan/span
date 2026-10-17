@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Owed · Timeline</title><link rel="stylesheet" href="/hub/static/hub.css"></head>
+<body><main>
+<h1>Timeline</h1><p class="sub">Milestones to noon Sunday. Check items as they land; everything saves to <code>docs/submission/timeline.json</code>.</p>
+<div class="prog"><i id="prog" style="width:0%"></i></div>
+<div id="list"></div>
+</main>
+<script src="/hub/static/nav.js"></script>
+<script>
+let data;
+const fmt=d=>new Date(d).toLocaleString("en-US",{timeZone:"America/Los_Angeles",weekday:"short",hour:"numeric",minute:"2-digit"});
+async function load(){data=await (await fetch("/hub/api/timeline")).json();render();}
+async function save(){await fetch("/hub/api/timeline",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(data)});render();}
+function render(){
+  const now=Date.now();let nextIdx=data.milestones.findIndex(m=>!m.done&&new Date(m.when)>now);
+  const total=data.milestones.reduce((a,m)=>a+m.items.length,0),done=data.milestones.reduce((a,m)=>a+(m.itemsDone||[]).filter(Boolean).length,0);
+  document.getElementById("prog").style.width=(100*done/total)+"%";
+  document.getElementById("list").innerHTML=data.milestones.map((m,i)=>{
+    const late=!m.done&&new Date(m.when)<now;
+    const itemsDone=m.itemsDone||(m.itemsDone=m.items.map(()=>false));
+    return `<div class="card ${m.done?'done':''} ${i===nextIdx?'now':''}">
+      <div class="row"><input type="checkbox" ${m.done?'checked':''} onchange="data.milestones[${i}].done=this.checked;save()">
+      <div class="when">${fmt(m.when)}</div>
+      <div style="flex:1"><span class="title">${m.title}</span><span class="owner">${m.owner}</span>${late?'<span class="badge late">past due</span>':''}
+      <ul class="items">${m.items.map((it,j)=>`<li class="${itemsDone[j]?'done':''}"><input type="checkbox" ${itemsDone[j]?'checked':''} onchange="data.milestones[${i}].itemsDone[${j}]=this.checked;save()"><span>${it}</span></li>`).join("")}</ul>
+      </div></div></div>`}).join("");
+}
+load();
+</script></body></html>

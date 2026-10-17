@@ -1,0 +1,8 @@
+data/raw/
+data/*.tar.gz
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/models/*.pkl

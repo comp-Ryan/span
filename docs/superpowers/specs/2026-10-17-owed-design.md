@@ -10,6 +10,8 @@ Working name: **Owed** (Claude's call; "Veri" was dropped because veri.studio is
 
 **The product.** A phone number you call or text and ask "am I making payroll Friday?" It answers in seconds with real numbers. While it works, a web page draws its reasoning live as a workflow: pulling context, scoring customers, forecasting, the answer, the levers, the ask. When you say "yes, text them," the workflow keeps growing on its own as reminders go out, replies come in, negotiations happen, and payments land. At the end it generates a one-page report. Reasoning on display, then a document that stays.
 
+**Demo company:** Palletbay Storage & Warehousing (company-020): $6,534 in the bank, ~$13,700 payroll in the next two weeks, $9,268 of bills due, $28,509 owed by customers of which $14,928 is overdue across 204 open invoices. Distressed. Real answer: "No, about $16k short, but $15k of it is overdue from customers who usually pay when reminded."
+
 **Hero question:** "Can I make payroll Friday?" **Second question in demo:** "Should I take Gallagher's order?" Other supported questions: who should I chase today, can I afford to hire in January, how's [client] doing (bookkeeper mode switches company).
 
 **Grounding.** Intuit dataset (inspected Oct 17): 100 synthetic companies, one clean year to 2026-10-06, payroll runs, invoices with due dates, every payment linked to its invoice, bills due, 7 distressed companies. Receivables carry the signal; most customers pay late; some never. Books are clean, so collections and cash timing are the honest problems.
@@ -47,7 +49,8 @@ Not a page. A **workflow canvas** that lays out nodes as events arrive, plus a *
 
 | Prize | Requirement | Tier |
 |---|---|---|
-| Model Learning track | Learned payment-behavior model + fine-tuned drafting model, held-out metrics | 1 |
+| Model Learning track (main track) | Learned payment-behavior model + fine-tuned drafting model, held-out metrics | 1 |
+| Agentverse (opt-in alongside the main track, per the LA Hacks deck) | uAgent registered on Agentverse, discoverable via ASI:One, intent → action | 1 |
 | Intuit | Real-time analysis on the QuickBooks dataset; Jev if available | 1 |
 | Veri ($800) | Fine-tune an open model (Qwen3-1.7B) on Veri; it runs at demo time | 1 (async, start early) |
 | Fetch.ai | uAgent on Agentverse, Chat Protocol, ASI:One discovery, agent-to-agent negotiation | 1 |
@@ -67,7 +70,7 @@ Not a page. A **workflow canvas** that lays out nodes as events arrive, plus a *
 | Creao AI (Best One-Person Company $1,000) | Ryan is solo; build the public landing page in Creao. Confirm rules on their info page | 3 |
 | MLH Snowflake | Mirror flattened tables for the cross-company benchmark query | 3 |
 
-Not entered: Agentverse track (one track only; Fetch challenge covers it), Workday, Base44, QNX, Espressif, Even Realities.
+Not entered: Workday, Base44, QNX, Espressif, Even Realities.
 
 Tier 1 ships Saturday. Tier 2 Saturday night if on schedule. Tier 3 Sunday 07:00–09:30 only, each ≤ 1.5h, drop without regret.
 
@@ -144,6 +147,14 @@ Type: one serif for the brief line, one sans elsewhere. One accent for actions. 
 - 09:30–10:30 Devpost: write-up, screenshots, 2-min video, Devin links, Paper link, Veri job link + metrics, Sentry screenshots, disclosure notes.
 - 10:30–11:30 Submit. Rehearse demo twice.
 - 12:00 Deadline.
+
+## Submission facts (from the LA Hacks pitching deck, Oct 17)
+- Devpost: https://la-ai-hackathon-2026.devpost.com/ — create the submission early, edit later. No buffer at 12:00 PM Sunday.
+- Required: project description (inspiration, what it does, how built, company challenges, reflection), PUBLIC GitHub repo, 2–3 min demo video as a YouTube link, thumbnail 5:3.
+- One main track (Model Learning) + opt into Agentverse + all applicable challenges. Team email = apply.lahacks.com email.
+- Sunday: 12:00 hacking ends · 12:30–1:45 science fair (2-min pitch + 3-min Q&A, repeated) · 2:15–3:00 Top 5 live (3-min demo + 4-min Q&A) · 3:15 closing.
+- Rubric: technical depth · product thinking & impact · originality & insight · execution & polish. Judges admit it's partly vibes: clean, convincing demo; concise answers. Company judges may judge by Devpost alone, so the challenge section must be explicit.
+- Local hub for all of this: `uvicorn owed.main:app` → /timeline /questions /architecture /spec.
 
 ## Demo script (3 minutes)
 Demo company: a wholesaler with aging (Hearthloaf Bakeries) or a distressed one for drama.
