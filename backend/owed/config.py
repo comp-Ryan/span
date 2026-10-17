@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://owed:owed@localhost:5433/owed"
     data_dir: str = "../data/raw/hackathon-100"
     demo_company: str = "company-020"
+    gemini_model: str = "gemini-2.5-flash"
     gemini_api_key: str = ""
     sentry_dsn: str = ""
     photon_api_key: str = ""
