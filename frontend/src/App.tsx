@@ -204,6 +204,7 @@ function Outcome({ fc, payments, levers }: { fc?: GraphNode; payments: GraphNode
     {left.length > 0 && <div className="fine">Still on the table: {left.map(l => `${l.label} (+${money(l.recovers)})`).join(' · ')}</div>}
   </div>
 }
+const shift = (d?: string, days = 0) => { if (!d) return undefined; const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10) }
 function whoOf(n: GraphNode): string {
   const t = n.title || ''
   const m = t.match(/^Texting (.+)$/) || t.match(/^Negotiating with (.+?)['’]s agent$/) || t.match(/^(.+?) replied$/) || t.match(/^(.+?) paid /)
