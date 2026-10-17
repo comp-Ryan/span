@@ -28,3 +28,8 @@ def apply_schema() -> None:
     with psycopg.connect(settings.database_url) as c:
         c.execute(sql)
         c.commit()
+
+
+def apply_runtime() -> None:
+    with conn() as c:
+        c.execute((Path(__file__).parent / "runtime.sql").read_text())
