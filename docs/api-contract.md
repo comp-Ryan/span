@@ -93,7 +93,7 @@ Response:
 After this, the matching card's `status` becomes `"paid"` and an `events` message fires.
 
 ## GET /events?company=
-Server-Sent Events. The frontend subscribes once. The stream draws the workflow canvas, drives decisions, carries speech, and announces reports. Every event has `id`, `ts`, `company_id`, `run_id` (one run per question).
+Server-Sent Events. The frontend subscribes once. The stream draws the workflow canvas, drives decisions, carries speech, and announces reports. Every event JSON payload has `id` (string), `ts`, `company_id`, `run_id` (one run per question). SSE also sets `id:` for reconnects. On initial connect, replay the last `replay` events (default 500, max 5000), oldest first; `Last-Event-ID` instead replays all subsequent events for that company. Heartbeats are SSE comments.
 
 ```
 event: run.start
@@ -186,7 +186,10 @@ data: { "run_id": "run-0001", "status": "open" | "closed" }
 Past and open runs for the sidebar. `{ "runs": [ { "run_id", "question", "source", "started_at", "status", "answer_title", "report_id" } ] }`
 
 ## GET /runs/{run_id}
-Full replay: every event for the run in order. Used on page load so the canvas can redraw a run that happened while the page was closed.
+Full replay: every event for the run in order. Used on page load so the canvas can redraw a run that happened while the page was closed. Optional `company` scopes the lookup (defaults to DEMO_COMPANY).
+```json
+{ "run_id": "run-0001", "events": [ { "event": "run.start", "data": { "id": "1", "ts": "2026-10-17T22:00:00+00:00", "company_id": "company-020", "run_id": "run-0001", "question": "Am I making payroll Friday?", "source": "web" } } ] }
+```
 
 ## GET /reports/{report_id}
 The generated one-page report as JSON the Paper template renders:
@@ -242,18 +245,6 @@ Expected cash over the next 90 days from predicted pay dates minus payroll and b
 }
 ```
 
-## POST /ask?company=
-Streams an answer. Also the endpoint the Agentverse uAgent calls.
-Request: `{ "question": "who should I chase today" }`
-Response: SSE
-```
-event: token
-data: { "text": "Chase " }
-...
-event: done
-data: { "answer": "Chase Gallagher Apothecary first ...", "cards": ["card-inv-01524"], "sources": ["ar_aging", "customer_payments"] }
-```
-
 ## GET /model/metrics
 Shown in the footer and the write-up.
 ```json
@@ -269,5 +260,5 @@ Shown in the footer and the write-up.
 
 ## Demo defaults
 - Owner rules (server config, shown read-only in the footer): installments allowed if customer paid-rate ≥ 0.8; max discount 5%; disputes escalate to owner; max 4 negotiation rounds.
-- `DEMO_COMPANY=company-001` (Hearthloaf Bakeries, wholesale, has 1-30 and 31-60 aging) unless a distressed company reads better on the day.
+- `DEMO_COMPANY=company-020` (Palletbay Storage & Warehousing).
 - Visa sandbox test card: `4111 1111 1111 1111`, any future expiry, any CVV (confirm against Visa's sandbox docs in hour one).
