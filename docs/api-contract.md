@@ -183,6 +183,20 @@ data: { "run_id": "run-0001", "status": "open" | "closed" }
 - `decision` renders one-tap buttons on its node; answered via `POST /decisions/{decision_id}`. `auto_resolves_in_s: null` means wait for the human.
 - Second-question runs (e.g. "should I take Gallagher's order?") use the same six types: context → scoring (one customer) → forecast (cash effect) → answer (green/amber/red in `data.verdict`) → levers (terms to offer) → action.
 
+### Forecast and answer scenario fields
+Forecast node data additionally includes `as_of`, `target_date`, and
+`pessimistic: {expected_by_target, cash_at_target, gap}`. The pessimistic scenario
+sets contribution to zero for every invoice with `p_paid_by_target < 0.7` and leaves
+all other contributions probability-weighted. Bills, payroll, owner draw and bank
+balance are identical in both scenarios. This is the same invoice-exclusion rule as `/cash`.
+`cash_at_target` is **before payroll**, so the UI's surplus is `cash_at_target - need`,
+and `gap = max(0, need - cash_at_target)`. `need` is payroll only; bills were already
+subtracted from cash. The older `conservative` field is retained for compatibility;
+new clients must use `pessimistic` (the old field uses band colors instead of 70%).
+Context data includes `as_of`, `target_date`, `headcount`, and `bills_due_by_target`.
+Answer titles explicitly report pessimistic shortfall, e.g. “Barely, and $X short if
+the slow payers slip” when the expected scenario covers payroll but the pessimistic one does not.
+
 ## GET /runs?company=
 Past and open runs for the sidebar. `{ "runs": [ { "run_id", "question", "source", "started_at", "status", "answer_title", "report_id" } ] }`
 
