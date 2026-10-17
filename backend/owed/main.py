@@ -1,3 +1,5 @@
+import asyncio
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -7,6 +9,7 @@ from starlette.exceptions import HTTPException
 
 from owed.events import router as events_router
 from owed.runs import router as runs_router
+from owed.reports.api import router as reports_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -14,6 +17,9 @@ from owed.runs.payroll import router as payroll_router
 from owed.voice.live import router as voice_router
 from owed.channels.photon import router as photon_router
 from owed.db import apply_runtime
+from owed.decisions import router as decisions_router, worker as decision_worker
+from owed.agents.negotiation import router as negotiation_router
+from owed.actions import payment_worker
 from owed.config import settings
 from owed.hub import STATIC as HUB_STATIC, router as hub_router
 from owed.payments import router as pay_router
@@ -26,7 +32,14 @@ if settings.sentry_dsn:
 @asynccontextmanager
 async def lifespan(app):
     apply_runtime()
-    yield
+    task = asyncio.create_task(decision_worker())
+    payments_task = asyncio.create_task(payment_worker())
+    try:
+        yield
+    finally:
+        task.cancel()
+        payments_task.cancel()
+        await asyncio.gather(task, payments_task, return_exceptions=True)
 
 
 app = FastAPI(title="Owed", version="0.1.0", lifespan=lifespan)
@@ -38,6 +51,9 @@ app.include_router(runs_router)
 app.include_router(payroll_router)
 app.include_router(voice_router)
 app.include_router(photon_router)
+app.include_router(decisions_router)
+app.include_router(negotiation_router)
+app.include_router(reports_router)
 
 
 @app.exception_handler(HTTPException)

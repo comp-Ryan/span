@@ -1,0 +1,454 @@
+{
+  "report_id": "rep-0001",
+  "run_id": "run-0001",
+  "generated_at": "2026-10-17T19:34:30-07:00",
+  "company": "Palletbay Storage & Warehousing",
+  "question": "Am I making payroll Friday?",
+  "answer": "No, $8,515 short at the time of asking; $7,937 short now.",
+  "numbers": {
+    "bank_balance": 6533.65,
+    "payroll": 13275.0,
+    "owed": 28508.72,
+    "expected_by_target": 7494.86,
+    "gap_then": 8514.8,
+    "gap_now": 7936.7
+  },
+  "workflow": {
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "context",
+        "title": "Pulling up context",
+        "status": "done",
+        "parent": null,
+        "data": {
+          "company": "Palletbay Storage & Warehousing",
+          "bank_balance": 6533.65,
+          "payroll_date": "2026-10-16",
+          "payroll_amount": 13275.0
+        }
+      },
+      {
+        "id": "n2",
+        "type": "scoring",
+        "title": "Scoring 204 open invoices",
+        "status": "done",
+        "parent": "n1",
+        "data": {
+          "rows": [
+            {
+              "band": "amber",
+              "amount": 338.04,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Evergreen Juniper Flats Removals",
+              "invoice_id": "inv-03280",
+              "days_past_due": 8,
+              "p_paid_by_target": 0.062,
+              "expected_pay_date": "2026-10-21"
+            },
+            {
+              "band": "green",
+              "amount": 100.76,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Evergreen Juniper Flats Removals",
+              "invoice_id": "inv-03174",
+              "days_past_due": 20,
+              "p_paid_by_target": 0.939,
+              "expected_pay_date": "2026-10-09"
+            },
+            {
+              "band": "amber",
+              "amount": 309.87,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Yeoman Roasters Co.",
+              "invoice_id": "inv-03308",
+              "days_past_due": 6,
+              "p_paid_by_target": 0.002,
+              "expected_pay_date": "2026-10-21"
+            },
+            {
+              "band": "green",
+              "amount": 82.64,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Yeoman Roasters Co.",
+              "invoice_id": "inv-03162",
+              "days_past_due": 21,
+              "p_paid_by_target": 0.929,
+              "expected_pay_date": "2026-10-07"
+            },
+            {
+              "band": "amber",
+              "amount": 234.75,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Lindqvist & Daughters Provisions",
+              "invoice_id": "inv-03346",
+              "days_past_due": 1,
+              "p_paid_by_target": 0.002,
+              "expected_pay_date": "2026-10-26"
+            },
+            {
+              "band": "amber",
+              "amount": 133.91,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Lindqvist & Daughters Provisions",
+              "invoice_id": "inv-03236",
+              "days_past_due": 13,
+              "p_paid_by_target": 0.484,
+              "expected_pay_date": "2026-10-14"
+            },
+            {
+              "band": "amber",
+              "amount": 281.7,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Hearth Trading Partners",
+              "invoice_id": "inv-03303",
+              "days_past_due": 6,
+              "p_paid_by_target": 0.001,
+              "expected_pay_date": "2026-10-18"
+            },
+            {
+              "band": "green",
+              "amount": 128.55,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Hearth Trading Partners",
+              "invoice_id": "inv-03217",
+              "days_past_due": 15,
+              "p_paid_by_target": 0.939,
+              "expected_pay_date": "2026-10-09"
+            },
+            {
+              "band": "amber",
+              "amount": 215.97,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Okonkwo & Daughters Roasters",
+              "invoice_id": "inv-03309",
+              "days_past_due": 6,
+              "p_paid_by_target": 0.001,
+              "expected_pay_date": "2026-10-19"
+            },
+            {
+              "band": "green",
+              "amount": 42.26,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Okonkwo & Daughters Roasters",
+              "invoice_id": "inv-03231",
+              "days_past_due": 14,
+              "p_paid_by_target": 0.935,
+              "expected_pay_date": "2026-10-11"
+            },
+            {
+              "band": "amber",
+              "amount": 122.07,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Bellrock Sterling Florals Company",
+              "invoice_id": "inv-03257",
+              "days_past_due": 12,
+              "p_paid_by_target": 0.0,
+              "expected_pay_date": "2026-10-18"
+            },
+            {
+              "band": "green",
+              "amount": 54.09,
+              "source": "owed_model",
+              "p_never": 0.056,
+              "customer": "Bellrock Sterling Florals Company",
+              "invoice_id": "inv-03157",
+              "days_past_due": 21,
+              "p_paid_by_target": 0.939,
+              "expected_pay_date": "2026-10-09"
+            }
+          ],
+          "progress": {
+            "done": 204,
+            "total": 204
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "type": "forecast",
+        "title": "Forecasting Friday",
+        "status": "done",
+        "parent": "n2",
+        "data": {
+          "gap": 7936.7,
+          "need": 13275.0,
+          "owed_total": 28508.72,
+          "cash_at_target": 5338.3,
+          "expected_by_target": 7494.86,
+          "bills_due_by_target": 9268.31
+        }
+      },
+      {
+        "id": "n4",
+        "type": "answer",
+        "title": "No. $8,515 short.",
+        "status": "done",
+        "parent": "n3",
+        "data": {
+          "gap": 8514.8,
+          "answer": "no",
+          "spoken": "No. You're about eighty-five hundred short for payroll on the sixteenth."
+        }
+      },
+      {
+        "id": "n5",
+        "type": "levers",
+        "title": "What closes the gap",
+        "status": "done",
+        "parent": "n4",
+        "data": {
+          "levers": [
+            {
+              "id": "chase",
+              "label": "Text 3 reliable late payers",
+              "targets": [
+                {
+                  "amount": 338.04,
+                  "reason": "6 invoices overdue ($1,156.20); paid all 70 past invoices, about 23 days late on average",
+                  "customer": "Evergreen Juniper Flats Removals",
+                  "invoice_id": "inv-03280"
+                },
+                {
+                  "amount": 309.87,
+                  "reason": "4 invoices overdue ($668.58); paid all 54 past invoices, about 21 days late on average",
+                  "customer": "Yeoman Roasters Co.",
+                  "invoice_id": "inv-03308"
+                },
+                {
+                  "amount": 234.75,
+                  "reason": "4 invoices overdue ($553.27); paid all 48 past invoices, about 21 days late on average",
+                  "customer": "Lindqvist & Daughters Provisions",
+                  "invoice_id": "inv-03346"
+                }
+              ],
+              "recovers": 1807.14
+            },
+            {
+              "id": "defer_bill",
+              "label": "Slide Havenwood Supply bill 8 days",
+              "bill_id": "bill-03407",
+              "recovers": 8166.78,
+              "vendor_tolerance": "medium"
+            }
+          ],
+          "ask_spoken": "If I text Evergreen, Yeoman and Lindqvist and slide the Havenwood bill eight days, you clear it. Want me to text them?",
+          "recommended": [
+            "chase",
+            "defer_bill"
+          ]
+        }
+      },
+      {
+        "id": "n6",
+        "type": "action",
+        "title": "Texting Evergreen Juniper Flats Removals",
+        "status": "done",
+        "parent": "n5",
+        "data": {
+          "kind": "reminder",
+          "draft": {
+            "body": "Hi Evergreen team, this is Palletbay Storage. You have 6 invoices past due totaling $1,156.20, the oldest 20 days late. Tap the link to pay by card, or reply here to talk terms.",
+            "tone": "firm",
+            "source": "gemini"
+          },
+          "channel": "sms",
+          "invoice_id": "inv-03280",
+          "sent_at": "2026-10-17T19:30:16.200000-07:00",
+          "pay_link": "/pay/tok_7c1e9a42",
+          "reminder_id": "rem-0001"
+        }
+      },
+      {
+        "id": "n7",
+        "type": "action",
+        "title": "Texting Yeoman Roasters Co.",
+        "status": "done",
+        "parent": "n5",
+        "data": {
+          "kind": "reminder",
+          "draft": {
+            "body": "Hi Yeoman Roasters, this is Palletbay Storage. 4 invoices totaling $668.58 are past due, the oldest 21 days. Tap the link to pay by card, or reply here to talk terms.",
+            "tone": "firm",
+            "source": "gemini"
+          },
+          "channel": "sms",
+          "invoice_id": "inv-03308",
+          "sent_at": "2026-10-17T19:30:17.800000-07:00",
+          "pay_link": "/pay/tok_b03d5f18",
+          "reminder_id": "rem-0002"
+        }
+      },
+      {
+        "id": "n8",
+        "type": "action",
+        "title": "Texting Lindqvist & Daughters Provisions",
+        "status": "done",
+        "parent": "n5",
+        "data": {
+          "kind": "reminder",
+          "draft": {
+            "body": "Hi Lindqvist team, this is Palletbay Storage. 4 invoices totaling $553.27 are past due, the oldest 21 days. Tap the link to pay by card, or reply here to talk terms.",
+            "tone": "firm",
+            "source": "gemini"
+          },
+          "channel": "sms",
+          "invoice_id": "inv-03346",
+          "sent_at": "2026-10-17T19:30:19.400000-07:00",
+          "pay_link": "/pay/tok_e5a2c977",
+          "reminder_id": "rem-0003"
+        }
+      },
+      {
+        "id": "n9",
+        "type": "action",
+        "title": "Evergreen replied",
+        "status": "done",
+        "parent": "n6",
+        "data": {
+          "kind": "reply",
+          "text": "Cash is tight this month. Can we split this into two?",
+          "classification": "wants_plan"
+        }
+      },
+      {
+        "id": "n10",
+        "type": "action",
+        "title": "Negotiating with Evergreen's agent",
+        "status": "waiting",
+        "parent": "n9",
+        "data": {
+          "kind": "negotiation",
+          "rounds": [
+            {
+              "n": 1,
+              "from": "owed",
+              "text": "We can do two payments of $578.10: the first today, the second by October 30.",
+              "p_honored": 0.86,
+              "cash_effect": -578.1
+            },
+            {
+              "n": 1,
+              "from": "customer",
+              "text": "Two payments works. I'll pay the first one now.",
+              "p_honored": 0.91,
+              "cash_effect": -578.1
+            }
+          ],
+          "negotiation_id": "neg-0001",
+          "agreement": {
+            "installments": [
+              {
+                "due": "2026-10-17",
+                "amount": 578.1,
+                "pay_token": "tok_7c1e9a42"
+              },
+              {
+                "due": "2026-10-30",
+                "amount": 578.1,
+                "pay_token": "tok_4f80d2b6"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "n11",
+        "type": "action",
+        "title": "Evergreen paid $578.10",
+        "status": "done",
+        "parent": "n10",
+        "data": {
+          "kind": "payment",
+          "rail": "visa",
+          "amount": 578.1,
+          "receipt": {
+            "last4": "1111",
+            "paid_at": "2026-10-17T19:31:56-07:00"
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "from": "n5",
+        "to": "n7"
+      },
+      {
+        "from": "n5",
+        "to": "n8"
+      },
+      {
+        "from": "n6",
+        "to": "n9"
+      },
+      {
+        "from": "n9",
+        "to": "n10"
+      },
+      {
+        "from": "n10",
+        "to": "n11"
+      }
+    ],
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"448\" height=\"696\" viewBox=\"0 0 448 696\" font-family=\"Helvetica, Arial, sans-serif\">\n<path d=\"M224.0,64.0 C224.0,75.0 224.0,75.0 224.0,86.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M224.0,142.0 C224.0,153.0 224.0,153.0 224.0,164.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M224.0,220.0 C224.0,231.0 224.0,231.0 224.0,242.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M224.0,298.0 C224.0,309.0 224.0,309.0 224.0,320.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M224.0,376.0 C224.0,387.0 76.0,387.0 76.0,398.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M224.0,376.0 C224.0,387.0 224.0,387.0 224.0,398.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M224.0,376.0 C224.0,387.0 372.0,387.0 372.0,398.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M76.0,454.0 C76.0,465.0 76.0,465.0 76.0,476.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M76.0,532.0 C76.0,543.0 76.0,543.0 76.0,554.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<path d=\"M76.0,610.0 C76.0,621.0 76.0,621.0 76.0,632.0\" fill=\"none\" stroke=\"#b8b0a3\" stroke-width=\"1.4\"/>\n<rect x=\"156.0\" y=\"8.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#f6f3ee\" stroke=\"#d8d1c5\" stroke-width=\"1.4\"/>\n<text x=\"165.0\" y=\"25.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#2a2723\">Pulling up context</text>\n<text x=\"165.0\" y=\"56.0\" font-size=\"8.5\" fill=\"#8a8378\">CONTEXT \u00b7 done</text>\n<rect x=\"156.0\" y=\"86.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#f6f3ee\" stroke=\"#d8d1c5\" stroke-width=\"1.4\"/>\n<text x=\"165.0\" y=\"103.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#2a2723\">Scoring 204 open</text>\n<text x=\"165.0\" y=\"117.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#2a2723\">invoices</text>\n<text x=\"165.0\" y=\"134.0\" font-size=\"8.5\" fill=\"#8a8378\">SCORING \u00b7 done</text>\n<rect x=\"156.0\" y=\"164.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#f6f3ee\" stroke=\"#d8d1c5\" stroke-width=\"1.4\"/>\n<text x=\"165.0\" y=\"181.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#2a2723\">Forecasting Friday</text>\n<text x=\"165.0\" y=\"212.0\" font-size=\"8.5\" fill=\"#8a8378\">FORECAST \u00b7 done</text>\n<rect x=\"156.0\" y=\"242.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#ff7a45\" stroke=\"#ff7a45\" stroke-width=\"1.4\"/>\n<text x=\"165.0\" y=\"259.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#ffffff\">No. $8,515 short.</text>\n<text x=\"165.0\" y=\"290.0\" font-size=\"8.5\" fill=\"#ffe3d6\">ANSWER \u00b7 done</text>\n<rect x=\"156.0\" y=\"320.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#fff1cc\" stroke=\"#e0a526\" stroke-width=\"1.4\"/>\n<text x=\"165.0\" y=\"337.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#4a3a10\">What closes the gap</text>\n<text x=\"165.0\" y=\"368.0\" font-size=\"8.5\" fill=\"#9a7a2a\">LEVERS \u00b7 done \u00b7 decided</text>\n<rect x=\"8.0\" y=\"398.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#ececec\" stroke=\"#c4c4c4\" stroke-width=\"1.4\"/>\n<text x=\"17.0\" y=\"415.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">Texting Evergreen</text>\n<text x=\"17.0\" y=\"429.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">Juniper Flats Remo\u2026</text>\n<text x=\"17.0\" y=\"446.0\" font-size=\"8.5\" fill=\"#777777\">ACTION \u00b7 done</text>\n<rect x=\"156.0\" y=\"398.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#ececec\" stroke=\"#c4c4c4\" stroke-width=\"1.4\"/>\n<text x=\"165.0\" y=\"415.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">Texting Yeoman</text>\n<text x=\"165.0\" y=\"429.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">Roasters Co.</text>\n<text x=\"165.0\" y=\"446.0\" font-size=\"8.5\" fill=\"#777777\">ACTION \u00b7 done</text>\n<rect x=\"304.0\" y=\"398.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#ececec\" stroke=\"#c4c4c4\" stroke-width=\"1.4\"/>\n<text x=\"313.0\" y=\"415.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">Texting Lindqvist &amp;</text>\n<text x=\"313.0\" y=\"429.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">Daughters Provisio\u2026</text>\n<text x=\"313.0\" y=\"446.0\" font-size=\"8.5\" fill=\"#777777\">ACTION \u00b7 done</text>\n<rect x=\"8.0\" y=\"476.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#ececec\" stroke=\"#c4c4c4\" stroke-width=\"1.4\"/>\n<text x=\"17.0\" y=\"493.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">Evergreen replied</text>\n<text x=\"17.0\" y=\"524.0\" font-size=\"8.5\" fill=\"#777777\">ACTION \u00b7 done</text>\n<rect x=\"8.0\" y=\"554.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#fff1cc\" stroke=\"#e0a526\" stroke-width=\"1.4\" stroke-dasharray=\"4,3\"/>\n<text x=\"17.0\" y=\"571.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#4a3a10\">Negotiating with</text>\n<text x=\"17.0\" y=\"585.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#4a3a10\">Evergreen's agent</text>\n<text x=\"17.0\" y=\"602.0\" font-size=\"8.5\" fill=\"#9a7a2a\">ACTION \u00b7 waiting \u00b7 decided</text>\n<rect x=\"8.0\" y=\"632.0\" width=\"136\" height=\"56\" rx=\"7\" ry=\"7\" fill=\"#ececec\" stroke=\"#c4c4c4\" stroke-width=\"1.4\"/>\n<text x=\"17.0\" y=\"649.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">Evergreen paid</text>\n<text x=\"17.0\" y=\"663.0\" font-size=\"12\" font-weight=\"bold\" fill=\"#333333\">$578.10</text>\n<text x=\"17.0\" y=\"680.0\" font-size=\"8.5\" fill=\"#777777\">ACTION \u00b7 done</text>\n</svg>"
+  },
+  "actions": [
+    {
+      "title": "Texted Evergreen Juniper Flats Removals",
+      "result": "Agreed to 2 installments; $578.10 paid"
+    },
+    {
+      "title": "Texted Yeoman Roasters Co.",
+      "result": "No reply yet"
+    },
+    {
+      "title": "Texted Lindqvist & Daughters Provisions",
+      "result": "No reply yet"
+    }
+  ],
+  "open_items": [
+    "Yeoman Roasters Co.: no reply yet",
+    "Lindqvist & Daughters Provisions: no reply yet",
+    "Evergreen Juniper Flats Removals: installment 2 of $578.10 due 2026-10-30",
+    "Slide Havenwood Supply bill 8 days: pending owner confirmation"
+  ],
+  "narrative": "You asked \u201cAm I making payroll Friday?\u201d Palletbay Storage & Warehousing had $6,534 in the bank against $13,275 of payroll due 2026-10-16, with $9,268 of bills due first. Customers owe $28,509; the payment model expected about $7,495 of it to arrive in time, which left a gap of $8,515.\n\nI took 3 actions. Texted Evergreen Juniper Flats Removals: agreed to 2 installments; $578.10 paid. The gap is now $7,937. 4 items are still open.",
+  "disclosures": [
+    "Customer agents simulated from payment history",
+    "Scoring by Owed model (held-out MAE 1.25 days)",
+    "Card payments run in the Visa sandbox"
+  ],
+  "pdf_url": "/reports/rep-0001.pdf"
+}

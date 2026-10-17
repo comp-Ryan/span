@@ -158,12 +158,14 @@ def post_pay(token: str, body: dict = Body(...)):
             con.execute('update pay_tokens set run_id=%s where pay_token=%s', (run_id, token))
         card_id = f"card-{tok['invoice_id']}"
         customer = tok["customer_name"] or "Customer"
+        reminder = con.execute('select node_id from reminders where pay_token=%s',(token,)).fetchone()
+        parent = 'node-'+tok['negotiation_id'] if tok['negotiation_id'] else reminder['node_id'] if reminder else None
         _emit(con, run_id, tok["company_id"], "card.updated",
               {"run_id": run_id, "card_id": card_id, "invoice_id": tok["invoice_id"], "status": "paid",
                "payment_id": payment_id, "amount": amount, "rail": rail, "pay_token": token})
         _emit(con, run_id, tok["company_id"], "node.create",
               {"run_id": run_id, "node_id": f"n-{payment_id}", "type": "action",
-               "title": f"{customer} paid ${amount:,.2f}", "status": "done", "parent": None,
+               "title": f"{customer} paid ${amount:,.2f}", "status": "done", "parent": parent,
                "data": {"kind": "payment", "receipt": receipt, "card_id": card_id, "invoice_id": tok["invoice_id"], "doc_number": tok["doc_number"],
                         "customer": customer, "amount": amount, "rail": rail, "payment_id": payment_id,
                         "sandbox_mode": receipt.get("sandbox_mode", "devnet" if rail == "solana" else None)}})

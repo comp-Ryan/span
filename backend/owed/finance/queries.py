@@ -124,3 +124,12 @@ def peer_dso(con, company_id: str) -> dict | None:
     if not r or r["mine"] is None:
         return None
     return {"dso_days": round(f(r["mine"])), "peer_median_dso_days": round(f(r["peer_median"])), "peer_count": r["peer_count"]}
+
+
+def owner_draw(con, company_id, as_of):
+    """Average monthly historical cash draw; absent history means no fabricated lever."""
+    row = con.execute('''select coalesce(sum(l.credit-l.debit),0)/3 amount from journal_entries j
+        join journal_lines l on l.company_id=j.company_id and l.je_id=j.id
+        where j.company_id=%s and j.purpose='owner_distribution' and j.txn_date>%s-interval '90 days'
+        and j.txn_date<=%s and (lower(l.account_name) like '%%cash%%' or lower(l.account_name) like '%%bank%%')''', (company_id,as_of,as_of)).fetchone()
+    return round(max(0,f(row['amount'])),2)
