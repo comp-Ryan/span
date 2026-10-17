@@ -1,4 +1,4 @@
-# Owed — Design Spec and Build Schedule (v2, maximal stack)
+# Owed — Design Spec and Build Schedule (v3: reasoning on display)
 
 Hackathon: LA Hacks AI 2026, UCLA. Sat Oct 17 – Sun Oct 18, 2026. Deadline Sun 12:00 PM (confirm on Devpost).
 Builder: Ryan, solo. Workflow: Ryan builds the frontend in Paper; Claude builds the backend from this spec and `docs/api-contract.md`; Devin gets self-contained chunks for the Cognition entry.
@@ -6,20 +6,42 @@ Working name: **Owed** (Claude's call; "Veri" was dropped because veri.studio is
 
 ## Intent
 
-**The problem: getting paid.** Small businesses die because customers pay late or never, and the owner has no time to chase. Owed is a live collections agent. You tell it what you want ("chase everyone over 30 days"), and you watch it work: it drafts, sends, negotiates with the customer's agent, takes the payment, updates the books, and tells you out loud what happened. It is an assistant with hands, not a report with buttons.
+**The problem.** Small business owners can't find out whether they'll make payroll, or what to do about it, until it's too late. The answer lives in their books (bank balance, 20-40 open invoices, each customer's payment habits, bills due) but turning it into "yes" or "no, call these two" has always needed an expert they can't afford, slower than they can wait.
 
-Grounded in the Intuit dataset (inspected Oct 17): 100 synthetic companies, one clean year, receivables carry the signal, most customers pay late, some invoices are written off, 7 companies distressed. README names "collections and AP prioritization, cash-flow, aging, cross-company comparison" as well supported. Books are clean (no duplicate charges, AP ages young), so collections is the honest problem.
+**The product.** A phone number you call or text and ask "am I making payroll Friday?" It answers in seconds with real numbers. While it works, a web page draws its reasoning live as a workflow: pulling context, scoring customers, forecasting, the answer, the levers, the ask. When you say "yes, text them," the workflow keeps growing on its own as reminders go out, replies come in, negotiations happen, and payments land. At the end it generates a one-page report. Reasoning on display, then a document that stays.
+
+**Hero question:** "Can I make payroll Friday?" **Second question in demo:** "Should I take Gallagher's order?" Other supported questions: who should I chase today, can I afford to hire in January, how's [client] doing (bookkeeper mode switches company).
+
+**Grounding.** Intuit dataset (inspected Oct 17): 100 synthetic companies, one clean year to 2026-10-06, payroll runs, invoices with due dates, every payment linked to its invoice, bills due, 7 distressed companies. Receivables carry the signal; most customers pay late; some never. Books are clean, so collections and cash timing are the honest problems.
 
 ## Goals
-- Judge understands it in 10 seconds. Every number is a real query. One full loop closes live on stage: command → negotiation → pay link → payment → books updated → spoken confirmation.
-- Enter Model Learning track and every challenge in the prize map below.
-- Honest: simulated customer agents are labeled as such; model metrics are on held-out data; any dataset edits disclosed.
+- A judge watches the answer get made and never has to trust a number blindly.
+- Every number is a real query or a real model output on the dataset. Nothing hardcoded.
+- One full loop closes on stage: question → reasoning workflow → answer spoken → "yes" → reminders sent → reply → negotiation → payment → gap closes → report generated.
+- Model Learning track plus every challenge in the prize map.
+- Honest: simulated customer agents labeled; model metrics on held-out data; dataset edits disclosed (none planned).
 
 ## Non-goals
-Auth, real bank connections, real money, native mobile, more than three attention cards.
+Auth, real bank connections, real money, native mobile, a fixed dashboard.
 
 ## Anti-goals
-Generic dashboard look. Fabricated data a judge can catch. A chatbot as the primary surface.
+Generic dashboard look. Fabricated data. A chat window as the primary surface. Pre-drawn workflow that only animates.
+
+## Experience, moment by moment
+
+Entry: phone call (Photon), SMS (Photon), ASI:One (Fetch), or typing on the page. All land in the same loop.
+
+1. **Pulling context.** Node: company, payroll date and amount, bank balance. <1s.
+2. **Scoring customers.** Node with a live counter over open invoices; each row ticks green/amber/red as it's scored (Jev or our model). ~2s, visible.
+3. **Forecasting.** Node: expected cash in by payroll date vs owed; a bar fills.
+4. **Answer.** Big node: "No. $7,000 short." Spoken at the same instant.
+5. **Levers.** Node branches: chase top reliable late payers (+$), slide a tolerant vendor bill (+$), hold owner draw (+$). Each scored.
+6. **Ask.** Spoken: "If I text Gallagher, Lowry and Mbeki and slide the Okonkwo bill a week, you clear it. Want me to text them?" Screen lists the three with one reason each.
+7. **Go.** Customer nodes light as drafts are written and sent. Workflow keeps growing unattended: reply node, negotiation node (transcript), decision node (one-tap overrule, 8s auto-resolve), payment node, gap number shrinks.
+8. **Report.** On completion or on request: one page with question, answer, numbers used, the workflow picture, actions taken, outcomes, open items. Printable, shareable. Always generated from the same events, so always current.
+
+## The frontend (Ryan, in Paper)
+Not a page. A **workflow canvas** that lays out nodes as events arrive, plus a **report template**, plus a **transcript strip** for the live call. Node types (6): `context`, `scoring`, `forecast`, `answer`, `levers`, `action`. Edges drawn as nodes connect. Dark and light. One serif for the answer node, one sans elsewhere, one accent for actions. Motion: nodes fade in and slide to position, counters tick, nothing else.
 
 ## Prize map (what must be true for each)
 
@@ -69,7 +91,9 @@ Type: one serif for the brief line, one sans elsewhere. One accent for actions. 
 ## Architecture
 
 - **DB: Tiger Cloud Postgres.** Flattened tables: companies, customers, vendors, invoices, invoice_lines, customer_payments, payment_applications, bills, bill_payments, payroll_runs, ar_aging, ap_aging, pnl_monthly. Hypertable `cash_projection(company_id, day, inflow, outflow, balance, scenario)`. Runtime tables: reminders, messages, negotiations, payments, events.
-- **Backend: Python FastAPI** on Vultr. Endpoints per `docs/api-contract.md`. SSE for feed and card updates.
+- **Backend: Python FastAPI** on Vultr. Endpoints per `docs/api-contract.md`. SSE carries workflow node/edge events, decisions, speech, and report-ready.
+- **Planner / tools are swappable.** Planner = Jev if it supports tool calling, else Gemini. Finance tools (forecast_cash, predict_payment, score_customer, rank_chase, defer_bill) = Jev if hackers can call it, else our trained model. One config line; decided at the Intuit booth in hour one.
+- **Tool set:** forecast_cash, predict_payment, score_customer, rank_chase, draft_reminder, send_message, negotiate, issue_pay_link, defer_bill, query_books, show_node, speak, write_report. Every tool call emits a node or node update.
 - **Models.**
   - *Payment-behavior model* (scikit-learn gradient-boosted trees or LightGBM): per open invoice → expected days-to-pay, p(never pay). Trained across all 100 companies, last 60 sim-days held out. Metrics reported.
   - *Drafter* (Qwen3-1.7B fine-tuned on Veri via `sft_text`): input = customer history summary + invoice + tone target; output = JSON {subject, body, acceptable_terms}. ~2,000 training rows generated Saturday from the dataset with Gemini as teacher. Served quantized on the Vultr box (llama.cpp) or Veri's inference if available. Fallback to Gemini drafting if serving fails, with the fine-tune still reported for Veri + Model Learning.
@@ -78,7 +102,7 @@ Type: one serif for the brief line, one sans elsewhere. One accent for actions. 
 - **Agents (Fetch uAgents).** `owed-agent` (one per demo company) registered on Agentverse with Chat Protocol; ASI:One queries route to `/ask` and `/command`. `customer-agent-<id>` for each customer in the demo company, also on Agentverse, persona = that customer's real payment history (median lateness, write-off history, terms). Negotiation protocol: propose → counter → accept/decline, max 4 rounds, every message mirrored to the feed. Owner rules (configurable): accept installments only for customers with ≥80% paid history; never discount more than 5%; escalate disputes to human.
 - **Channels (Photon 2.0).** Outbound reminders via email and SMS; inbound replies webhook → classifier → feed → negotiation or human decision. Fallback if Photon beta fails in hour one: SMTP for email + Telegram Bot for inbound; lose Photon prize only.
 - **Payments.** Pay link page (Devin builds): Visa sandbox card rail; Solana devnet USDC rail (Tier 2) via a Phantom-compatible devnet wallet and a backend that watches for the transfer. Either rail marks the invoice paid, writes a customer_payment row, fires `card.updated`.
-- **Voice (ElevenLabs).** TTS on brief and feed confirmations; conversational mode if time: mic → STT → `/command`, reply → TTS.
+- **Voice.** Inbound call audio via Photon → STT (Gemini audio, or Photon's if provided) → planner → spoken reply. TTS is Photon's native voice if it has one, else ElevenLabs. ElevenLabs is plumbing, not a feature.
 - **StepFun (Tier 3).** Inbound Photon MMS with an image → step-5-preview extracts payer, amount, check number → invoice marked `pending_check`.
 - **Browser Use (Tier 3).** Customers flagged `requires_portal` → Browser Use agent opens the mock vendor portal (a static page we host), fills invoice fields, uploads PDF, captures confirmation number → feed.
 - **Observability (Sentry).** SDK with Tracing on every request, AI agent monitoring on every Gemini/drafter call, Logs. Write-up: the bug a trace found.

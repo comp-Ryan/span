@@ -1,4 +1,4 @@
-# Owed API Contract v2
+# Owed API Contract v3 (workflow events)
 
 Single source of truth between the Paper frontend and the backend. Change this file before changing any endpoint.
 
@@ -17,8 +17,7 @@ Companies available for the demo (POS companies excluded, they have no invoices)
 ]}
 ```
 
-## GET /brief?company=
-The top of the screen.
+## GET /brief?company=  (legacy; the canvas replaces it, keep for ASI:One text answers)
 ```json
 {
   "company": { "id": "company-001", "name": "Hearthloaf Bakeries", "profile": "wholesale" },
@@ -33,8 +32,7 @@ The top of the screen.
 ```
 `benchmark` and `audio_url` may be `null`.
 
-## GET /cards?company=
-At most three. Ordered by priority. This is the center of the screen.
+## GET /cards?company=  (legacy; superseded by `levers` node data)
 ```json
 { "cards": [ {
   "id": "card-inv-01524",
@@ -95,59 +93,126 @@ Response:
 After this, the matching card's `status` becomes `"paid"` and an `events` message fires.
 
 ## GET /events?company=
-Server-Sent Events. The frontend subscribes once. This stream IS the live action feed on the right side of the screen, and it also drives card state. Every event has `id`, `ts`, `company_id`, and `card_id` (nullable).
+Server-Sent Events. The frontend subscribes once. The stream draws the workflow canvas, drives decisions, carries speech, and announces reports. Every event has `id`, `ts`, `company_id`, `run_id` (one run per question).
 
 ```
-event: feed
-data: { "id": "ev-0001", "ts": "2026-10-17T18:40:00-07:00", "card_id": "card-inv-01524",
-        "kind": "drafting", "text": "Drafting a firm reminder to Gallagher Apothecary (53 days late).", "actor": "owed" }
+event: run.start
+data: { "run_id": "run-0001", "question": "Am I making payroll Friday?", "source": "call" | "sms" | "asi_one" | "web", "company_id": "company-001" }
 
-event: feed
-data: { "kind": "sent", "text": "Sent by SMS and email via Photon.", "channel": "sms", "reminder_id": "rem-0001", "actor": "owed" }
+event: node.create
+data: { "run_id": "run-0001", "node_id": "n1", "type": "context", "title": "Pulling up context", "status": "running", "parent": null }
 
-event: feed
-data: { "kind": "reply", "text": "Gallagher: \"Can we split this into two payments?\"", "classification": "wants_plan", "actor": "customer" }
+event: node.update
+data: { "node_id": "n1", "status": "done",
+        "data": { "company": "Hearthloaf Bakeries", "payroll_date": "2026-10-24", "payroll_amount": 18000.00, "bank_balance": 11000.00 } }
 
-event: feed
-data: { "kind": "negotiation", "negotiation_id": "neg-0001", "round": 1, "from": "owed", "text": "Proposing full payment of $776.10 by Oct 24." }
+event: node.create
+data: { "node_id": "n2", "type": "scoring", "title": "Scoring 23 open invoices", "status": "running", "parent": "n1" }
 
-event: feed
-data: { "kind": "negotiation", "negotiation_id": "neg-0001", "round": 1, "from": "customer", "text": "Counter: two payments of $388.05, Oct 24 and Nov 7." }
+event: node.update
+data: { "node_id": "n2", "progress": { "done": 7, "total": 23 },
+        "row": { "invoice_id": "inv-01524", "customer": "Gallagher Apothecary", "amount": 776.10, "days_past_due": 53,
+                 "p_paid_by_target": 0.62, "expected_pay_date": "2026-10-21", "p_never": 0.18, "band": "amber", "source": "jev" | "owed_model" } }
+  (one node.update per invoice; the frontend appends rows and colors them by band)
 
-event: feed
-data: { "kind": "decision", "negotiation_id": "neg-0001", "text": "Accepting: Gallagher has paid 9 of 11 invoices; owner rules allow installments above 80%.",
-        "options": [ { "id": "accept", "label": "Accept" }, { "id": "decline", "label": "Decline" }, { "id": "call", "label": "Call them" } ],
-        "auto_resolves_in_s": 8, "actor": "owed" }
+event: node.create
+data: { "node_id": "n3", "type": "forecast", "title": "Forecasting Friday", "status": "running", "parent": "n2" }
+event: node.update
+data: { "node_id": "n3", "status": "done", "data": { "owed_total": 26100.00, "expected_by_target": 4200.00, "bills_due_by_target": 3400.00, "cash_at_target": 11800.00, "need": 18000.00, "gap": 6200.00 } }
 
-event: feed
-data: { "kind": "pay_link", "text": "Two pay links issued.", "pay_links": ["https://<domain>/pay/tok_a", "https://<domain>/pay/tok_b"] }
+event: node.create
+data: { "node_id": "n4", "type": "answer", "title": "No. $6,200 short.", "status": "done", "parent": "n3",
+        "data": { "answer": "no", "gap": 6200.00, "spoken": "No. You're about six thousand two hundred short on Friday." } }
 
-event: card.updated
-data: { "card_id": "card-inv-01524", "status": "paid", "receipt": { "amount": 388.05, "paid_at": "...", "rail": "visa", "last4": "1111" } }
+event: node.create
+data: { "node_id": "n5", "type": "levers", "title": "What closes the gap", "status": "running", "parent": "n4" }
+event: node.update
+data: { "node_id": "n5", "status": "done", "data": { "levers": [
+          { "id": "chase", "label": "Text 3 reliable late payers", "recovers": 6100.00,
+            "targets": [ { "invoice_id": "inv-01524", "customer": "Gallagher Apothecary", "amount": 776.10, "reason": "53 days late, pays 9 of 11 times when reminded" } ] },
+          { "id": "defer_bill", "label": "Slide Okonkwo bill 8 days", "recovers": 1400.00, "bill_id": "bill-00212", "vendor_tolerance": "high" },
+          { "id": "hold_draw", "label": "Hold owner draw", "recovers": 2000.00 } ],
+        "recommended": ["chase", "defer_bill"], "ask_spoken": "If I text Gallagher, Lowry and Mbeki and slide the Okonkwo bill a week, you clear it. Want me to text them?" } }
 
-event: brief.updated
-data: { "headline": "...", "expected_in_30d": 21418.55 }
+event: decision
+data: { "run_id": "run-0001", "decision_id": "d1", "node_id": "n5", "prompt": "Text them?",
+        "options": [ { "id": "yes", "label": "Yes, text them" }, { "id": "chase_only", "label": "Text, don't touch bills" }, { "id": "no", "label": "Not now" } ],
+        "auto_resolves_in_s": null }
+
+event: node.create
+data: { "node_id": "n6", "type": "action", "title": "Texting Gallagher Apothecary", "status": "running", "parent": "n5",
+        "data": { "kind": "reminder", "invoice_id": "inv-01524", "channel": "sms", "draft": { "body": "..." , "tone": "firm", "source": "qwen_veri" | "gemini" } } }
+event: node.update
+data: { "node_id": "n6", "status": "done", "data": { "sent_at": "...", "reminder_id": "rem-0001", "pay_link": "https://<domain>/pay/tok_a" } }
+
+event: node.create
+data: { "node_id": "n9", "type": "action", "title": "Gallagher replied", "status": "done", "parent": "n6",
+        "data": { "kind": "reply", "text": "Can we split this into two?", "classification": "wants_plan" } }
+
+event: node.create
+data: { "node_id": "n10", "type": "action", "title": "Negotiating with Gallagher's agent", "status": "running", "parent": "n9",
+        "data": { "kind": "negotiation", "negotiation_id": "neg-0001", "rounds": [] } }
+event: node.update
+data: { "node_id": "n10", "data": { "round": { "n": 1, "from": "owed" | "customer", "text": "..." , "cash_effect": -388.05, "p_honored": 0.81 } } }
+
+event: decision
+data: { "decision_id": "d2", "node_id": "n10", "prompt": "Accept two installments? (Gallagher has paid 9 of 11)",
+        "options": [ {"id":"accept","label":"Accept"}, {"id":"decline","label":"Decline"}, {"id":"call","label":"Call them"} ], "auto_resolves_in_s": 8, "default": "accept" }
+
+event: node.create
+data: { "node_id": "n12", "type": "action", "title": "Gallagher paid $388.05", "status": "done", "parent": "n10",
+        "data": { "kind": "payment", "rail": "visa" | "solana", "amount": 388.05, "receipt": { "last4": "1111", "paid_at": "..." } } }
+
+event: node.update
+data: { "node_id": "n3", "data": { "cash_at_target": 12188.05, "gap": 5811.95 } }
+  (forecast node re-fires on every payment; the gap number ticks down)
 
 event: speech
-data: { "text": "Gallagher agreed to two payments. The first just landed.", "audio_url": "https://api.<domain>/audio/ev-0042.mp3" }
-```
-- `kind` for `feed`: `"drafting" | "sent" | "reply" | "classified" | "negotiation" | "decision" | "pay_link" | "paid" | "portal" | "check_photo" | "error" | "info"`.
-- `actor`: `"owed" | "customer" | "owner" | "system"`.
-- A `decision` event with `options` renders one-tap buttons; the owner answers with `POST /decisions/{negotiation_id}`. If unanswered within `auto_resolves_in_s`, Owed proceeds with its own choice.
+data: { "run_id": "run-0001", "text": "Gallagher agreed to two payments. The first just landed.", "audio_url": "https://api.<domain>/audio/ev-0042.mp3" }
 
-## POST /command?company=
-The command box and the mic both land here. Returns immediately; work streams on `/events`.
-Request: `{ "text": "chase everyone over 30 days", "source": "typed" | "voice" }`
+event: report.ready
+data: { "run_id": "run-0001", "report_id": "rep-0001", "url": "/reports/rep-0001" }
+
+event: run.end
+data: { "run_id": "run-0001", "status": "open" | "closed" }
+```
+- `type`: `"context" | "scoring" | "forecast" | "answer" | "levers" | "action"`. Six node types; the canvas needs no others.
+- `status`: `"running" | "done" | "failed" | "waiting"`.
+- `parent` defines edges. A node with `parent: null` is a root. Multiple children of one parent are siblings (branches).
+- `decision` renders one-tap buttons on its node; answered via `POST /decisions/{decision_id}`. `auto_resolves_in_s: null` means wait for the human.
+- Second-question runs (e.g. "should I take Gallagher's order?") use the same six types: context → scoring (one customer) → forecast (cash effect) → answer (green/amber/red in `data.verdict`) → levers (terms to offer) → action.
+
+## GET /runs?company=
+Past and open runs for the sidebar. `{ "runs": [ { "run_id", "question", "source", "started_at", "status", "answer_title", "report_id" } ] }`
+
+## GET /runs/{run_id}
+Full replay: every event for the run in order. Used on page load so the canvas can redraw a run that happened while the page was closed.
+
+## GET /reports/{report_id}
+The generated one-page report as JSON the Paper template renders:
+```json
+{ "report_id": "rep-0001", "run_id": "run-0001", "generated_at": "...", "company": "Hearthloaf Bakeries",
+  "question": "Am I making payroll Friday?", "answer": "No, $6,200 short at the time of asking; $5,812 short now.",
+  "numbers": { "bank_balance": 11000.00, "payroll": 18000.00, "owed": 26100.00, "expected_by_target": 4200.00, "gap_then": 6200.00, "gap_now": 5811.95 },
+  "workflow": { "nodes": [ ... ], "edges": [ ... ] },
+  "actions": [ { "title": "Texted Gallagher Apothecary", "result": "Agreed to 2 installments; $388.05 paid" } ],
+  "open_items": [ "Lowry & Daughters: no reply yet", "Okonkwo bill deferral pending owner confirmation" ],
+  "narrative": "Two paragraphs written by the planner.",
+  "disclosures": [ "Customer agents simulated from payment history", "Scoring by Jev" | "Scoring by Owed model (held-out MAE 6.4 days)" ],
+  "pdf_url": "https://api.<domain>/reports/rep-0001.pdf" }
+```
+
+## POST /decisions/{decision_id}?company=
+Request: `{ "option_id": "yes", "note": "optional" }` → `{ "decision_id": "d1", "resolved": "yes" }`
+
+## POST /ask?company=  (replaces /command)
+Typed questions land here; calls and SMS land via the Photon webhook; ASI:One via the uAgent. All start a run. Returns immediately; the run streams on `/events`.
+Request: `{ "question": "Am I making payroll Friday?", "source": "web" }`
 Response:
 ```json
-{ "command_id": "cmd-0001", "intent": "chase", "targets": ["inv-01524", "inv-01676", "inv-01677"], "summary": "Chasing 3 invoices over 30 days past due." }
+{ "run_id": "run-0001", "intent": "payroll_check", "target_date": "2026-10-24" }
 ```
-Intents: `chase`, `chase_one`, `status`, `pause`, `accept_plan`, `decline_plan`, `call`, `ask`. Unknown text falls back to `ask` and streams an answer as `feed` events with `kind: "info"`.
-
-## POST /decisions/{negotiation_id}?company=
-Owner overrules or confirms a `decision` event.
-Request: `{ "option_id": "accept" | "decline" | "call", "note": "optional" }`
-Response: `{ "negotiation_id": "neg-0001", "status": "agreed" | "declined" | "escalated" }`
+Intents: `payroll_check`, `order_check`, `chase_today`, `afford_check`, `client_status`, `free_question`. Every intent produces a run with the same six node types.
 
 ## GET /negotiations/{id}?company=
 Full transcript for the drawer when a feed line is clicked.
