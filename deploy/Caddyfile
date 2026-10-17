@@ -1,0 +1,10 @@
+{$API_DOMAIN} {
+    handle /submit {
+        reverse_proxy agents:8001
+    }
+    handle {
+        reverse_proxy api:8000 {
+            flush_interval -1
+        }
+    }
+}

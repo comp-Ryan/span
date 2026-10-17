@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from google import genai
 from google.genai import types
 from psycopg.types.json import Jsonb
@@ -115,7 +115,7 @@ async def classify_reply(text):
 
 
 @router.post('/inbound/photon')
-async def inbound(request: Request):
+async def inbound(request: Request, tasks: BackgroundTasks):
     # Beta signature documentation is not yet public. Authenticate a configured callback
     # token, then retrieve the canonical message from the authenticated Photon API.
     if not settings.photon_webhook_token:
@@ -133,6 +133,19 @@ async def inbound(request: Request):
         return {'ok': True, 'ignored': True}
     space_id = message.get('space', {}).get('id')
     text = message['content']['text']
+    owner=settings.photon_owner_handle
+    if owner and message['sentBy'].get('handle','').casefold()==owner.casefold():
+        from owed.runs.payroll import Ask,ask
+        with conn() as c:
+            inserted=c.execute('''insert into channel_inbox(provider_id,company_id,payload,status) values (%s,%s,%s,'done')
+                on conflict(provider_id) do nothing returning provider_id''',(message_id,settings.demo_company,Jsonb(message))).fetchone()
+        if not inserted:
+            return {'ok':True,'duplicate':True}
+        run=ask(Ask(question=text,source='sms'),tasks,settings.demo_company)
+        with conn() as c:
+            c.execute('update channel_inbox set run_id=%s where provider_id=%s',(run['run_id'],message_id))
+        return {'ok':True,**run}
+
     with conn() as c:
         # Resolve an explicit parent message first. An ambiguous demo conversation
         # must never silently attach a reply to a different invoice/company.
