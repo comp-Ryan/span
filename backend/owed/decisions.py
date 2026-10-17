@@ -1,13 +1,13 @@
 """Atomic human/timeout decisions with a durable action queue."""
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, Field
 from psycopg.types.json import Jsonb
+from pydantic import BaseModel, Field
 
 from owed.config import settings
 from owed.db import conn
@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 def request_decision(run_id, node_id, prompt, options, payload, timeout=None, default=None):
     decision_id = 'd-' + uuid4().hex
-    deadline = datetime.now(timezone.utc) + timedelta(seconds=timeout) if timeout else None
+    deadline = datetime.now(UTC) + timedelta(seconds=timeout) if timeout else None
     with conn() as c:
         c.execute('''insert into decisions(decision_id,run_id,node_id,prompt,options,payload,deadline,default_option)
             values (%s,%s,%s,%s,%s,%s,%s,%s)''',

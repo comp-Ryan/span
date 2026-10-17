@@ -1,16 +1,15 @@
 """Four-message negotiation with simulated customer uAgents and owner policy gates."""
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
-from fastapi.encoders import jsonable_encoder
 from psycopg.types.json import Jsonb
 from uagents.query import query
 from uagents.resolver import RulesBasedResolver
 from uagents_core.envelope import Envelope
 
-from owed.agents.protocol import Proposal, Counter
+from owed.agents.protocol import Counter, Proposal
 from owed.config import settings
 from owed.db import conn
 from owed.decisions import request_decision
@@ -45,7 +44,7 @@ async def negotiate(run_id, company, invoice_id, parent):
     async def record(speaker,text,installments):
         _, rate=policy(history,installments,0)
         item={'n':len(rounds)+1,'from':speaker,'text':text,'cash_effect':round(-float(invoice['open_balance'])/2,2) if installments==2 else 0,'p_honored':round(rate,3)}
-        rounds.append({**item,'round':item['n'],'ts':datetime.now(timezone.utc).isoformat()})
+        rounds.append({**item,'round':item['n'],'ts':datetime.now(UTC).isoformat()})
         with conn() as c:
             c.execute('update negotiations set rounds=%s where negotiation_id=%s',(Jsonb(rounds),neg))
         await asyncio.to_thread(emit,run_id,'node.update',{'node_id':node,'data':{'round':item}})
@@ -59,7 +58,7 @@ async def negotiate(run_id, company, invoice_id, parent):
             await record('owed',f'Propose {installments} payment(s), {discount:.0%} discount.',installments)
             response=await query(agent['address'],proposal,resolver=RulesBasedResolver({agent['address']:settings.customer_agent_endpoint}),timeout=10)
             if not isinstance(response,Envelope):
-                raise ValueError('Customer agent did not respond')
+                raise TypeError('Customer agent did not respond')
             reply=Counter.parse_raw(response.decode_payload())
             await record('customer',reply.text,reply.installments)
             allowed,rate=policy(history,reply.installments,reply.discount)

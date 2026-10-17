@@ -26,14 +26,20 @@ log = logging.getLogger(__name__)
 
 
 async def tts_chunks(text):
-    async with httpx.AsyncClient(timeout=30) as client:
-        async with client.stream('POST', f'https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}/stream',
-            params={'output_format': 'ulaw_8000'}, headers={'xi-api-key': settings.elevenlabs_api_key},
-            json={'text': text, 'model_id': 'eleven_flash_v2_5'}) as response:
-            response.raise_for_status()
-            async for chunk in response.aiter_bytes(160):
-                if chunk:
-                    yield chunk
+    async with (
+        httpx.AsyncClient(timeout=30) as client,
+        client.stream(
+            'POST',
+            f'https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}/stream',
+            params={'output_format': 'ulaw_8000'},
+            headers={'xi-api-key': settings.elevenlabs_api_key},
+            json={'text': text, 'model_id': 'eleven_flash_v2_5'},
+        ) as response,
+    ):
+        response.raise_for_status()
+        async for chunk in response.aiter_bytes(160):
+            if chunk:
+                yield chunk
 
 
 class Playback:

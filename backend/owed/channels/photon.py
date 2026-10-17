@@ -2,7 +2,7 @@
 import asyncio
 import hmac
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import httpx
@@ -83,7 +83,7 @@ async def send_reminder(run_id, company, invoice_id, parent='n5', channel='sms',
             'draft': {'body': body, 'tone': 'friendly', 'source': 'template'}}})
     try:
         receipt = await Photon().send(recipient, body, channel, reminder_id)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         with conn() as c:
             c.execute("update reminders set sent_at=%s,status='sent',provider_message_id=%s,space_id=%s where reminder_id=%s",
                 (now, receipt['provider_message_id'], receipt['space_id'], reminder_id))
@@ -135,7 +135,7 @@ async def inbound(request: Request, tasks: BackgroundTasks):
     text = message['content']['text']
     owner=settings.photon_owner_handle
     if owner and message['sentBy'].get('handle','').casefold()==owner.casefold():
-        from owed.runs.payroll import Ask,ask
+        from owed.runs.payroll import Ask, ask
         with conn() as c:
             inserted=c.execute('''insert into channel_inbox(provider_id,company_id,payload,status) values (%s,%s,%s,'done')
                 on conflict(provider_id) do nothing returning provider_id''',(message_id,settings.demo_company,Jsonb(message))).fetchone()

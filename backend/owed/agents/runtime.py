@@ -1,18 +1,24 @@
 """Run: python -m owed.agents.runtime. Separate uAgents for Owed and each customer."""
 import asyncio
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import httpx
 from uagents import Agent, Bureau, Context, Protocol
-from uagents_core.contrib.protocols.chat import ChatAcknowledgement, ChatMessage, EndSessionContent, TextContent, chat_protocol_spec
+from uagents_core.contrib.protocols.chat import (
+    ChatAcknowledgement,
+    ChatMessage,
+    EndSessionContent,
+    TextContent,
+    chat_protocol_spec,
+)
 from uagents_core.registration import AgentRegistrationPolicy, BatchRegistrationPolicy
 from uagents_core.utils.registration import RegistrationRequestCredentials, register_chat_agent
 
 from owed.agents.protocol import Counter, Proposal, counter
 from owed.config import settings
-from owed.db import conn, apply_runtime
+from owed.db import apply_runtime, conn
 from owed.finance import queries as q
 
 
@@ -59,7 +65,7 @@ def build():
 
     @chat.on_message(ChatMessage)
     async def handle_chat(ctx: Context, sender: str, message: ChatMessage):
-        await ctx.send(sender, ChatAcknowledgement(timestamp=datetime.now(timezone.utc), acknowledged_msg_id=message.msg_id))
+        await ctx.send(sender, ChatAcknowledgement(timestamp=datetime.now(UTC), acknowledged_msg_id=message.msg_id))
         question = ' '.join(part.text for part in message.content if isinstance(part, TextContent))
         if not question.strip():
             return
@@ -76,7 +82,7 @@ def build():
                     answer = found[-1].get('data', {}).get('spoken', found[-1]['title'])
                     break
                 await asyncio.sleep(1)
-        await ctx.send(sender, ChatMessage(timestamp=datetime.now(timezone.utc), msg_id=uuid4(),
+        await ctx.send(sender, ChatMessage(timestamp=datetime.now(UTC), msg_id=uuid4(),
             content=[TextContent(type='text', text=answer + f' Run: {run_id}'), EndSessionContent(type='end-session')]))
 
     @chat.on_message(ChatAcknowledgement)

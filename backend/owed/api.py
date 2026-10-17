@@ -1,6 +1,8 @@
 """Company selection and honest model metadata for the product shell."""
 import json
+
 from fastapi import APIRouter
+
 from owed.db import conn
 from owed.finance import queries as q
 from owed.finance.model import METRICS_PATH

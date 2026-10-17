@@ -1,12 +1,12 @@
 """Deterministic payroll workflow grounded in the books and trained model."""
 import asyncio
 import logging
-import sentry_sdk
 from datetime import date, timedelta
 from functools import lru_cache
 from typing import Literal
 from uuid import uuid4
 
+import sentry_sdk
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, Field

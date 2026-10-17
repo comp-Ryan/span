@@ -1,6 +1,6 @@
 """Execute approved levers and recompute forecasts from runtime payment records."""
 import asyncio
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from psycopg.types.json import Jsonb
@@ -94,7 +94,7 @@ async def settle_negotiation(row):
         if not allowed:
             raise ValueError('Owner policy rejects these terms')
         paid=c.execute('select coalesce(sum(amount),0) amount from payments where company_id=%s and invoice_id=%s',(row['company_id'],neg['invoice_id'])).fetchone()['amount']
-        total=((invoice['open_balance']-paid)*(Decimal('1')-Decimal(str(payload['discount'])))).quantize(Decimal('.01'))
+        total=((invoice['open_balance']-paid)*(Decimal(1)-Decimal(str(payload['discount'])))).quantize(Decimal('.01'))
         count=payload['installments']; first=(total/count).quantize(Decimal('.01'))
         amounts=[first,total-first] if count==2 else [total]
         installments=[]
