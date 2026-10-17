@@ -1387,12 +1387,12 @@
     "data": {
      "company": "Palletbay Storage & Warehousing",
      "profile": "wholesale",
-     "next_payroll_date": "2026-10-13",
+     "next_payroll_date": "2026-10-07",
      "target_date": "2026-10-20",
      "payroll_due_by_target": 13275.0,
      "weekly_payroll": 6637.5,
      "headcount": 6,
-     "bills_due_by_target": 9268.31,
+     "bills_due_by_target": 10866.86,
      "bank_balance": 6533.65
     }
    }
@@ -6341,11 +6341,11 @@
      "owed_total": 28508.72,
      "expected_by_target": 17223.27,
      "payroll_due_by_target": 13275.0,
-     "bills_due_by_target": 9268.31,
+     "bills_due_by_target": 10866.86,
      "bank_balance": 6533.65,
-     "cash_at_target": 1213.61,
-     "need": 22543.31,
-     "gap": 0
+     "cash_at_target": -384.94,
+     "need": 24141.86,
+     "gap": 384.94
     }
    }
   },
@@ -6357,13 +6357,13 @@
    "data": {
     "node_id": "n4",
     "type": "answer",
-    "title": "Yes. You're covered.",
+    "title": "No. About $385 short.",
     "status": "done",
     "parent": "n3",
     "data": {
-     "answer": "yes",
-     "gap": 0,
-     "spoken": "Yes, you're covered."
+     "answer": "no",
+     "gap": 384.94,
+     "spoken": "No. You're about 400 dollars short over the next two weeks. 28,509 dollars is owed to you, but only about 17,223 of it is likely to land in time."
     }
    }
   },
@@ -6373,7 +6373,7 @@
    "run_id": "run-demo-020",
    "company_id": "company-020",
    "data": {
-    "text": "Yes, you're covered.",
+    "text": "No. You're about 400 dollars short over the next two weeks. 28,509 dollars is owed to you, but only about 17,223 of it is likely to land in time.",
     "audio_url": null
    }
   },
@@ -6437,20 +6437,20 @@
       {
        "id": "defer_bill",
        "label": "Slide 2 tolerant vendor bills a week",
-       "recovers": 1101.53,
+       "recovers": 567.9,
        "bills": [
         {
-         "bill_id": "bill-permit-03719",
-         "vendor": "Hollyhock Department of Revenue",
+         "bill_id": "bill-operating-03705",
+         "vendor": "Rasmussen Holdings LLC",
          "amount": 500.0,
-         "due_date": "2026-10-06",
-         "vendor_tolerance": "medium"
+         "due_date": "2026-10-05",
+         "vendor_tolerance": "high"
         },
         {
-         "bill_id": "bill-interest-03672",
-         "vendor": "Lanternwood Community Bank",
-         "amount": 601.53,
-         "due_date": "2026-10-08",
+         "bill_id": "bill-utilities-03700",
+         "vendor": "Foxglove Power & Light",
+         "amount": 67.9,
+         "due_date": "2026-10-05",
          "vendor_tolerance": "high"
         }
        ]
@@ -6465,7 +6465,7 @@
       "chase",
       "defer_bill"
      ],
-     "ask_spoken": "If I text Evergreen, Hearth, Okonkwo and we slide two vendor bills a week, that covers about $3,516 of it. Want me to text them?"
+     "ask_spoken": "If I text Evergreen, Hearth, Okonkwo and we slide two vendor bills a week, that adds about $2,982 of cushion. Want me to text them?"
     }
    }
   },
@@ -6475,7 +6475,7 @@
    "run_id": "run-demo-020",
    "company_id": "company-020",
    "data": {
-    "text": "If I text Evergreen, Hearth, Okonkwo and we slide two vendor bills a week, that covers about $3,516 of it. Want me to text them?",
+    "text": "If I text Evergreen, Hearth, Okonkwo and we slide two vendor bills a week, that adds about $2,982 of cushion. Want me to text them?",
     "audio_url": null
    }
   },
@@ -6780,10 +6780,10 @@
      "owed_total": 28508.72,
      "expected_by_target": 17223.27,
      "payroll_due_by_target": 13275.0,
-     "bills_due_by_target": 9268.31,
+     "bills_due_by_target": 10866.86,
      "bank_balance": 6533.65,
-     "cash_at_target": 1791.71,
-     "need": 22543.31,
+     "cash_at_target": 193.16,
+     "need": 24141.86,
      "gap": 0
     }
    }
@@ -6794,7 +6794,7 @@
    "run_id": "run-demo-020",
    "company_id": "company-020",
    "data": {
-    "text": "Evergreen agreed to two payments. The first just landed. You're now about 0 short.",
+    "text": "Evergreen agreed to two payments. The first just landed. Your cushion is now about 200 dollars.",
     "audio_url": null
    }
   },

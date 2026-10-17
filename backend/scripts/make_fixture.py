@@ -59,10 +59,11 @@ E("node.create", {"node_id": "n3", "type": "forecast", "title": f"Forecasting th
 fc = {"owed_total": round(owed_total, 2), "expected_by_target": round(exp, 2), "payroll_due_by_target": pay["due_by_target"], "bills_due_by_target": round(bills_total, 2),
       "bank_balance": bal, "cash_at_target": round(cash_at, 2), "need": round(need, 2), "gap": gap}
 E("node.update", {"node_id": "n3", "status": "done", "data": fc}, t + 0.6)
-short = f"${gap:,.0f}"
-ans = f"No. About {short} short." if gap > 0 else "Yes. You're covered."
+cushion = round(cash_at, 2); tight = 0 <= cushion < 0.10 * need
+ans = f"No. About ${gap:,.0f} short." if gap > 0 else (f"Barely. About ${cushion:,.0f} to spare." if tight else "Yes. You're covered.")
 spoken = (f"No. You're about {int(round(gap, -2)):,} dollars short over the next two weeks. {owed_total:,.0f} dollars is owed to you, but only about {exp:,.0f} of it is likely to land in time."
-          if gap > 0 else "Yes, you're covered.")
+          if gap > 0 else (f"Barely. You'd have about {int(round(cushion, -2)):,} dollars to spare on the twentieth, and only if your usual payers come through. If two of the slower ones slip, you're short."
+          if tight else f"Yes, you're covered, with about {int(round(cushion, -2)):,} dollars to spare."))
 E("node.create", {"node_id": "n4", "type": "answer", "title": ans, "status": "done", "parent": "n3", "data": {"answer": "no" if gap > 0 else "yes", "gap": gap, "spoken": spoken}}, t + 0.7)
 E("speech", {"text": spoken, "audio_url": None}, t + 0.7)
 E("node.create", {"node_id": "n5", "type": "levers", "title": "What closes the gap", "status": "running", "parent": "n4"}, t + 0.9)
@@ -72,7 +73,7 @@ levers = [{"id": "chase", "label": f"Text {len(top)} reliable late payers", "rec
           {"id": "defer_bill", "label": f"Slide {len(defer)} tolerant vendor bills a week", "recovers": defer_amt, "bills": [
             {"bill_id": b["bill_id"], "vendor": b["vendor_name"], "amount": D(b["open_amount"]), "due_date": str(b["due_date"]), "vendor_tolerance": "high" if (b["hist_days_vs_due"] or 0) > 0 else "medium"} for b in defer]},
           {"id": "hold_draw", "label": "Hold owner draw this month", "recovers": 0}]
-ask = f"If I text {', '.join(first(c) for c in top)} and we slide two vendor bills a week, that covers about ${recovers + defer_amt:,.0f} of it. Want me to text them?"
+ask = f"If I text {', '.join(first(c) for c in top)} and we slide two vendor bills a week, that adds about ${recovers + defer_amt:,.0f} of cushion. Want me to text them?"
 E("node.update", {"node_id": "n5", "status": "done", "data": {"levers": levers, "recommended": ["chase", "defer_bill"], "ask_spoken": ask}}, t + 2.4)
 E("speech", {"text": ask, "audio_url": None}, t + 2.4)
 E("decision", {"decision_id": "d1", "node_id": "n5", "prompt": "Text them?", "options": [{"id": "yes", "label": "Yes, text them"}, {"id": "chase_only", "label": "Text, don't touch bills"}, {"id": "no", "label": "Not now"}], "auto_resolves_in_s": None}, t + 2.5)
@@ -92,7 +93,7 @@ E("node.update", {"node_id": "n10", "status": "done", "data": {"agreement": {"in
 E("node.create", {"node_id": "n12", "type": "action", "title": f"{first(c0)} paid ${half:,.2f}", "status": "done", "parent": "n10", "data": {"kind": "payment", "rail": "visa", "amount": half, "receipt": {"last4": "1111", "paid_at": "..."}}}, t2 + 90)
 fc2 = dict(fc); fc2["cash_at_target"] = round(fc["cash_at_target"] + half, 2); fc2["gap"] = round(max(0, fc["gap"] - half), 2)
 E("node.update", {"node_id": "n3", "data": fc2}, t2 + 90.2)
-E("speech", {"text": f"{first(c0)} agreed to two payments. The first just landed. You're now about {int(round(fc2['gap'], -2)):,} short.", "audio_url": None}, t2 + 90.5)
+E("speech", {"text": f"{first(c0)} agreed to two payments. The first just landed. Your cushion is now about {int(round(fc2['cash_at_target'], -2)):,} dollars.", "audio_url": None}, t2 + 90.5)
 E("report.ready", {"report_id": "rep-demo-020", "url": "/reports/rep-demo-020"}, t2 + 91)
 E("run.end", {"status": "open"}, t2 + 91.1)
 

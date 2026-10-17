@@ -136,48 +136,95 @@ function Fork({ fromRef, toRefs, containerRef }: { fromRef: React.RefObject<HTML
     {geo.to.map(x => <path key={x} d={`M${x - 5} 45l5 5 5-5`} />)}
   </svg>
 }
-function CashChart({ ctx, fc, dropped }: { ctx?: GraphNode; fc?: GraphNode; dropped?: number }) {
-  const W = 1280, H = 192, base = 150, top = 12
-  const bank = ctx?.data.bank_balance ?? 6500, exp = fc?.data.expected_by_target ?? 0, pay = ctx?.data.payroll_due_by_target ?? ctx?.data.payroll_amount ?? 0, bills = fc?.data.bills_due_by_target ?? ctx?.data.bills_due_by_target ?? 0
-  const days = 14, step = W / days, mid = Math.floor(days / 2)
-  const series = (penalty: number) => { let v = bank; const pts: number[] = [v]; for (let d = 1; d <= days; d++) { v += exp / days; if (d % 4 === 2) v -= bills / 3; if (d === mid || d === days) v -= pay / 2; if (d > mid) v -= penalty / (days - mid); pts.push(v) } return pts }
-  const good = series(0), bad = series(dropped ?? Math.min(exp * 0.18, 3000))
-  const maxV = Math.max(...good, 1) * 1.1; const y = (v: number) => base - (v / maxV) * (base - top)
+function buildSeries(ctx?: GraphNode, sc?: GraphNode, fc?: GraphNode) {
+  const bank = ctx?.data.bank_balance ?? 0
+  const target = fc?.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date
+  const asOf = sc?.rows.length ? undefined : undefined; void asOf
+  const days = 14
+  const pay = ctx?.data.payroll_due_by_target ?? ctx?.data.payroll_amount ?? 0, bills = fc?.data.bills_due_by_target ?? ctx?.data.bills_due_by_target ?? 0
+  const rows = sc?.rows || []
+  const inflowGood = new Array(days + 1).fill(0), inflowBad = new Array(days + 1).fill(0)
+  const expTotal = fc?.data.expected_by_target ?? rows.reduce((a, r) => a + r.amount * r.p_paid_by_target, 0)
+  const rowSum = rows.reduce((a, r) => a + r.amount * r.p_paid_by_target, 0) || 1
+  for (const r of rows) {
+    const d = Math.min(days, Math.max(1, r.expected_days_to_pay || 7)); const v = r.amount * r.p_paid_by_target * (expTotal / rowSum)
+    inflowGood[d] += v; if (r.p_paid_by_target >= 0.7) inflowBad[d] += v
+  }
+  if (!rows.length) for (let d = 1; d <= days; d++) { inflowGood[d] = expTotal / days; inflowBad[d] = expTotal * 0.82 / days }
+  const out = new Array(days + 1).fill(0); out[Math.floor(days / 2)] += pay / 2; out[days] += pay / 2; out[3] += bills / 3; out[8] += bills / 3; out[12] += bills / 3
+  const walk = (inf: number[]) => { let v = bank; const pts = [v]; for (let d = 1; d <= days; d++) { v += inf[d] - out[d]; pts.push(v) } return pts }
+  return { good: walk(inflowGood), bad: walk(inflowBad), days, target, pay, bank }
+}
+function CashChart({ ctx, sc, fc }: { ctx?: GraphNode; sc?: GraphNode; fc?: GraphNode }) {
+  const W = 760, H = 200, base = 156, top = 14
+  const { good, bad, days, target, pay, bank } = useMemo(() => buildSeries(ctx, sc, fc), [ctx, sc, fc])
+  const step = W / days, mid = Math.floor(days / 2)
+  const maxV = Math.max(...good, 1) * 1.08, minV = Math.min(...bad, 0)
+  const y = (v: number) => base - ((v - minV) / (maxV - minV)) * (base - top)
   const path = (pts: number[]) => pts.map((v, i) => `${i ? 'L' : 'M'}${(i * step).toFixed(1)} ${y(v).toFixed(1)}`).join(' ')
   const endG = good[days], endB = bad[days]
-  return <div className="chart">
-    <div className="head"><b>Cash in the bank, day by day</b><div className="legend"><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--green)' }} />if the usual payers pay</span><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--amber)' }} />if two slow payers slip</span><span><i style={{ width: 14, height: 0, borderTop: '2px dashed var(--red)', borderRadius: 0 }} />zero</span></div></div>
+  return <div className="chart card">
+    <div className="head"><b>Cash in the bank, day by day</b><div className="legend"><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--green)' }} />usual payers pay</span><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--amber)' }} />slow payers slip</span></div></div>
     <svg viewBox={`0 0 ${W} ${H}`} fill="none">
-      <path d={`${path(good)} L${W} ${base} L0 ${base} Z`} fill="#2CA01C" fillOpacity=".10" />
-      <path d={path(good)} stroke="#2CA01C" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d={`${path(good)} L${W} ${y(0)} L0 ${y(0)} Z`} fill="#2CA01C" fillOpacity=".10" />
+      <path d={`M0 ${y(0)} H${W}`} stroke="#D52B1E" strokeWidth="1.5" strokeDasharray="4 4" />
       <path d={path(bad)} stroke="#E08A00" strokeWidth="2" strokeDasharray="5 4" strokeLinejoin="round" />
-      <path d={`M0 ${base} H${W}`} stroke="#D52B1E" strokeWidth="1.5" strokeDasharray="4 4" />
-      <path d={`M${mid * step} ${top} V${base} M${W - 6} ${top} V${base}`} stroke="#8D9096" strokeWidth="1" strokeDasharray="3 4" />
-      <circle cx={W - 4} cy={y(endG)} r="5" fill="#fff" stroke="#2CA01C" strokeWidth="2.5" /><circle cx={W - 4} cy={y(endB)} r="5" fill="#fff" stroke="#E08A00" strokeWidth="2" />
-      <text x="0" y="186" fontFamily="Avenir Next" fontSize="11" fill="#6B6C72">Today · ${k(bank)}</text>
-      <text x={mid * step} y="186" fontSize="11" fontWeight="600" fill="#393A3D" textAnchor="middle">{fmtDate(shift(ctx?.data.target_date, -7))} · payday</text>
-      <text x={W - 90} y="186" fontSize="11" fontWeight="600" fill="#393A3D" textAnchor="middle">{fmtDate(ctx?.data.target_date)} · payday</text>
-      <text x={W - 16} y={y(endG) - 8} fontSize="12" fontWeight="700" fill="#2CA01C" textAnchor="end">{endG >= 0 ? '+' : '−'}${k(Math.abs(endG))}</text>
-      <text x={W - 16} y={y(endB) + 16} fontSize="12" fontWeight="700" fill="#B35C00" textAnchor="end">{endB >= 0 ? '+' : '−'}${k(Math.abs(endB))}</text>
-      <text x={mid * step + 8} y="24" fontSize="11" fill="#6B6C72">− ${k(pay / 2)} payroll</text>
+      <path d={path(good)} stroke="#2CA01C" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d={`M${mid * step} ${top} V${base} M${W - 1} ${top} V${base}`} stroke="#8D9096" strokeWidth="1" strokeDasharray="3 4" />
+      <circle cx={W - 2} cy={y(endG)} r="5" fill="#fff" stroke="#2CA01C" strokeWidth="2.5" /><circle cx={W - 2} cy={y(endB)} r="5" fill="#fff" stroke="#E08A00" strokeWidth="2" />
+      <text x="0" y={H - 6} fontSize="11" fill="#6B6C72">Today · ${k(bank)}</text>
+      <text x={mid * step} y={H - 6} fontSize="11" fontWeight="600" fill="#393A3D" textAnchor="middle">{fmtDate(shift(target, -7))} · payday</text>
+      <text x={W - 4} y={H - 6} fontSize="11" fontWeight="600" fill="#393A3D" textAnchor="end">{fmtDate(target)} · payday</text>
+      <text x={W - 12} y={Math.min(y(endG), y(endB) - 16) - 8} fontSize="12" fontWeight="700" fill="#2CA01C" textAnchor="end">{endG >= 0 ? '+' : '−'}${k(Math.abs(endG))}</text>
+      <text x={W - 12} y={Math.max(y(endB), y(endG) + 16) + 16} fontSize="12" fontWeight="700" fill="#B35C00" textAnchor="end">{endB >= 0 ? '+' : '−'}${k(Math.abs(endB))}</text>
+      <text x={mid * step + 8} y="26" fontSize="11" fill="#6B6C72">− ${k(pay / 2)} payroll</text>
     </svg>
+  </div>
+}
+function Outcome({ fc, payments, levers }: { fc?: GraphNode; payments: GraphNode[]; levers: Lever[] }) {
+  const now = fc?.data.cash_at_target ?? 0, got = payments.reduce((a, p) => a + (p.data.amount || 0), 0), before = now - got
+  const need = fc?.data.need || 1
+  const Bar = ({ v, c, label }: { v: number; c: string; label: string }) => <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><div className="kv"><span style={{ color: 'var(--muted)' }}>{label}</span><b style={{ color: v < 0 ? 'var(--red)' : undefined }}>{v < 0 ? '−' : '+'}{money(Math.abs(v))}</b></div><div className="bar"><i style={{ width: `${Math.min(100, Math.max(2, 100 * Math.abs(v) / (need * 0.3)))}%`, background: c }} /></div></div>
+  return <div className="card outcome">
+    <b style={{ fontSize: 14 }}>Where you stand now</b>
+    <Bar v={before} c="var(--amber)" label="Cushion when you asked" />
+    <Bar v={now} c={now >= 0 ? 'var(--green)' : 'var(--red)'} label="Cushion now" />
+    {payments.length > 0 && <div className="fine" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="ic green" style={{ width: 18, height: 18 }}>{I.check}</span>{payments.length} payment{payments.length > 1 ? 's' : ''} landed · {money(got)}</div>}
+    {levers.length > 0 && <div className="fine">Still on the table: {levers.filter(l => l.recovers).map(l => `${l.label} (+${money(l.recovers)})`).join(' · ')}</div>}
   </div>
 }
 const shift = (d?: string, days = 0) => { if (!d) return undefined; const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10) }
 
-function ActionCard({ n }: { n: GraphNode }) {
-  const d = n.data; const kind = d.kind
-  const icon = kind === 'payment' ? I.card : kind === 'negotiation' ? I.people : kind === 'reply' ? I.chat : I.chat
-  const cls = kind === 'payment' ? 'green' : kind === 'reply' ? 'blue' : kind === 'negotiation' ? 'amber' : 'grey'
-  return <div className={`action ${kind === 'payment' ? 'paid' : ''}`}>
-    <span className={`ic ${cls}`}>{icon}</span>
-    <div style={{ minWidth: 0 }}>
-      <div className="t">{n.title}{n.status === 'running' && <span className="fine"> · working</span>}</div>
-      {kind === 'reminder' && d.draft && <div className="d">“{String(d.draft.body).replace('{pay_link}', 'pay link').slice(0, 140)}…”{d.pay_link ? ' · pay link sent' : ''}</div>}
-      {kind === 'reply' && <div className="d">“{d.text}” · {String(d.classification || '').replace('_', ' ')}</div>}
-      {kind === 'negotiation' && <div className="rounds">{n.rounds.map((r, i) => <div className="r" key={i}><b>{r.from === 'owed' ? BRAND : 'them'}</b><span>{r.text}</span></div>)}{d.agreement && <div className="r"><b>agreed</b><span>{d.agreement.installments?.length} payments of {money(d.agreement.installments?.[0]?.amount)}</span></div>}</div>}
-      {kind === 'payment' && <div className="d">{money(d.amount)} via {d.rail} · card ending {d.receipt?.last4}</div>}
-    </div>
+function whoOf(n: GraphNode): string {
+  const t = n.title || ''
+  const m = t.match(/^Texting (.+)$/) || t.match(/^Negotiating with (.+?)['’]s agent$/) || t.match(/^(.+?) replied$/) || t.match(/^(.+?) paid /)
+  return (m ? m[1] : t).split(' ')[0]
+}
+function Conversations({ actions }: { actions: GraphNode[] }) {
+  const groups = new Map<string, GraphNode[]>()
+  for (const a of actions) { const w = whoOf(a); groups.set(w, [...(groups.get(w) || []), a]) }
+  if (!groups.size) return null
+  return <div className="convs">
+    {[...groups.entries()].map(([who, items], gi) => {
+      const full = items.find(i => i.data.kind === 'reminder')?.title.replace(/^Texting /, '') || who
+      return <div className="conv" key={who}>
+        <div className="chead"><span className="av" style={{ background: AV_COLORS[gi % 5] }}>{initials(full)}</span><div><b>{full}</b><div className="fine">SMS · pay link included</div></div></div>
+        <div className="bubbles">
+          {items.map(a => {
+            const d = a.data
+            if (d.kind === 'reminder') return <div key={a.node_id} className="bub out"><div>{String(d.draft?.body || a.title).replace('{pay_link}', 'owed.co/p/8f3a')}</div><span className="meta">{BRAND} for Palletbay · {a.status === 'done' ? 'delivered' : 'sending…'}</span></div>
+            if (d.kind === 'reply') return <div key={a.node_id} className="bub in"><div>{d.text}</div><span className="meta">{who} · read by {BRAND} · {String(d.classification || '').replace('_', ' ')}</span></div>
+            if (d.kind === 'negotiation') return <div key={a.node_id} className="neg">
+              <div className="fine" style={{ textAlign: 'center' }}>{BRAND} is negotiating with {who}’s agent{a.status === 'running' ? '…' : ''}</div>
+              {a.rounds.map((r, i) => <div key={i} className={`bub ${r.from === 'owed' ? 'out agent' : 'in agent'}`}><div>{r.text}</div><span className="meta">{r.from === 'owed' ? `${BRAND} agent` : `${who}’s agent`}{r.p_honored ? ` · ${Math.round(r.p_honored * 100)}% likely honored` : ''}</span></div>)}
+              {d.agreement && <div className="agree">{I.check} Agreed: {d.agreement.installments?.length} payments of {money(d.agreement.installments?.[0]?.amount)}</div>}
+            </div>
+            if (d.kind === 'payment') return <div key={a.node_id} className="receipt"><span className="ic green">{I.card}</span><div><b>{money(d.amount)} received</b><div className="fine">{String(d.rail).toUpperCase()} · card ending {d.receipt?.last4}</div></div></div>
+            return <div key={a.node_id} className="fine">{a.title}</div>
+          })}
+        </div>
+      </div>
+    })}
   </div>
 }
 
@@ -205,28 +252,47 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
       <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex' }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={opt => decision && onDecide(decision, opt)} /></div>)}</div>
     </>}
     {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
-    {actions.length > 0 && <div className="actions">{actions.map(a => <ActionCard key={a.node_id} n={a} />)}</div>}
-    {fc && fc.status === 'done' && (LIVE ? <DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={fc.data.cash_at_target} neverPays={fc.data.excluded_customer_id} /> : <CashChart ctx={ctx} fc={fc} />)}
+    {actions.length > 0 && <Conversations actions={actions} />}
+    {fc && fc.status === 'done' && <div className="split">{LIVE ? <DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={fc.data.cash_at_target} neverPays={fc.data.excluded_customer_id} /> : <CashChart ctx={ctx} sc={sc} fc={fc} />}<Outcome fc={fc} payments={actions.filter(a => a.data.kind === 'payment')} levers={levers} /></div>}
   </section>
 }
 
-/* ---------- call pill + transcript ---------- */
-function Call({ run, elapsed }: { run: RunState; elapsed: number }) {
-  const [pinned, setPinned] = useState(false)
-  const live = run.status === 'open'
+/* ---------- bottom-right dock: call transcript + chat ---------- */
+function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay }: { run: RunState; elapsed: number; input: string; setInput: (s: string) => void; onAsk: (q: string) => void; live: boolean; onReplay: (speed: number) => void }) {
+  const [open, setOpen] = useState(false)
+  const onCall = run.status === 'open'
+  const lastOwed = [...run.turns].reverse().find(t => t.kind === 'owed')
+  const [preview, setPreview] = useState<string | null>(null)
+  useEffect(() => { if (!open && lastOwed) { setPreview(lastOwed.text); const t = setTimeout(() => setPreview(null), 6000); return () => clearTimeout(t) } }, [lastOwed?.text, open])
   const mm = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`
-  return <div className={`callwrap ${pinned ? 'pinned' : ''}`} onClick={() => setPinned(p => !p)}>
-    <div className="pill"><span className="ic green">{I.phone}</span><div className={`wave ${live ? '' : 'idle'}`}>{Array.from({ length: 9 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div><b>{live ? `On a call · ${mm}` : 'Call ended'}</b></div>
-    <div className="panel">
-      <div className="ph"><span>Transcript</span><span style={{ color: 'var(--green)', display: 'flex', gap: 6, alignItems: 'center', fontSize: 12 }}><i className="dot" />{live ? 'Listening' : 'Saved'}</span></div>
-      <div className="turns">
+  const scroller = useRef<HTMLDivElement | null>(null)
+  useEffect(() => { scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' }) }, [run.turns.length, open])
+  const send = () => { const q = input.trim(); if (q) onAsk(q) }
+  return <div className={`dock ${open ? 'open' : ''}`}>
+    {open && <div className="dpanel">
+      <div className="dhead" onClick={() => setOpen(false)}>
+        <span className="ic green">{I.phone}</span>
+        <div style={{ flex: 1 }}><b>{onCall ? `On a call · ${mm}` : 'Call ended'}</b><div className="fine">{onCall ? 'Listening · tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
+        <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
+        <span className="fine" style={{ marginLeft: 8 }}>▾</span>
+      </div>
+      <div className="turns" ref={scroller}>
         {run.turns.map((t, i) => t.kind === 'tool'
           ? <div className="tool" key={i}><span style={{ color: 'var(--blue)' }}>{I.check}</span><span><b>{t.text}</b>{t.meta ? ` · ${t.meta}` : ''}</span><span className="s">{t.secs != null ? `${t.secs.toFixed(1)} s` : ''}</span></div>
           : <div className={`turn ${t.kind}`} key={i}><span className="av">{t.kind === 'you' ? 'R' : BRAND[0]}</span><span style={{ paddingTop: 3 }}>{t.text}</span></div>)}
-        {live && <div className="thinking" style={{ paddingLeft: 34 }}><i/><i/><i/> waiting for you</div>}
+        {onCall && <div className="thinking" style={{ paddingLeft: 34 }}><i/><i/><i/> waiting for you</div>}
       </div>
-      <div className="fine" style={{ borderTop: '1px solid var(--line2)', paddingTop: 6 }}>Tool rows show what {BRAND} did between sentences. Click the pill to keep this open.</div>
-    </div>
+      <div className="sugg">{['What if Evergreen doesn’t pay?', 'Show me who’s late', 'Can I afford a hire in January?'].map(q => <button key={q} onClick={() => onAsk(q)}>{q}</button>)}</div>
+      <div className="dinput"><input placeholder={`Ask ${BRAND} a follow-up, or just say it…`} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }} /><button className="btn primary" style={{ height: 32, padding: '0 14px' }} onClick={send}>Ask</button></div>
+      {!live && <div className="controls" style={{ justifyContent: 'flex-end' }}>demo · <button onClick={() => onReplay(1)}>replay</button><button onClick={() => onReplay(3)}>3×</button><a href="?live" style={{ color: 'var(--blue)' }}>go live</a></div>}
+    </div>}
+    {!open && preview && <div className="preview" onClick={() => setOpen(true)}><span className="av">{BRAND[0]}</span><span>{preview}</span></div>}
+    {!open && <button className="bubble" onClick={() => setOpen(true)}>
+      <span className="ic green">{I.phone}</span>
+      <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
+      <b>{onCall ? `On a call · ${mm}` : 'Transcript'}</b>
+      {run.turns.length > 0 && <span className="badge">{run.turns.length}</span>}
+    </button>}
   </div>
 }
 
@@ -237,12 +303,24 @@ export default function App() {
   const [input, setInput] = useState('')
   const [speed, setSpeed] = useState(SPEED)
   const stopRef = useRef<() => void>(() => {})
-  const apply = (ev: RawEvent) => setRuns(prev => {
+  const applyNow = (ev: RawEvent) => setRuns(prev => {
     const rid = ev.data?.run_id || ev.run_id || prev[prev.length - 1]?.run_id
     const idx = prev.findIndex(r => r.run_id === rid)
     if (ev.event === 'run.start' || idx < 0) return [...prev.filter(r => r.run_id !== rid), reduce(emptyRun(), ev)]
     const next = prev.slice(); next[idx] = reduce(prev[idx], ev); return next
   })
+  // sequential presentation: never mount two nodes in the same instant, even if the backend bursts
+  const queue = useRef<RawEvent[]>([]); const draining = useRef(false)
+  const apply = (ev: RawEvent) => { queue.current.push(ev); if (!draining.current) drain() }
+  const drain = async () => {
+    draining.current = true
+    while (queue.current.length) {
+      const ev = queue.current.shift()!; applyNow(ev)
+      const beat = ev.event === 'node.create' ? 420 : ev.event === 'decision' ? 250 : ev.event === 'speech' ? 150 : 0
+      if (beat) await new Promise(r => setTimeout(r, beat))
+    }
+    draining.current = false
+  }
   const playing = useRef(false)
   const play = async (s = speed) => { stopRef.current(); setRuns([]); playing.current = true; const stop = await playFixture('/fixture.json', apply, s); stopRef.current = () => { playing.current = false; stop() } }
   useEffect(() => {
@@ -292,7 +370,6 @@ export default function App() {
         <a className="on">{I.chat}Ask</a><a>{I.book}Home</a><a>{I.card}Get paid</a><a>{I.trend}Reports</a><a>{I.person}Customers</a>
       </nav>
       <main className="main">
-        {main && <Call run={main} elapsed={elapsed} />}
         {main ? <>
           <div className="eyebrow"><span className="av">R</span><span>Ryan · by {main.source === 'call' ? 'phone' : main.source} · Sat 3:52 PM</span><span className="sep" /><span>Thread 1 of 3 today</span><span className="sep" /><span className="link">Through Oct 20</span></div>
           <h1 className="q">{main.question}</h1>
@@ -300,12 +377,6 @@ export default function App() {
         {runs.map((r, i) => <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
       </main>
     </div>
-    <div className="followup"><div className="box">
-      <div className="input"><span style={{ color: 'var(--muted2)' }}>{I.chat}</span><input placeholder={`Ask ${BRAND} a follow-up, or just say it on the call…`} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && input.trim()) followUp(input.trim()) }} /><button className="btn primary" style={{ height: 34 }} onClick={() => input.trim() && followUp(input.trim())}>Ask</button></div>
-      <div className="sugg">
-        {['What if Evergreen doesn’t pay?', 'Show me who’s late', 'Can I afford a hire in January?', 'What happens if I move payday?'].map(s => <button key={s} onClick={() => followUp(s)}>{s}</button>)}
-        {!LIVE && <span className="controls" style={{ marginLeft: 'auto' }}>demo · <button onClick={() => play(1)}>replay</button><button onClick={() => { setSpeed(3); play(3) }}>3×</button><a href="?live" style={{ color: 'var(--blue)' }}>go live</a></span>}
-      </div>
-    </div></div>
+    {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} />}
   </div>
 }
