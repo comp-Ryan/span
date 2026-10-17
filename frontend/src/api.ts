@@ -4,14 +4,16 @@ const BASE = '/api'
 
 export async function startRun(company: string, question: string, source = 'web', parentRunId?: string) {
   const r = await fetch(`${BASE}/ask?company=${encodeURIComponent(company)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question, source, parent_run_id: parentRunId }) })
+  if (!r.ok) throw new Error((await r.json()).error?.message || 'Request failed')
   return r.json() as Promise<{ run_id: string; intent: string }>
 }
 export async function resolveDecision(decisionId: string, optionId: string, company: string) {
   const r = await fetch(`${BASE}/decisions/${decisionId}?company=${encodeURIComponent(company)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ option_id: optionId }) })
+  if (!r.ok) throw new Error((await r.json()).error?.message || 'Request failed')
   return r.json()
 }
-export async function replay(runId: string): Promise<RawEvent[]> {
-  const r = await fetch(`${BASE}/runs/${runId}`); const j = await r.json(); return j.events || []
+export async function replay(runId: string, company?: string): Promise<RawEvent[]> {
+  const r = await fetch(`${BASE}/runs/${runId}?company=${encodeURIComponent(company || "company-020")}`); const j = await r.json(); return j.events || []
 }
 export async function getReport(id: string): Promise<ReportDoc> {
   const r = await fetch(`${BASE}/reports/${encodeURIComponent(id)}`)

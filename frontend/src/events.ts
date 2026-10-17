@@ -24,6 +24,7 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
     case 'node.update': {
       const prev = run.nodes[d.node_id]; if (!prev) return run
       const n: GraphNode = { ...prev, data: { ...prev.data, ...(d.data || {}) }, rows: prev.rows.slice(), rounds: prev.rounds.slice() }
+      if (n.type === 'forecast' && d.data?.cash_at_target != null && n.data.initial_cash_at_target == null) { n.data.initial_cash_at_target = d.data.cash_at_target; n.data.initial_need = d.data.need }
       if (d.status) { n.status = d.status; if (d.status === 'done') n.doneAt = now }
       if (d.progress) n.progress = d.progress
       if (d.row) n.rows.push(d.row)

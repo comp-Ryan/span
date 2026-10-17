@@ -355,3 +355,33 @@ identified by `data.reused_from: {run_id, node_id}`; financial values are refres
 the books rather than freezing stale payment balances. Node IDs are scoped to a run,
 so a cross-run edge is always qualified with its run ID. Chase target objects also
 include `customer_id`, allowing stable frontend keys.
+
+## Live decision demo loop
+Resolving the emitted payroll decision with `option_id: "yes"` (IDs are unique per run;
+`d1` in examples is illustrative) enqueues the three selected reminder actions. Reminders
+use the drafter (`draft.source: "gemini"` or disclosed `"template"` fallback).
+With Photon key, project and sender configured, messages go only to the explicitly mapped
+`PHOTON_DEMO_RECIPIENT`; a missing recipient is an error, and provider errors are never
+reported as successful or silently simulated. Without the transport configuration,
+reminder `data.channel` is `"simulated"` and `provider_status` is `"simulated"`; no SMS is sent.
+`sent_at` in that case records completion of the simulation, not real delivery.
+
+After all three simulated reminders, the first customer emits a reply with
+`data.simulated: true` and `channel: "simulated"`, then uses the local uAgent negotiation.
+Real Photon sends wait for real inbound replies instead. Customer agents remain simulated
+personas in both cases. Action data includes `customer_id` and `customer` for grouping;
+negotiations also include `simulated: true`. Agreements include `pay_link` alongside each
+installment's `pay_token`. No payment occurs until the payer submits the pay page.
+Payment actions explicitly label `sandbox_mode` (`"simulated"`, `"sandbox"`, or `"devnet"`).
+
+`decision.resolved` is emitted atomically on a successful first resolution:
+```json
+{"decision_id":"d-unique","node_id":"n5","option_id":"yes"}
+```
+It has the common event envelope. Existing resolution `node.update` is retained.
+Retries of the same resolution do not enqueue another action; conflicting retries return 409.
+The live frontend acknowledges selection only after the API succeeds, and displays pay
+links, synthetic-message labels, negotiation approval options and simulated receipts.
+
+Forecast data also carries the current `bank_balance` (including runtime payments), so
+clients must prefer it to the initial context bank value when rendering refreshed cash.

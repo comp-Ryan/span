@@ -27,7 +27,7 @@ def policy(history, installments, discount, disputed=False):
 
 async def negotiate(run_id, company, invoice_id, parent):
     with conn() as c:
-        invoice = c.execute('select * from invoice_facts where company_id=%s and invoice_id=%s', (company,invoice_id)).fetchone()
+        invoice = c.execute('select f.*,cu.display_name customer_name from invoice_facts f join customers cu on cu.company_id=f.company_id and cu.id=f.customer_id where f.company_id=%s and f.invoice_id=%s', (company,invoice_id)).fetchone()
         if not invoice or invoice['open_balance']<=0:
             raise ValueError('Open invoice not found')
         history = q.customer_history(c,company,invoice['customer_id'],q.AS_OF_DEFAULT,limit=10000)
@@ -38,8 +38,8 @@ async def negotiate(run_id, company, invoice_id, parent):
         neg = 'neg-' + uuid4().hex
         c.execute("insert into negotiations(negotiation_id,run_id,company_id,invoice_id,status) values (%s,%s,%s,%s,'negotiating')", (neg,run_id,company,invoice_id))
     node = 'node-' + neg
-    await asyncio.to_thread(emit,run_id,'node.create', {'node_id':node,'type':'action','title':'Negotiating with the simulated customer agent',
-        'status':'running','parent':parent,'data':{'kind':'negotiation','negotiation_id':neg,'rounds':[]}})
+    await asyncio.to_thread(emit,run_id,'node.create', {'node_id':node,'type':'action','title':f"Negotiating with {invoice['customer_name']}'s agent",
+        'status':'running','parent':parent,'data':{'kind':'negotiation','negotiation_id':neg,'rounds':[], 'simulated':True, 'customer_id':invoice['customer_id'], 'customer':invoice['customer_name']}})
     rounds=[]
     async def record(speaker,text,installments):
         _, rate=policy(history,installments,0)

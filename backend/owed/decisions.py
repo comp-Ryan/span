@@ -51,6 +51,7 @@ def resolve(decision_id, option, company, note=None):
             raise HTTPException(422, 'Invalid decision option')
         c.execute('update decisions set resolved=%s,resolved_at=now() where decision_id=%s', (option, decision_id))
         c.execute('insert into action_jobs(decision_id) values (%s) on conflict do nothing', (decision_id,))
+        emit(row['run_id'], 'decision.resolved', {'decision_id': decision_id, 'node_id': row['node_id'], 'option_id': option}, connection=c)
         emit(row['run_id'], 'node.update', {'node_id': row['node_id'], 'data': {
             'decision_id': decision_id, 'resolved': option, 'note': note}}, connection=c)
     return {'decision_id': decision_id, 'resolved': option}

@@ -60,7 +60,7 @@ def snapshot(company: str, target: date, excluded_customer_id=None):
     expected = round(sum(q.f(r['open_balance']) * r['p_paid_by_target'] for r in scored), 2)
     bills_total = round(sum(q.f(b['open_amount']) for b in bills), 2)
     cash = round(bank + expected - bills_total - draw_due, 2)
-    forecast = {'as_of': q.AS_OF_DEFAULT.isoformat(), 'target_date': target.isoformat(),
+    forecast = {'bank_balance': bank, 'as_of': q.AS_OF_DEFAULT.isoformat(), 'target_date': target.isoformat(),
                 'owed_total': round(sum(q.f(r['open_balance']) for r in scored), 2),
                 'expected_by_target': expected, 'bills_due_by_target': bills_total,
                 'cash_at_target': cash, 'need': payroll['due_by_target'],
