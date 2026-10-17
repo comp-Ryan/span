@@ -329,3 +329,29 @@ Reports accept the standard `company` query parameter and are rebuilt from curre
 When no drafting model is installed, `/model/metrics.drafter.serving` and `/health.drafter` are `"template_fallback"`; unmeasured metrics are null and row counts zero. `/health.db` is `"postgres"` for the local/Vultr database. Provider booleans report configuration presence; they do not attest successful live calls.
 
 Canonical Photon messages from the configured `PHOTON_OWNER_HANDLE` start an `/ask`-equivalent run with source `sms`; other senders must match a reminder conversation. Live owner approval is handled through a `resolve_decision` tool scoped to the current call run.
+
+## Follow-up runs
+`POST /ask` additionally accepts optional `parent_run_id`. The parent must belong to
+`company` (404 otherwise). The target date is inherited unless the question explicitly
+specifies Friday or two weeks. `run.start` includes `parent_run_id` when present, and
+`GET /runs` includes nullable `parent_run_id` for each item.
+
+Two no-key intents are supported:
+- `what_if_customer`: “what if Evergreen doesn't pay?” re-forecasts after removing that
+  customer's residual open invoices from expected and pessimistic scenarios. Actual
+  payments already received stay in cash. Emits context → scoring → forecast → answer
+  → levers and an owner decision. Excluded invoices are not recommended for chasing.
+  Forecast data includes `excluded_customer_id`; subsequent payment refreshes preserve
+  this scenario and its target date. In the Palletbay demo, “Evergreen” explicitly means
+  **Evergreen Juniper Flats Removals**, the shorthand used in `docs/frontend/brief.md`;
+  the full selected name appears in the answer. Other ambiguous names return 422.
+- `show_late`: “show me who's late” emits one scoring node containing only overdue
+  open invoices, sorted descending by `days_past_due`, then amount, then invoice ID.
+  Its data has `overdue_only: true` and `sort: "days_past_due_desc"`.
+
+A child root can reference a node in the parent run using `parent` (the parent's node ID)
+and `parent_run_id` together. Local edges still use just `parent`. Reused context is
+identified by `data.reused_from: {run_id, node_id}`; financial values are refreshed from
+the books rather than freezing stale payment balances. Node IDs are scoped to a run,
+so a cross-run edge is always qualified with its run ID. Chase target objects also
+include `customer_id`, allowing stable frontend keys.

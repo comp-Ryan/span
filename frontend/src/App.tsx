@@ -51,6 +51,7 @@ function ScoredNode({ n }: { n: GraphNode }) {
     <h3><span className="ic green">{I.people}</span>{total || '…'} invoices scored{n.status === 'running' && n.progress ? <span className="fine" style={{ marginLeft: 'auto' }}>{n.progress.done} / {n.progress.total}</span> : null}</h3>
     <div className="dots">{sample.map(r => <i key={r.invoice_id} style={{ background: col[r.band] || col.amber }} title={`${r.customer} · $${Math.round(r.amount)} · ${Math.round(r.p_paid_by_target * 100)}%`} />)}</div>
     <div className="legend"><span><i style={{ background: 'var(--green)' }} />will pay</span><span><i style={{ background: 'var(--amber)' }} />maybe</span><span><i style={{ background: 'var(--red)' }} />unlikely</span></div>
+    {n.data.overdue_only && <div style={{ maxHeight: 280, overflow: 'auto' }}>{n.rows.map(r => <div className="kv" key={r.invoice_id}><span>{r.customer}</span><b>{r.days_past_due}d · {money(r.amount)}</b></div>)}</div>}
     {n.rows.length > 0 && <div className="kv"><span style={{ color: 'var(--muted)' }}>Likely in time</span><b>${k(likely)} of ${k(owed)}</b></div>}
   </div>
 }
@@ -336,7 +337,7 @@ export default function App() {
   }
   const followUp = async (q: string) => {
     setInput('')
-    if (LIVE) { await startRun(COMPANY, q); return }
+    if (LIVE) { await startRun(COMPANY, q, 'web', runs[0]?.run_id); return }
     // demo: synthesize a follow-up branch from the current run
     const base = runs[0]; if (!base) return
     const ctx = Object.values(base.nodes).find(n => n.type === 'context'), fc = Object.values(base.nodes).find(n => n.type === 'forecast')

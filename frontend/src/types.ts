@@ -18,7 +18,7 @@ export interface GraphNode {
 }
 export interface Turn { kind: 'you' | 'owed' | 'tool'; text: string; meta?: string; secs?: number; at: number }
 export interface RunState {
-  run_id: string; question: string; source: string; company_id: string
+  run_id: string; parent_run_id?: string; question: string; source: string; company_id: string
   nodes: Record<string, GraphNode>; order: string[]
   decisions: Record<string, Decision>; turns: Turn[]; status: 'open' | 'closed' | 'idle'; report_id?: string
   startedAt: number

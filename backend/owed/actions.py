@@ -109,10 +109,10 @@ async def settle_negotiation(row):
 
 def refresh_forecasts(company):
     with conn() as c:
-        runs=c.execute('''select r.run_id,r.question from runs r where r.company_id=%s and exists
+        runs=c.execute('''select r.run_id,r.question,r.target_date,r.excluded_customer_id from runs r where r.company_id=%s and exists
             (select 1 from events e where e.run_id=r.run_id and e.event='node.create' and e.data->>'type'='forecast')''',(company,)).fetchall()
     for run in runs:
-        snap=snapshot(company,target_for(run['question']))
+        snap=snapshot(company,run['target_date'] or target_for(run['question']),run['excluded_customer_id'])
         with conn() as c:
             nodes=c.execute("select data->>'node_id' node_id from events where run_id=%s and event='node.create' and data->>'type'='forecast'",(run['run_id'],)).fetchall()
             for node in nodes:
