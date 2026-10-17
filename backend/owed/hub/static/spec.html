@@ -4,7 +4,7 @@
 <article class="md" id="md"></article>
 </main>
 <script src="/hub/static/nav.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
+<script src="/hub/static/marked.min.js"></script>
 <script>
 async function show(n){const t=await (await fetch("/hub/api/doc/"+n)).text();document.getElementById("md").innerHTML=marked.parse(t);
   document.querySelectorAll(".bar .btn").forEach(b=>b.classList.toggle("ghost",!b.textContent.toLowerCase().startsWith(n==='spec'?'design':n==='contract'?'api':n==='challenges'?'chal':'idea')));}

@@ -1,80 +1,134 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Owed · Architecture</title><link rel="stylesheet" href="/hub/static/hub.css"></head>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Owed · Architecture</title><link rel="stylesheet" href="/hub/static/hub.css">
+<style>.mermaid svg{max-width:100%;height:auto}.err{color:var(--warn);font-family:var(--mono);white-space:pre-wrap}</style></head>
 <body><main>
-<h1>Architecture</h1><p class="sub">One assistant, three entry points, one event stream. Every tool call is a node on the canvas.</p>
-<pre class="mermaid">
-flowchart LR
-  subgraph entry[Entry points]
-    CALL[Phone call / SMS<br/>Photon 2.0 audio stream]
-    ASI[ASI:One chat<br/>Fetch Agentverse]
-    WEB[Web page<br/>Paper frontend]
-  end
-  subgraph brain[Backend · FastAPI on Vultr · traced by Sentry]
-    LIVE[Gemini Live<br/>hear · think · call tools<br/>text out]
-    TTS[ElevenLabs streaming TTS<br/>voice back to the call + page]
-    PLAN[Gemini tool loop<br/>web + SMS + ASI:One]
-    TOOLS[Finance tools<br/>forecast_cash · predict_payment · score_customer · rank_chase · defer_bill<br/>Jev if available, else Owed model]
-    DRAFT[Drafter<br/>Qwen3-1.7B fine-tuned on Veri<br/>fallback Gemini]
-    NEG[Negotiation<br/>owed-agent ⇄ customer agents<br/>uAgents on Agentverse]
-    PAY[Pay links<br/>Visa sandbox · Solana devnet]
-    EV[(Event stream<br/>run.start · node.create · node.update<br/>decision · speech · report.ready)]
-    REP[Report generator]
-  end
-  subgraph data[Data · Tiger Postgres]
-    DB[(100 companies<br/>84k invoices · 144k payments<br/>26k payroll runs · bills · bank)]
-    RT[(runtime: runs · events · reminders<br/>negotiations · payments · reports)]
-  end
-  CALL -->|audio| LIVE
-  LIVE -->|text| TTS -->|audio| CALL
-  LIVE --> TOOLS
-  LIVE --> EV
-  ASI --> PLAN
-  WEB -->|POST /ask| PLAN
-  PLAN --> TOOLS --> DB
-  PLAN --> DRAFT
-  PLAN --> NEG
-  NEG --> PAY
-  PLAN --> EV
-  TOOLS --> EV
-  DRAFT --> EV
-  NEG --> EV
-  PAY --> EV
-  EV --> RT
-  EV -->|SSE /events| WEB
-  EV -->|speech| CALL
-  EV --> REP -->|GET /reports| WEB
-  DRAFT -->|reminder SMS/email| CUST[Customer phone]
-  CUST -->|reply webhook| PLAN
-  CUST -->|pays| PAY
-</pre>
-<h2 style="margin-top:28px">A run, as nodes</h2>
-<pre class="mermaid">
-flowchart TB
-  n1[context<br/>Palletbay · payroll Fri · $13.7k · bank $6.5k]:::done --> n2[scoring<br/>204 open invoices, each: p(paid by Fri), p(never)]:::done --> n3[forecast<br/>expected by Fri vs need → gap]:::done --> n4[answer<br/>No. $16k short.]:::ans
-  n4 --> n5[levers<br/>text top late payers · slide a bill · hold draw]:::done
-  n5 --> d1{decision<br/>Text them?}:::dec
-  d1 --> a1[action · texting Evergreen]:::act
-  d1 --> a2[action · texting Yeoman]:::act
-  d1 --> a3[action · texting Hearth Trading]:::act
-  a1 --> r1[action · reply: can we split?]:::act --> ng[action · negotiating with customer agent]:::act --> d2{decision<br/>accept 2 installments? 8s}:::dec --> p1[action · paid $578 via Visa]:::act --> n3
-  classDef done fill:#1f1d27,stroke:#5fcf8a,color:#ebe8f0
-  classDef ans fill:#2a1a14,stroke:#ff7a45,color:#fff,font-weight:bold
-  classDef dec fill:#2b2616,stroke:#f5c451,color:#ebe8f0
-  classDef act fill:#1f1d27,stroke:#9a95a8,color:#ebe8f0
-</pre>
-<h2 style="margin-top:28px">Two lanes</h2>
-<div class="grid">
-<div class="card"><b>Fast lane</b><br>Event arrives (payment, reply, slider). Finance tool returns numbers in well under a second. Node updates immediately. Many calls per minute, no prose.</div>
-<div class="card"><b>Slow lane</b><br>Debounced. Planner reads before/after numbers and context, decides levers, writes the spoken sentence and the report. Two to five seconds. The "why" lands after the "what" has already moved.</div>
-<div class="card"><b>On the call</b><br>Gemini Live hears and reasons and calls tools in one loop; Jev (or the Owed model) answers the finance tools in under 300 ms; ElevenLabs speaks the reply in ~100 ms. About one second to the first spoken word. FINANCE_TOOLS=jev|owed_model is config.</div>
-</div>
+<h1>Architecture</h1><p class="sub">One assistant, three front doors, one event stream. Every tool call is a node on the canvas.</p>
+<h2>System</h2><div class="mermaid" id="g1"></div>
+<h2 style="margin-top:28px">The call, step by step</h2><div class="mermaid" id="g2"></div>
+<h2 style="margin-top:28px">One run, as nodes on the canvas</h2><div class="mermaid" id="g3"></div>
+<h2 style="margin-top:28px">Data</h2><div class="mermaid" id="g4"></div>
 <h2 style="margin-top:28px">Who builds what</h2>
 <div class="grid">
 <div class="card"><b>Ryan · Paper</b><br>Workflow canvas, 6 node types, report template, transcript strip. Talks to the backend only through the contract.</div>
-<div class="card"><b>Claude · backend</b><br>Schema, loader, models, planner, tools, event stream, Photon, uAgents, pay rails, voice, Sentry, deploy.</div>
+<div class="card"><b>Claude · backend</b><br>Schema, loader, models, Gemini Live session, tools, event stream, Photon, uAgents, pay rails, Sentry, deploy.</div>
 <div class="card"><b>Devin</b><br>Loader tests, pay-link page (Visa + Solana), mock vendor portal. Session links go in the Devpost.</div>
 </div>
 </main>
 <script src="/hub/static/nav.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.1/mermaid.min.js"></script>
-<script>mermaid.initialize({startOnLoad:true,theme:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"default",securityLevel:"loose"});</script>
+<script src="/hub/static/mermaid.min.js"></script>
+<script>
+const G = {};
+G.g1 = `flowchart LR
+  subgraph doors[Front doors]
+    CALL["📞 Phone call<br/>Photon audio stream"]
+    SMS["💬 SMS / customer replies<br/>Photon"]
+    ASI["🔎 ASI:One<br/>Fetch Agentverse"]
+    WEB["🖥 Web page<br/>Paper canvas"]
+  end
+  subgraph brain["Backend · FastAPI on Vultr · Sentry tracing"]
+    LIVE["Gemini Live<br/>hear · think · call tools<br/>(text out)"]
+    LOOP["Gemini tool loop<br/>(typed / SMS / ASI:One)"]
+    TOOLS["Finance tools<br/>forecast_cash · predict_payment<br/>score_customer · rank_chase · defer_bill<br/><b>Jev</b> or Owed model"]
+    DRAFT["Drafter<br/>Qwen3-1.7B fine-tuned on Veri"]
+    NEG["Negotiation<br/>owed-agent ⇄ customer agents<br/>uAgents on Agentverse"]
+    PAY["Pay links<br/>Visa sandbox · Solana devnet"]
+    TTS["ElevenLabs<br/>streaming voice"]
+    EV[("Event stream<br/>node.create · node.update<br/>decision · speech · report.ready")]
+    REP["Report generator"]
+  end
+  subgraph store["Tiger Postgres"]
+    DB[("Intuit dataset<br/>100 companies · 84k invoices<br/>144k payments · 26k payroll runs")]
+    RT[("runtime<br/>runs · events · reminders<br/>negotiations · payments · reports")]
+  end
+  CALL -- audio --> LIVE
+  LIVE -- text --> TTS -- audio --> CALL
+  SMS --> LOOP
+  ASI --> LOOP
+  WEB -- "POST /ask" --> LOOP
+  LIVE --> TOOLS
+  LOOP --> TOOLS
+  TOOLS --> DB
+  LIVE --> DRAFT
+  LOOP --> DRAFT
+  DRAFT -- "reminder SMS/email" --> CUST["Customer's phone"]
+  CUST -- reply --> SMS
+  LOOP --> NEG --> PAY
+  CUST -- pays --> PAY
+  LIVE & LOOP & TOOLS & DRAFT & NEG & PAY --> EV
+  EV --> RT
+  EV -- "SSE /events" --> WEB
+  EV --> REP -- "GET /reports" --> WEB
+  classDef door fill:#1f1d27,stroke:#ff7a45,color:#ebe8f0
+  class CALL,SMS,ASI,WEB door`;
+
+G.g2 = `sequenceDiagram
+  autonumber
+  participant O as Owner (phone)
+  participant P as Photon
+  participant B as Backend
+  participant G as Gemini Live
+  participant J as Jev / Owed model
+  participant E as ElevenLabs
+  participant C as Canvas (web)
+  O->>P: calls the number
+  P->>B: audio stream (websocket)
+  B->>G: open Live session, forward audio
+  O->>G: "Am I making payroll Friday?"
+  G->>B: tool: forecast_cash(company, target)
+  B->>C: node.create context · scoring · forecast
+  B->>J: score 204 open invoices
+  J-->>B: p(paid by Fri), p(never) each (<300 ms)
+  B->>C: node.update rows tick in (green/amber/red)
+  B-->>G: tool result {gap: 16460}
+  G->>B: text "No. You're about $16k short…"
+  B->>C: node.create answer
+  B->>E: stream text
+  E-->>P: audio (~100 ms first byte)
+  P-->>O: hears the answer (~1 s after asking)
+  G->>B: tool: rank_chase → levers
+  B->>C: node.create levers + decision "Text them?"
+  O->>G: "yes"
+  G->>B: tool: draft_reminder ×3, send_message ×3
+  B->>C: action nodes light up
+  Note over O,C: Call ends. Replies, negotiation and payments keep flowing to the canvas and back to O by SMS.`;
+
+G.g3 = `flowchart TB
+  n1["context<br/>Palletbay · payroll Fri · $13.7k · bank $6.5k"]:::done --> n2["scoring<br/>204 open invoices · p(paid by Fri) · p(never)"]:::done --> n3["forecast<br/>expected by Fri vs need → gap"]:::done --> n4["answer<br/><b>No. $16k short.</b>"]:::ans
+  n4 --> n5["levers<br/>text top late payers · slide a bill · hold draw"]:::done
+  n5 --> d1{"decision<br/>Text them?"}:::dec
+  d1 --> a1["action · texting Evergreen"]:::act
+  d1 --> a2["action · texting Yeoman"]:::act
+  d1 --> a3["action · texting Hearth Trading"]:::act
+  a1 --> r1["action · reply: can we split?"]:::act --> ng["action · negotiating with customer agent"]:::act --> d2{"decision<br/>accept 2 installments? (8 s)"}:::dec --> p1["action · paid $578 via Visa"]:::act
+  p1 -. "re-fires" .-> n3
+  classDef done fill:#1f1d27,stroke:#5fcf8a,color:#ebe8f0
+  classDef ans fill:#2a1a14,stroke:#ff7a45,color:#fff
+  classDef dec fill:#2b2616,stroke:#f5c451,color:#ebe8f0
+  classDef act fill:#1f1d27,stroke:#9a95a8,color:#ebe8f0`;
+
+G.g4 = `erDiagram
+  COMPANIES ||--o{ CUSTOMERS : has
+  COMPANIES ||--o{ INVOICES : issues
+  CUSTOMERS ||--o{ INVOICES : owes
+  INVOICES ||--o{ PAYMENT_APPLICATIONS : "settled by"
+  CUSTOMER_PAYMENTS ||--o{ PAYMENT_APPLICATIONS : applies
+  COMPANIES ||--o{ BILLS : receives
+  COMPANIES ||--o{ PAYROLL_RUNS : pays
+  COMPANIES ||--o{ BANK_TRANSACTIONS : "bank feed"
+  INVOICES ||--|| INVOICE_FACTS : "derived: paid_amount, days_late, status"
+  RUNS ||--o{ EVENTS : streams
+  RUNS ||--o{ REMINDERS : sends
+  RUNS ||--o{ NEGOTIATIONS : opens
+  REMINDERS ||--o| PAY_TOKENS : carries
+  PAY_TOKENS ||--o| PAYMENTS : "paid via visa/solana"
+  RUNS ||--o| GENERATED_REPORTS : produces`;
+
+mermaid.initialize({startOnLoad:false, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default", securityLevel:"loose", flowchart:{htmlLabels:true, curve:"basis"}});
+(async () => {
+  for (const [id, def] of Object.entries(G)) {
+    const el = document.getElementById(id);
+    try { const {svg} = await mermaid.render(id + "_svg", def); el.innerHTML = svg; }
+    catch (e) { el.innerHTML = '<div class="err">diagram failed to render: ' + (e.message||e) + '</div>'; console.error(e); }
+  }
+})();
+</script>
 </body></html>
