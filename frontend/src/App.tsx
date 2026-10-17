@@ -10,6 +10,7 @@ const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
 const LIVE = new URLSearchParams(location.search).has('live')
 const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
 const RUN = new URLSearchParams(location.search).get('run')
+const STATIC = new URLSearchParams(location.search).has('static')
 
 /* ---------- icons ---------- */
 const I = {
@@ -449,7 +450,7 @@ export default function App() {
     if (RUN) {
       const seen = new Set<string>()
       const ingest = (ev: RawEvent) => { const d = ev.data; if (d.run_id !== RUN && !(d.parent_run_id === RUN)) return; if (d.id && seen.has(d.id)) return; if (d.id) seen.add(d.id); apply(ev) }
-      const off = subscribe(COMPANY, ingest)
+      const off = STATIC ? () => {} : subscribe(COMPANY, ingest)
       replay(RUN).then(evs => { for (const e of evs) ingest(e) }).catch(() => {})
       return off
     }
