@@ -24,3 +24,20 @@ export interface RunState {
   startedAt: number
 }
 export interface RawEvent { event: string; data: any; ts_offset_s?: number; run_id?: string; company_id?: string }
+
+/* GET /reports/{report_id} — see docs/api-contract.md */
+export interface ReportNode {
+  id: string; type: NodeType; title: string; status: NodeStatus; parent: string | null
+  data: Record<string, any>
+}
+export interface ReportDoc {
+  report_id: string; run_id: string; generated_at: string; company: string
+  question: string; answer: string
+  numbers: {
+    bank_balance?: number; payroll?: number; owed?: number
+    expected_by_target?: number; gap_then?: number; gap_now?: number
+  }
+  workflow: { nodes: ReportNode[]; edges: { from: string; to: string }[]; svg?: string }
+  actions: { title: string; result: string }[]
+  open_items: string[]; narrative: string; disclosures: string[]; pdf_url?: string
+}
