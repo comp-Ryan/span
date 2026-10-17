@@ -158,7 +158,7 @@ function buildSeries(ctx?: GraphNode, sc?: GraphNode, fc?: GraphNode, received =
   return { good: walk(inflowGood), bad: walk(inflowBad), days, target, pay, bank }
 }
 function CashChart({ ctx, sc, fc, received = 0 }: { ctx?: GraphNode; sc?: GraphNode; fc?: GraphNode; received?: number }) {
-  const W = 1240, H = 200, base = 156, top = 14
+  const W = 780, H = 220, base = 176, top = 14
   const { good, bad, days, target, pay, bank } = useMemo(() => buildSeries(ctx, sc, fc, received), [ctx, sc, fc, received])
   const step = W / days, mid = Math.floor(days / 2)
   const maxV = Math.max(...good, 1) * 1.08, minV = Math.min(...bad, 0)
@@ -203,6 +203,20 @@ function Outcome({ fc, payments, levers }: { fc?: GraphNode; payments: GraphNode
   </div>
 }
 const shift = (d?: string, days = 0) => { if (!d) return undefined; const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10) }
+function RiskPanel({ sc, fc }: { sc?: GraphNode; fc?: GraphNode }) {
+  const rows = (sc?.rows || []).filter(r => r.band !== 'green').sort((a, b) => b.amount - a.amount)
+  const atRisk = rows.reduce((a, r) => a + r.amount, 0)
+  const pess = fc?.data.pessimistic?.gap
+  return <div className="card risk">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="ic amber" style={{ width: 22, height: 22 }}>{I.trend}</span><b style={{ fontSize: 14 }}>If the slow payers slip</b></div>
+    <div className="kv" style={{ fontSize: 13 }}><span style={{ color: 'var(--muted)' }}>{rows.length} invoices not reliable by payday</span><b>{money(atRisk)} at risk</b></div>
+    <div className="risklist">
+      {rows.slice(0, 6).map((r, i) => <div className="riskrow" key={r.invoice_id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(r.customer)}</span><span className="nm">{r.customer}</span><span className="am">{money(r.amount)}</span><span className={`pc ${r.band}`}>{Math.round(r.p_paid_by_target * 100)}%</span></div>)}
+      {rows.length > 6 && <div className="fine">+ {rows.length - 6} more</div>}
+    </div>
+    {pess != null && <div className="fine" style={{ color: 'var(--amber-dk)', fontWeight: 600 }}>Worst case on payday: {pess > 0 ? `${money(pess)} short` : 'still covered'}</div>}
+  </div>
+}
 function whoOf(n: GraphNode): string {
   const t = n.title || ''
   const m = t.match(/^Texting (.+)$/) || t.match(/^Negotiating with (.+?)['’]s agent$/) || t.match(/^(.+?) replied$/) || t.match(/^(.+?) paid /)
@@ -262,9 +276,11 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
       <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex' }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={opt => decision && onDecide(decision, opt)} /></div>)}</div>
     </>}
     {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
-    {fc && fc.status === 'done' && (LIVE
-      ? <div className="chart-wrap"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
-      : <div className="chart-wrap"><CashChart ctx={ctx} sc={sc} fc={fc} received={received} /></div>)}
+    {fc && fc.status === 'done' && <div className="split">
+      {LIVE ? <div className="chart-wrap"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
+            : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} />}
+      <RiskPanel sc={sc} fc={fc} />
+    </div>}
     {actions.length > 0 && <Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} />}
     {payments.length > 0 && <Outcome fc={fc} payments={payments} levers={levers} />}
     {run.report_id && <a className="rlink" href={`/report/${run.report_id}`}>Open one-page report</a>}
