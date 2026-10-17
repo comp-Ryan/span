@@ -20,6 +20,7 @@ from owed.db import apply_runtime
 from owed.decisions import router as decisions_router, worker as decision_worker
 from owed.agents.negotiation import router as negotiation_router
 from owed.actions import payment_worker
+from owed.finance.cash import router as cash_router
 from owed.api import router as product_router
 from owed.config import settings
 from owed.hub import STATIC as HUB_STATIC, router as hub_router
@@ -48,6 +49,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 app.mount("/hub/static", StaticFiles(directory=HUB_STATIC), name="hub-static")
 app.include_router(hub_router)
 app.include_router(product_router)
+app.include_router(cash_router)
 app.include_router(events_router)
 app.include_router(runs_router)
 app.include_router(payroll_router)

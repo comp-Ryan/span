@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
 import { emptyRun, k, money, reduce } from './events'
 import { playFixture, resolveDecision, startRun, subscribe } from './api'
+import DailyCashChart from './DailyCashChart'
 
 const COMPANY = 'company-020'
 const BRAND = (import.meta.env.VITE_BRAND as string) || 'Owed'
@@ -204,7 +205,7 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
     </>}
     {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
     {actions.length > 0 && <div className="actions">{actions.map(a => <ActionCard key={a.node_id} n={a} />)}</div>}
-    {fc && fc.status === 'done' && <CashChart ctx={ctx} fc={fc} />}
+    {fc && fc.status === 'done' && (LIVE ? <DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={fc.data.cash_at_target} neverPays={fc.data.excluded_customer_id} /> : <CashChart ctx={ctx} fc={fc} />)}
   </section>
 }
 

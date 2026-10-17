@@ -48,7 +48,8 @@ def snapshot(company: str, target: date):
         invoices = [{**r, 'open_balance': max(0, q.f(r['open_balance'])-paid.get(r['invoice_id'],0))} for r in invoices]
         invoices = [r for r in invoices if r['open_balance']>0]
         deferrals = {r['bill_id']: r['due_date'] for r in c.execute('select bill_id,due_date from bill_deferrals where company_id=%s',(company,)).fetchall()}
-        bills = [b for b in bills if deferrals.get(b['bill_id'],b['due_date'])<=target]
+        bills = [{**b, 'due_date': deferrals.get(b['bill_id'], b['due_date'])} for b in bills
+                 if deferrals.get(b['bill_id'], b['due_date']) <= target]
         draw = q.owner_draw(c,company,q.AS_OF_DEFAULT)
         held = c.execute('select amount from draw_holds where company_id=%s',(company,)).fetchone()
         draw_due = 0 if held else draw

@@ -238,19 +238,36 @@ Photon webhook (server-to-server, not called by the frontend). Body is Photon's 
 ## POST /voice/transcribe
 Mic audio → text. Request: multipart `audio` (webm/opus). Response: `{ "text": "chase gallagher" }`. The frontend then calls `/command`. ElevenLabs speech for responses arrives as `speech` events.
 
-## GET /cash?company=&top3_pay_this_week=false&never_pays=
-Expected cash over the next 90 days from predicted pay dates minus payroll and bills due.
-- `top3_pay_this_week`: boolean slider.
-- `never_pays`: optional customer id slider ("if X never pays").
+## GET /cash?company=&target=&top3_pay_this_week=false&never_pays=
+Dated cash projection from the dataset's “today” (`2026-10-06`) through `target`, inclusive.
+`target` is ISO date; defaults to 90 days ahead; must be between today and today + 366 days.
+Each day is an end-of-day balance **after payroll and bills**, unlike the forecast node's
+`cash_at_target`, which is available cash **before payroll**.
+- Expected receipts are residual invoice balance × `p_paid_by_target`, posted on the model's
+  expected pay date. A receipt predicted after target is excluded (never pulled forward).
+- `pessimistic_days` excludes invoices with `p_paid_by_target < 0.7`; others retain the same weighting.
+- Payroll uses the trailing eight weeks' average per weekday, not calendar-day prorating.
+  Bills use due dates (approved cash-plan deferrals override them); overdue unpaid bills fall on day one.
+- Recorded runtime payments increase opening cash and reduce invoice balances, avoiding double-counting.
+- `top3_pay_this_week=true` advances the three largest expected receipts to at most day seven.
+  `never_pays` excludes that company-scoped customer's open invoices from both series (404 if none).
+- Historical owner draw, when present and not held, is reserved at target; its timing is estimated.
+- The forecast node's by-target classifier sum may differ from this point-date projection: the
+  classifier can assign a chance of early payment to an invoice whose expected date is later.
 ```json
 {
-  "start": "2026-10-06", "opening_balance": 104107.55,
-  "days": [ { "date": "2026-10-06", "inflow": 0, "outflow": 1200.00, "balance": 102907.55 } ],
-  "payroll_dates": ["2026-10-10", "2026-10-24"],
-  "low_point": { "date": "2026-11-21", "balance": 61240.10 },
-  "assumptions": { "top3_pay_this_week": false, "never_pays": null }
+  "start": "2026-10-06", "target": "2026-10-20", "opening_balance": 6533.65,
+  "days": [ { "date": "2026-10-06", "inflow": 0, "outflow": 1598.55, "balance": 4935.10 } ],
+  "pessimistic_days": [ { "date": "2026-10-06", "inflow": 0, "outflow": 1598.55, "balance": 4935.10 } ],
+  "payroll_dates": ["2026-10-07"],
+  "low_point": { "date": "2026-10-06", "balance": 4935.10 },
+  "pessimistic_low_point": { "date": "2026-10-06", "balance": 4935.10 },
+  "assumptions": { "top3_pay_this_week": false, "never_pays": null, "pessimistic_threshold": 0.7,
+    "clock": "dataset", "inflows": "probability_weighted_on_expected_date",
+    "payroll": "trailing_8_week_weekday_average", "overdue_bills": "due_on_start", "owner_draw": "reserved_at_target" }
 }
 ```
+Both series have exactly one row per date; the abbreviated example omits subsequent rows.
 
 ## GET /model/metrics
 Shown in the footer and the write-up.
