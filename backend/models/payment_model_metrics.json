@@ -1,0 +1,33 @@
+{
+  "trained_at": "2026-10-17T15:01:00.400131-07:00",
+  "holdout_days": 60,
+  "test_window": [
+    "2026-06-08",
+    "2026-08-07"
+  ],
+  "n_companies": 86,
+  "n_invoices_train": 45529,
+  "n_invoices_test": 15610,
+  "auc_paid_within_30d": 0.968,
+  "auc_all_horizons": 0.998,
+  "auc_write_off_holdout": null,
+  "auc_write_off_cv5": 0.795,
+  "n_write_offs": 46,
+  "mae_days_late": 1.25,
+  "baseline_mae_customer_avg": 1.36,
+  "model": "HistGradientBoosting (horizon CDF classifier + write-off classifier)",
+  "features": [
+    "terms_days",
+    "n_paid",
+    "avg_late",
+    "sd_late",
+    "late_rate",
+    "max_late",
+    "n_wo",
+    "amount_ratio",
+    "amount_log",
+    "horizon",
+    "profile one-hot"
+  ],
+  "notes": "History features use only invoices paid before the target invoice's due date. Test window is 60 days ending 60 days before the dataset end so labels are settled."
+}

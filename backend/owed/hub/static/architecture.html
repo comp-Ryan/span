@@ -4,12 +4,14 @@
 <pre class="mermaid">
 flowchart LR
   subgraph entry[Entry points]
-    CALL[Phone call / SMS<br/>Photon 2.0]
+    CALL[Phone call / SMS<br/>Photon 2.0 audio stream]
     ASI[ASI:One chat<br/>Fetch Agentverse]
     WEB[Web page<br/>Paper frontend]
   end
   subgraph brain[Backend · FastAPI on Vultr · traced by Sentry]
-    PLAN[Planner<br/>Jev if tool-calling, else Gemini]
+    LIVE[Gemini Live<br/>hear · think · call tools<br/>text out]
+    TTS[ElevenLabs streaming TTS<br/>voice back to the call + page]
+    PLAN[Gemini tool loop<br/>web + SMS + ASI:One]
     TOOLS[Finance tools<br/>forecast_cash · predict_payment · score_customer · rank_chase · defer_bill<br/>Jev if available, else Owed model]
     DRAFT[Drafter<br/>Qwen3-1.7B fine-tuned on Veri<br/>fallback Gemini]
     NEG[Negotiation<br/>owed-agent ⇄ customer agents<br/>uAgents on Agentverse]
@@ -21,7 +23,10 @@ flowchart LR
     DB[(100 companies<br/>84k invoices · 144k payments<br/>26k payroll runs · bills · bank)]
     RT[(runtime: runs · events · reminders<br/>negotiations · payments · reports)]
   end
-  CALL --> PLAN
+  CALL -->|audio| LIVE
+  LIVE -->|text| TTS -->|audio| CALL
+  LIVE --> TOOLS
+  LIVE --> EV
   ASI --> PLAN
   WEB -->|POST /ask| PLAN
   PLAN --> TOOLS --> DB
@@ -60,7 +65,7 @@ flowchart TB
 <div class="grid">
 <div class="card"><b>Fast lane</b><br>Event arrives (payment, reply, slider). Finance tool returns numbers in well under a second. Node updates immediately. Many calls per minute, no prose.</div>
 <div class="card"><b>Slow lane</b><br>Debounced. Planner reads before/after numbers and context, decides levers, writes the spoken sentence and the report. Two to five seconds. The "why" lands after the "what" has already moved.</div>
-<div class="card"><b>Swappable</b><br>PLANNER=jev|gemini and FINANCE_TOOLS=jev|owed_model are config. Decided at the Intuit booth in hour one. Same code, same events either way.</div>
+<div class="card"><b>On the call</b><br>Gemini Live hears and reasons and calls tools in one loop; Jev (or the Owed model) answers the finance tools in under 300 ms; ElevenLabs speaks the reply in ~100 ms. About one second to the first spoken word. FINANCE_TOOLS=jev|owed_model is config.</div>
 </div>
 <h2 style="margin-top:28px">Who builds what</h2>
 <div class="grid">

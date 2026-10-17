@@ -63,7 +63,7 @@ Not a page. A **workflow canvas** that lays out nodes as events arrive, plus a *
 | MLH Tiger Data | Postgres (Tiger Cloud) is the app DB; cash series as a hypertable | 1 |
 | MLH Vultr | Backend hosted on Vultr | 1 |
 | MLH Domain | Bought at GoDaddy Registry | 1 |
-| MLH ElevenLabs | Voice: spoken confirmations, talk-to-Owed mode | 2 |
+| MLH ElevenLabs | The voice of Owed on the call (streaming TTS behind Gemini Live) | 1 |
 | MLH Solana | Second pay rail: USDC on Solana devnet | 2 |
 | StepFun | Customer texts a photo of a mailed check; step-5-preview reads it, marks invoice pending | 3 |
 | Browser Use | When a customer requires portal submission, agent submits the invoice on a (mock) vendor portal | 3 |
@@ -95,7 +95,15 @@ Type: one serif for the brief line, one sans elsewhere. One accent for actions. 
 
 - **DB: Tiger Cloud Postgres.** Flattened tables: companies, customers, vendors, invoices, invoice_lines, customer_payments, payment_applications, bills, bill_payments, payroll_runs, ar_aging, ap_aging, pnl_monthly. Hypertable `cash_projection(company_id, day, inflow, outflow, balance, scenario)`. Runtime tables: reminders, messages, negotiations, payments, events.
 - **Backend: Python FastAPI** on Vultr. Endpoints per `docs/api-contract.md`. SSE carries workflow node/edge events, decisions, speech, and report-ready.
-- **Planner / tools are swappable.** Planner = Jev if it supports tool calling, else Gemini. Finance tools (forecast_cash, predict_payment, score_customer, rank_chase, defer_bill) = Jev if hackers can call it, else our trained model. One config line; decided at the Intuit booth in hour one.
+- **Call path (Ryan's decision, Oct 17 ~3 PM): Gemini Live + ElevenLabs + Jev.**
+  1. Photon answers the call and streams caller audio to the backend over a websocket.
+  2. Backend opens a Gemini Live session and forwards audio. Gemini Live does hearing, reasoning and tool calling in one low-latency loop (no separate STT).
+  3. Tools declared to Gemini Live: forecast_cash, predict_payment, score_customer, rank_chase, defer_bill, draft_reminder, send_message, query_books, show_node. Backend executes them: Jev where available (fast lane), else the Owed payment model. Every tool call emits a node event immediately.
+  4. Gemini Live replies in TEXT; ElevenLabs streaming TTS (Flash) turns it into voice (~100 ms first audio) and the audio goes back through Photon. The same text is a transcript line on the page.
+  5. Barge-in: Gemini Live detects interruption; we cut ElevenLabs playback.
+  Latency budget: ~0.5 s Gemini first response + <0.3 s Jev tool + ~0.1 s ElevenLabs ≈ 1 s to first spoken word, canvas moving before the voice starts.
+  Fallbacks: if Photon has no bidirectional media stream → Twilio media streams for voice, Photon keeps SMS/replies/reminders. If ElevenLabs hop misbehaves → Gemini Live native audio (one-line change). If Jev unavailable → Owed model is the fast lane.
+- **Web path.** Typed questions use the same tools and emit the same events via the standard Gemini API (non-Live) tool loop. One tool set, one event stream, two front doors. Finance tools remain swappable (`FINANCE_TOOLS=jev|owed_model`).
 - **Tool set:** forecast_cash, predict_payment, score_customer, rank_chase, draft_reminder, send_message, negotiate, issue_pay_link, defer_bill, query_books, show_node, speak, write_report. Every tool call emits a node or node update.
 - **Models.**
   - *Payment-behavior model* (scikit-learn gradient-boosted trees or LightGBM): per open invoice → expected days-to-pay, p(never pay). Trained across all 100 companies, last 60 sim-days held out. Metrics reported.
@@ -105,7 +113,7 @@ Type: one serif for the brief line, one sans elsewhere. One accent for actions. 
 - **Agents (Fetch uAgents).** `owed-agent` (one per demo company) registered on Agentverse with Chat Protocol; ASI:One queries route to `/ask` and `/command`. `customer-agent-<id>` for each customer in the demo company, also on Agentverse, persona = that customer's real payment history (median lateness, write-off history, terms). Negotiation protocol: propose → counter → accept/decline, max 4 rounds, every message mirrored to the feed. Owner rules (configurable): accept installments only for customers with ≥80% paid history; never discount more than 5%; escalate disputes to human.
 - **Channels (Photon 2.0).** Outbound reminders via email and SMS; inbound replies webhook → classifier → feed → negotiation or human decision. Fallback if Photon beta fails in hour one: SMTP for email + Telegram Bot for inbound; lose Photon prize only.
 - **Payments.** Pay link page (Devin builds): Visa sandbox card rail; Solana devnet USDC rail (Tier 2) via a Phantom-compatible devnet wallet and a backend that watches for the transfer. Either rail marks the invoice paid, writes a customer_payment row, fires `card.updated`.
-- **Voice.** Inbound call audio via Photon → STT (Gemini audio, or Photon's if provided) → planner → spoken reply. TTS is Photon's native voice if it has one, else ElevenLabs. ElevenLabs is plumbing, not a feature.
+- **Voice.** ElevenLabs is the voice of Owed on the call and on the page (same voice both places). See call path above.
 - **StepFun (Tier 3).** Inbound Photon MMS with an image → step-5-preview extracts payer, amount, check number → invoice marked `pending_check`.
 - **Browser Use (Tier 3).** Customers flagged `requires_portal` → Browser Use agent opens the mock vendor portal (a static page we host), fills invoice fields, uploads PDF, captures confirmation number → feed.
 - **Observability (Sentry).** SDK with Tracing on every request, AI agent monitoring on every Gemini/drafter call, Logs. Write-up: the bug a trace found.
