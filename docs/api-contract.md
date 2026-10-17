@@ -385,3 +385,18 @@ links, synthetic-message labels, negotiation approval options and simulated rece
 
 Forecast data also carries the current `bank_balance` (including runtime payments), so
 clients must prefer it to the initial context bank value when rendering refreshed cash.
+
+## Production UI and API routing
+The built Vite frontend is served by FastAPI at `/`; `/?live` uses the same-origin
+`/api` prefix, while the default view replays the fixture. `/?live&run=<run_id>` replays
+an existing run and continues its live event stream. `/report/{report_id}` serves the
+product report page; `/reports/{report_id}` remains the JSON API and `.pdf` remains PDF.
+Every product API route (including events, pay, voice, health, runs and decisions) is
+available at **both** its original path and `/api` + that path, with identical shapes.
+Legacy callbacks and pay links therefore keep working. Static asset misses and unknown
+API paths return 404, never an HTML success response.
+
+The development/submission hub is at `/hub` → `/hub/timeline`, with `/hub/questions`,
+`/hub/architecture`, `/hub/spec`, `/hub/static/*`, and `/hub/api/*`. Legacy hub page URLs
+(`/timeline`, `/questions`, `/architecture`, `/spec`) are retained. With no product build,
+`/` redirects to `/hub` rather than serving a broken app. Build/restart before production.

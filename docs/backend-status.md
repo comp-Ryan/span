@@ -48,3 +48,23 @@ session to re-copy it. Preserve the worktree's stable `AGENT_SEED` unless intent
 rotating agent identities. Never commit `.env`, the model pickle, database dumps, or logs.
 Use `backend/.env.example` for setting names and `deploy/README.md` for deployment.
 Deployment additionally needs an SSH host (or Vultr API key to provision) and API domain.
+
+## Frontend integration update — October 17, 4:25 PM
+
+Five ordered follow-up deliverables:
+1. PR #12: `/cash` daily expected and pessimistic series, live chart uses API values.
+2. PR #13: forecast `pessimistic` uses the same 70% threshold; downside-aware answer.
+3. PR #14: company-scoped parent runs, Evergreen what-if exclusion, late-invoice branch.
+4. PR #17: real frontend Yes click exercised three labeled simulated reminders, four
+   local uAgent messages, an agreed plan, and browser test-card payment of $183.10.
+   Forecast gap changed from $384.94 to $260.43. That isolated simulated run was reset
+   afterward. Real Photon messages await actual inbound replies, never fake delivery.
+5. Production UI package: `npm run build` outputs `backend/owed/static`; Docker's Node
+   stage builds it. Product `/`, API `/api/*` plus legacy routes, hub `/hub`, report
+   `/report/:id`. Frontend and 40 backend tests pass; live page served on port 8000.
+
+The step-4 replay evidence is local-only at `.local/browser-e2e-step4.json`. Subsequent
+frontend changes from the main session (conversation layout and report page) were
+merged without discarding the live accounting, simulation labels, or approval behavior.
+Public service/deployment credential limitations above still apply. No `.env` was
+re-copied during this update because a keys-ready instruction has not yet arrived.
