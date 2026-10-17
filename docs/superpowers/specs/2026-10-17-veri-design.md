@@ -1,7 +1,7 @@
 # Veri — Design Spec and Build Schedule
 
 Hackathon: LA Hacks AI 2026, UCLA. Sat Oct 17 – Sun Oct 18, 2026. Deadline Sun 12:00 PM (confirm on Devpost at opening).
-Builder: Ryan, solo. Devin does the frontend structure. Domain: veri.studio.
+Builder: Ryan, solo. Workflow: Ryan builds the frontend in Paper; Claude builds the backend from this spec and `docs/api-contract.md`; Devin gets one self-contained chunk (Snowflake loader or Visa checkout page plus tests) for the Cognition entry. Domain: veri.studio.
 
 ## Intent
 
@@ -49,7 +49,8 @@ Type: one serif for the brief line, one sans for everything else. One accent col
 - **Agent:** uAgent in the same process (or sidecar) registered on Agentverse with Chat Protocol. Maps chat text → `/ask`, and "pay X" → `/pay`.
 - **Payments:** Visa sandbox. The reminder carries a pay link; the payer's side is a minimal hosted checkout that runs a tokenized sandbox payment and marks the invoice paid. This is the "GenAI commerce with secure payments" story: the agent drafts, the customer pays, the books update.
 - **Voice:** ElevenLabs TTS on the brief text, cached per brief.
-- **Frontend:** Next.js + Tailwind. Devin builds scaffold, theme tokens, assistant/ask panel, queue component, payment flow, Playwright tests, Vultr deploy script. Ryan owns the brief screen layout, type, motion, and copy.
+- **Frontend:** Built by Ryan in Paper, exported to whatever Paper produces (confirm in hour one whether it exports a deployable React/HTML bundle or needs a host). Talks to the backend only through `docs/api-contract.md`. Claude writes no frontend code unless asked.
+- **Devin:** one chunk, briefed with the contract: the Snowflake flattener/loader with tests, or the Visa pay-link checkout page. Keep the session link.
 - **Hosting:** one Vultr VM, Docker compose (api + web). veri.studio → Vultr.
 
 ## Model Learning content (the "learned" part)
