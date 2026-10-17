@@ -103,7 +103,7 @@ async def settle_negotiation(row):
             installments.append({'amount':float(amount),'due':(q.AS_OF_DEFAULT+timedelta(days=14*i)).isoformat(),'pay_token':token})
         agreement={'installments':installments}
         c.execute("update negotiations set status='agreed',agreement=%s where negotiation_id=%s",(Jsonb(agreement),neg['negotiation_id']))
-        emit(row['run_id'],'node.update',{'node_id':row['node_id'],'status':'done','data':{'agreement':agreement}},connection=c)
+        emit(row['run_id'],'node.update',{'node_id':row['node_id'],'status':'waiting','data':{'agreement':agreement}},connection=c)
     await asyncio.to_thread(emit,row['run_id'],'speech',{'text':'The simulated customer agent agreed to the payment plan. The installment links are ready.','audio_url':None})
 
 

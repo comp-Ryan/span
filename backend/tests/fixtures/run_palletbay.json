@@ -1,0 +1,842 @@
+{
+  "run_id": "run-0001",
+  "events": [
+    {
+      "event": "run.start",
+      "data": {
+        "question": "Am I making payroll Friday?",
+        "source": "call",
+        "id": "1",
+        "ts": "2026-10-17T19:30:00-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n1",
+        "type": "context",
+        "title": "Pulling up context",
+        "status": "running",
+        "parent": null,
+        "id": "2",
+        "ts": "2026-10-17T19:30:00.400000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n1",
+        "status": "done",
+        "data": {
+          "company": "Palletbay Storage & Warehousing",
+          "payroll_date": "2026-10-16",
+          "payroll_amount": 13275.0,
+          "bank_balance": 6533.65
+        },
+        "id": "3",
+        "ts": "2026-10-17T19:30:01.500000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n2",
+        "type": "scoring",
+        "title": "Scoring 204 open invoices",
+        "status": "running",
+        "parent": "n1",
+        "id": "4",
+        "ts": "2026-10-17T19:30:01.800000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 17,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03280",
+          "customer": "Evergreen Juniper Flats Removals",
+          "amount": 338.04,
+          "days_past_due": 8,
+          "p_paid_by_target": 0.062,
+          "expected_pay_date": "2026-10-21",
+          "p_never": 0.056,
+          "band": "amber",
+          "source": "owed_model"
+        },
+        "id": "5",
+        "ts": "2026-10-17T19:30:02.050000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 34,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03174",
+          "customer": "Evergreen Juniper Flats Removals",
+          "amount": 100.76,
+          "days_past_due": 20,
+          "p_paid_by_target": 0.939,
+          "expected_pay_date": "2026-10-09",
+          "p_never": 0.056,
+          "band": "green",
+          "source": "owed_model"
+        },
+        "id": "6",
+        "ts": "2026-10-17T19:30:02.300000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 51,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03308",
+          "customer": "Yeoman Roasters Co.",
+          "amount": 309.87,
+          "days_past_due": 6,
+          "p_paid_by_target": 0.002,
+          "expected_pay_date": "2026-10-21",
+          "p_never": 0.056,
+          "band": "amber",
+          "source": "owed_model"
+        },
+        "id": "7",
+        "ts": "2026-10-17T19:30:02.550000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 68,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03162",
+          "customer": "Yeoman Roasters Co.",
+          "amount": 82.64,
+          "days_past_due": 21,
+          "p_paid_by_target": 0.929,
+          "expected_pay_date": "2026-10-07",
+          "p_never": 0.056,
+          "band": "green",
+          "source": "owed_model"
+        },
+        "id": "8",
+        "ts": "2026-10-17T19:30:02.800000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 85,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03346",
+          "customer": "Lindqvist & Daughters Provisions",
+          "amount": 234.75,
+          "days_past_due": 1,
+          "p_paid_by_target": 0.002,
+          "expected_pay_date": "2026-10-26",
+          "p_never": 0.056,
+          "band": "amber",
+          "source": "owed_model"
+        },
+        "id": "9",
+        "ts": "2026-10-17T19:30:03.050000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 102,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03236",
+          "customer": "Lindqvist & Daughters Provisions",
+          "amount": 133.91,
+          "days_past_due": 13,
+          "p_paid_by_target": 0.484,
+          "expected_pay_date": "2026-10-14",
+          "p_never": 0.056,
+          "band": "amber",
+          "source": "owed_model"
+        },
+        "id": "10",
+        "ts": "2026-10-17T19:30:03.300000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 119,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03303",
+          "customer": "Hearth Trading Partners",
+          "amount": 281.7,
+          "days_past_due": 6,
+          "p_paid_by_target": 0.001,
+          "expected_pay_date": "2026-10-18",
+          "p_never": 0.056,
+          "band": "amber",
+          "source": "owed_model"
+        },
+        "id": "11",
+        "ts": "2026-10-17T19:30:03.550000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 136,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03217",
+          "customer": "Hearth Trading Partners",
+          "amount": 128.55,
+          "days_past_due": 15,
+          "p_paid_by_target": 0.939,
+          "expected_pay_date": "2026-10-09",
+          "p_never": 0.056,
+          "band": "green",
+          "source": "owed_model"
+        },
+        "id": "12",
+        "ts": "2026-10-17T19:30:03.800000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 153,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03309",
+          "customer": "Okonkwo & Daughters Roasters",
+          "amount": 215.97,
+          "days_past_due": 6,
+          "p_paid_by_target": 0.001,
+          "expected_pay_date": "2026-10-19",
+          "p_never": 0.056,
+          "band": "amber",
+          "source": "owed_model"
+        },
+        "id": "13",
+        "ts": "2026-10-17T19:30:04.050000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 170,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03231",
+          "customer": "Okonkwo & Daughters Roasters",
+          "amount": 42.26,
+          "days_past_due": 14,
+          "p_paid_by_target": 0.935,
+          "expected_pay_date": "2026-10-11",
+          "p_never": 0.056,
+          "band": "green",
+          "source": "owed_model"
+        },
+        "id": "14",
+        "ts": "2026-10-17T19:30:04.300000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 187,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03257",
+          "customer": "Bellrock Sterling Florals Company",
+          "amount": 122.07,
+          "days_past_due": 12,
+          "p_paid_by_target": 0.0,
+          "expected_pay_date": "2026-10-18",
+          "p_never": 0.056,
+          "band": "amber",
+          "source": "owed_model"
+        },
+        "id": "15",
+        "ts": "2026-10-17T19:30:04.550000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "progress": {
+          "done": 204,
+          "total": 204
+        },
+        "row": {
+          "invoice_id": "inv-03157",
+          "customer": "Bellrock Sterling Florals Company",
+          "amount": 54.09,
+          "days_past_due": 21,
+          "p_paid_by_target": 0.939,
+          "expected_pay_date": "2026-10-09",
+          "p_never": 0.056,
+          "band": "green",
+          "source": "owed_model"
+        },
+        "id": "16",
+        "ts": "2026-10-17T19:30:04.800000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n2",
+        "status": "done",
+        "progress": {
+          "done": 204,
+          "total": 204
+        },
+        "id": "17",
+        "ts": "2026-10-17T19:30:05.100000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n3",
+        "type": "forecast",
+        "title": "Forecasting Friday",
+        "status": "running",
+        "parent": "n2",
+        "id": "18",
+        "ts": "2026-10-17T19:30:05.400000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n3",
+        "status": "done",
+        "data": {
+          "owed_total": 28508.72,
+          "expected_by_target": 7494.86,
+          "bills_due_by_target": 9268.31,
+          "cash_at_target": 4760.2,
+          "need": 13275.0,
+          "gap": 8514.8
+        },
+        "id": "19",
+        "ts": "2026-10-17T19:30:06.300000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n4",
+        "type": "answer",
+        "title": "No. $8,515 short.",
+        "status": "done",
+        "parent": "n3",
+        "data": {
+          "answer": "no",
+          "gap": 8514.8,
+          "spoken": "No. You're about eighty-five hundred short for payroll on the sixteenth."
+        },
+        "id": "20",
+        "ts": "2026-10-17T19:30:06.800000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n5",
+        "type": "levers",
+        "title": "What closes the gap",
+        "status": "running",
+        "parent": "n4",
+        "id": "21",
+        "ts": "2026-10-17T19:30:07.400000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n5",
+        "status": "done",
+        "data": {
+          "levers": [
+            {
+              "id": "chase",
+              "label": "Text 3 reliable late payers",
+              "recovers": 1807.14,
+              "targets": [
+                {
+                  "invoice_id": "inv-03280",
+                  "customer": "Evergreen Juniper Flats Removals",
+                  "amount": 338.04,
+                  "reason": "6 invoices overdue ($1,156.20); paid all 70 past invoices, about 23 days late on average"
+                },
+                {
+                  "invoice_id": "inv-03308",
+                  "customer": "Yeoman Roasters Co.",
+                  "amount": 309.87,
+                  "reason": "4 invoices overdue ($668.58); paid all 54 past invoices, about 21 days late on average"
+                },
+                {
+                  "invoice_id": "inv-03346",
+                  "customer": "Lindqvist & Daughters Provisions",
+                  "amount": 234.75,
+                  "reason": "4 invoices overdue ($553.27); paid all 48 past invoices, about 21 days late on average"
+                }
+              ]
+            },
+            {
+              "id": "defer_bill",
+              "label": "Slide Havenwood Supply bill 8 days",
+              "recovers": 8166.78,
+              "bill_id": "bill-03407",
+              "vendor_tolerance": "medium"
+            }
+          ],
+          "recommended": [
+            "chase",
+            "defer_bill"
+          ],
+          "ask_spoken": "If I text Evergreen, Yeoman and Lindqvist and slide the Havenwood bill eight days, you clear it. Want me to text them?"
+        },
+        "id": "22",
+        "ts": "2026-10-17T19:30:08.800000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "decision",
+      "data": {
+        "decision_id": "d1",
+        "node_id": "n5",
+        "prompt": "Text them?",
+        "options": [
+          {
+            "id": "yes",
+            "label": "Yes, text them"
+          },
+          {
+            "id": "chase_only",
+            "label": "Text, don't touch bills"
+          },
+          {
+            "id": "no",
+            "label": "Not now"
+          }
+        ],
+        "auto_resolves_in_s": null,
+        "id": "23",
+        "ts": "2026-10-17T19:30:09-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n6",
+        "type": "action",
+        "title": "Texting Evergreen Juniper Flats Removals",
+        "status": "running",
+        "parent": "n5",
+        "data": {
+          "kind": "reminder",
+          "invoice_id": "inv-03280",
+          "channel": "sms",
+          "draft": {
+            "body": "Hi Evergreen team, this is Palletbay Storage. You have 6 invoices past due totaling $1,156.20, the oldest 20 days late. Tap the link to pay by card, or reply here to talk terms.",
+            "tone": "firm",
+            "source": "gemini"
+          }
+        },
+        "id": "24",
+        "ts": "2026-10-17T19:30:15-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n6",
+        "status": "done",
+        "data": {
+          "sent_at": "2026-10-17T19:30:16.200000-07:00",
+          "reminder_id": "rem-0001",
+          "pay_link": "/pay/tok_7c1e9a42"
+        },
+        "id": "25",
+        "ts": "2026-10-17T19:30:16.200000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n7",
+        "type": "action",
+        "title": "Texting Yeoman Roasters Co.",
+        "status": "running",
+        "parent": "n5",
+        "data": {
+          "kind": "reminder",
+          "invoice_id": "inv-03308",
+          "channel": "sms",
+          "draft": {
+            "body": "Hi Yeoman Roasters, this is Palletbay Storage. 4 invoices totaling $668.58 are past due, the oldest 21 days. Tap the link to pay by card, or reply here to talk terms.",
+            "tone": "firm",
+            "source": "gemini"
+          }
+        },
+        "id": "26",
+        "ts": "2026-10-17T19:30:16.600000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n7",
+        "status": "done",
+        "data": {
+          "sent_at": "2026-10-17T19:30:17.800000-07:00",
+          "reminder_id": "rem-0002",
+          "pay_link": "/pay/tok_b03d5f18"
+        },
+        "id": "27",
+        "ts": "2026-10-17T19:30:17.800000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n8",
+        "type": "action",
+        "title": "Texting Lindqvist & Daughters Provisions",
+        "status": "running",
+        "parent": "n5",
+        "data": {
+          "kind": "reminder",
+          "invoice_id": "inv-03346",
+          "channel": "sms",
+          "draft": {
+            "body": "Hi Lindqvist team, this is Palletbay Storage. 4 invoices totaling $553.27 are past due, the oldest 21 days. Tap the link to pay by card, or reply here to talk terms.",
+            "tone": "firm",
+            "source": "gemini"
+          }
+        },
+        "id": "28",
+        "ts": "2026-10-17T19:30:18.200000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n8",
+        "status": "done",
+        "data": {
+          "sent_at": "2026-10-17T19:30:19.400000-07:00",
+          "reminder_id": "rem-0003",
+          "pay_link": "/pay/tok_e5a2c977"
+        },
+        "id": "29",
+        "ts": "2026-10-17T19:30:19.400000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n9",
+        "type": "action",
+        "title": "Evergreen replied",
+        "status": "done",
+        "parent": "n6",
+        "data": {
+          "kind": "reply",
+          "text": "Cash is tight this month. Can we split this into two?",
+          "classification": "wants_plan"
+        },
+        "id": "30",
+        "ts": "2026-10-17T19:30:57.400000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n10",
+        "type": "action",
+        "title": "Negotiating with Evergreen's agent",
+        "status": "running",
+        "parent": "n9",
+        "data": {
+          "kind": "negotiation",
+          "negotiation_id": "neg-0001",
+          "rounds": []
+        },
+        "id": "31",
+        "ts": "2026-10-17T19:30:58.200000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n10",
+        "data": {
+          "round": {
+            "n": 1,
+            "from": "owed",
+            "text": "We can do two payments of $578.10: the first today, the second by October 30.",
+            "cash_effect": -578.1,
+            "p_honored": 0.86
+          }
+        },
+        "id": "32",
+        "ts": "2026-10-17T19:31:00.700000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n10",
+        "data": {
+          "round": {
+            "n": 1,
+            "from": "customer",
+            "text": "Two payments works. I'll pay the first one now.",
+            "cash_effect": -578.1,
+            "p_honored": 0.91
+          }
+        },
+        "id": "33",
+        "ts": "2026-10-17T19:31:03.700000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "decision",
+      "data": {
+        "decision_id": "d2",
+        "node_id": "n10",
+        "prompt": "Accept two installments? (Evergreen has paid 70 of 70)",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept"
+          },
+          {
+            "id": "decline",
+            "label": "Decline"
+          },
+          {
+            "id": "call",
+            "label": "Call them"
+          }
+        ],
+        "auto_resolves_in_s": 8,
+        "default": "accept",
+        "id": "34",
+        "ts": "2026-10-17T19:31:04-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.create",
+      "data": {
+        "node_id": "n11",
+        "type": "action",
+        "title": "Evergreen paid $578.10",
+        "status": "done",
+        "parent": "n10",
+        "data": {
+          "kind": "payment",
+          "rail": "visa",
+          "amount": 578.1,
+          "receipt": {
+            "last4": "1111",
+            "paid_at": "2026-10-17T19:31:56-07:00"
+          }
+        },
+        "id": "35",
+        "ts": "2026-10-17T19:31:56-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n10",
+        "status": "waiting",
+        "data": {
+          "agreement": {
+            "installments": [
+              {
+                "amount": 578.1,
+                "due": "2026-10-17",
+                "pay_token": "tok_7c1e9a42"
+              },
+              {
+                "amount": 578.1,
+                "due": "2026-10-30",
+                "pay_token": "tok_4f80d2b6"
+              }
+            ]
+          }
+        },
+        "id": "36",
+        "ts": "2026-10-17T19:31:56.200000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "node.update",
+      "data": {
+        "node_id": "n3",
+        "data": {
+          "cash_at_target": 5338.3,
+          "gap": 7936.7
+        },
+        "id": "37",
+        "ts": "2026-10-17T19:31:56.500000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "speech",
+      "data": {
+        "text": "Evergreen agreed to two payments and the first just landed. You're now about seventy-nine hundred short. Yeoman and Lindqvist haven't replied yet.",
+        "audio_url": "/audio/ev-0038.mp3",
+        "id": "38",
+        "ts": "2026-10-17T19:31:57.300000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "report.ready",
+      "data": {
+        "report_id": "rep-0001",
+        "url": "/reports/rep-0001",
+        "id": "39",
+        "ts": "2026-10-17T19:31:59.300000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    },
+    {
+      "event": "run.end",
+      "data": {
+        "status": "open",
+        "id": "40",
+        "ts": "2026-10-17T19:31:59.400000-07:00",
+        "company_id": "company-020",
+        "run_id": "run-0001"
+      }
+    }
+  ],
+  "fixture_kind": "scripted integration-test scenario; not a current model forecast or evidence of live sends/payments"
+}

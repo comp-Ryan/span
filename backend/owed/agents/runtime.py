@@ -7,7 +7,7 @@ from uuid import uuid4
 import httpx
 from uagents import Agent, Bureau, Context, Protocol
 from uagents_core.contrib.protocols.chat import ChatAcknowledgement, ChatMessage, EndSessionContent, TextContent, chat_protocol_spec
-from uagents_core.registration import AgentRegistrationPolicy
+from uagents_core.registration import AgentRegistrationPolicy, BatchRegistrationPolicy
 from uagents_core.utils.registration import RegistrationRequestCredentials, register_chat_agent
 
 from owed.agents.protocol import Counter, Proposal, counter
@@ -18,6 +18,14 @@ from owed.finance import queries as q
 
 class LocalOnly(AgentRegistrationPolicy):
     async def register(self, *args, **kwargs):
+        return None
+
+
+class LocalBatch(BatchRegistrationPolicy):
+    async def register(self):
+        return None
+
+    def add_agent(self, *args, **kwargs):
         return None
 
 
@@ -90,7 +98,7 @@ def build():
         register_chat_agent(name='Owed — payroll and collections', endpoint=settings.agent_public_endpoint,
             active=True, credentials=RegistrationRequestCredentials(agent_seed_phrase=seed_for(), agentverse_api_key=settings.agentverse_api_key),
             readme='Ask whether payroll is covered, inspect real payment-history forecasts, and request collection actions. Customer agents are simulated from dataset history.')
-    bureau = Bureau(agents=agents, port=settings.agent_port, endpoint=settings.agent_public_endpoint or f'http://127.0.0.1:{settings.agent_port}/submit')
+    bureau = Bureau(agents=agents, registration_policy=None if settings.agentverse_api_key else LocalBatch(), port=settings.agent_port, endpoint=settings.agent_public_endpoint or f'http://127.0.0.1:{settings.agent_port}/submit')
     return bureau
 
 

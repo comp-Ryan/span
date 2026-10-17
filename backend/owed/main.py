@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException
 
 from owed.events import router as events_router
 from owed.runs import router as runs_router
+from owed.reports.api import router as reports_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -52,6 +53,7 @@ app.include_router(voice_router)
 app.include_router(photon_router)
 app.include_router(decisions_router)
 app.include_router(negotiation_router)
+app.include_router(reports_router)
 
 
 @app.exception_handler(HTTPException)

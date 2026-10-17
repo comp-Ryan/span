@@ -17,6 +17,8 @@ dependencies = [
   "uagents>=0.26.1",
   "python-dotenv>=1.0",
   "sentry-sdk[fastapi]>=2.0",
+  "reportlab>=4.2",
+  "svglib>=1.5",
 ]
 
 [project.optional-dependencies]
