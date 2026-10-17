@@ -1,4 +1,4 @@
-import type { RawEvent } from './types'
+import type { RawEvent, ReportDoc } from './types'
 
 const BASE = '/api'
 
@@ -12,6 +12,11 @@ export async function resolveDecision(decisionId: string, optionId: string, comp
 }
 export async function replay(runId: string): Promise<RawEvent[]> {
   const r = await fetch(`${BASE}/runs/${runId}`); const j = await r.json(); return j.events || []
+}
+export async function getReport(id: string): Promise<ReportDoc> {
+  const r = await fetch(`${BASE}/reports/${encodeURIComponent(id)}`)
+  if (!r.ok) throw new Error(`${r.status}`)
+  return r.json()
 }
 export function subscribe(company: string, onEvent: (e: RawEvent) => void): () => void {
   const es = new EventSource(`${BASE}/events?company=${encodeURIComponent(company)}`)

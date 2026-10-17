@@ -263,6 +263,7 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
       : <div className="chart-wrap"><CashChart ctx={ctx} sc={sc} fc={fc} received={received} /></div>)}
     {actions.length > 0 && <Conversations actions={actions} />}
     {(payments.length > 0 || run.status === 'closed') && <Outcome fc={fc} payments={payments} levers={levers} />}
+    {run.report_id && <a className="rlink" href={`/report/${run.report_id}`}>Open one-page report</a>}
   </section>
 }
 
