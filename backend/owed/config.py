@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     agent_port: int = 8001
     internal_api_url: str = "http://127.0.0.1:8000"
     customer_agent_endpoint: str = "http://127.0.0.1:8001/submit"
+    photon_owner_handle: str = ""
     photon_project_id: str = ""
     photon_sms_sender_id: str = ""
     photon_email_sender_id: str = ""

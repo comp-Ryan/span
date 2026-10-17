@@ -20,6 +20,7 @@ from owed.db import apply_runtime
 from owed.decisions import router as decisions_router, worker as decision_worker
 from owed.agents.negotiation import router as negotiation_router
 from owed.actions import payment_worker
+from owed.api import router as product_router
 from owed.config import settings
 from owed.hub import STATIC as HUB_STATIC, router as hub_router
 from owed.payments import router as pay_router
@@ -46,6 +47,7 @@ app = FastAPI(title="Owed", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/hub/static", StaticFiles(directory=HUB_STATIC), name="hub-static")
 app.include_router(hub_router)
+app.include_router(product_router)
 app.include_router(events_router)
 app.include_router(runs_router)
 app.include_router(payroll_router)
@@ -69,5 +71,11 @@ app.include_router(pay_router)
 
 @app.get("/health")
 def health():
-    return {"ok": True, "planner": settings.planner, "finance_tools": settings.finance_tools,
-            "visa": "sandbox" if visa.configured() else "simulated", "solana": "devnet"}
+    from owed.db import conn
+    with conn() as c:
+        c.execute('select 1')
+    return {"ok": True, "db": "postgres", "gemini": bool(settings.gemini_api_key),
+            "drafter": "template_fallback", "photon": bool(settings.photon_api_key and settings.photon_project_id),
+            "visa": "sandbox" if visa.configured() else "simulated", "solana": "devnet",
+            "agentverse": bool(settings.agentverse_api_key and settings.agent_public_endpoint), "jev": False,
+            "planner": settings.planner, "finance_tools": settings.finance_tools}

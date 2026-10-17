@@ -294,3 +294,7 @@ Resolved decisions emit `node.update` with `data.decision_id`, `data.resolved`, 
 Reports accept the standard `company` query parameter and are rebuilt from current events on read, preserving the report ID. Simulated card receipts are disclosed as simulation rather than a Visa sandbox transaction.
 
 `bills_due_by_target` includes every still-unpaid bill due on or before the target, including overdue liabilities. Earlier fixture estimates omitted overdue bills; current live forecasts correct that omission.
+
+When no drafting model is installed, `/model/metrics.drafter.serving` and `/health.drafter` are `"template_fallback"`; unmeasured metrics are null and row counts zero. `/health.db` is `"postgres"` for the local/Vultr database. Provider booleans report configuration presence; they do not attest successful live calls.
+
+Canonical Photon messages from the configured `PHOTON_OWNER_HANDLE` start an `/ask`-equivalent run with source `sms`; other senders must match a reminder conversation. Live owner approval is handled through a `resolve_decision` tool scoped to the current call run.
