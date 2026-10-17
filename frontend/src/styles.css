@@ -148,7 +148,10 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .neg{display:flex;flex-direction:column;gap:8px;padding-top:4px}
 .agree{align-self:center;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--green);padding:4px 10px;border-radius:12px;background:var(--green-bg)}
 .receipt{align-self:center;display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--green);border-radius:12px;background:var(--green-bg);font-size:13px;animation:pop .35s ease-out both}
-.chart-wrap{margin-top:22px}.chart-wrap .chart{margin-top:0}
+.split{display:grid;grid-template-columns:62fr 38fr;gap:20px;margin-top:22px;align-items:stretch;min-width:0}
+.split>*{min-width:0}
+.chart-wrap{min-width:0;overflow:hidden}
+.chart-wrap svg{max-height:260px;width:100%;height:auto}
 .chart{margin-top:0}
 .outcome{display:flex;flex-direction:column;gap:12px;margin-top:22px;border-color:var(--green);animation:pop .4s ease-out both}
 .outcome .kv{font-size:13px}
@@ -209,3 +212,12 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .delta .d-col{flex:1;display:flex;flex-direction:column;gap:4px}
 .delta .d-col b{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .delta .d-arrow{color:var(--muted2);padding-bottom:10px}
+
+.risk{display:flex;flex-direction:column;gap:12px}
+.risklist{display:flex;flex-direction:column;gap:6px}
+.riskrow{display:flex;align-items:center;gap:8px;font-size:13px;height:26px}
+.riskrow .av{width:22px;height:22px;border-radius:11px;color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.riskrow .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.riskrow .am{width:64px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.riskrow .pc{width:40px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.riskrow .pc.amber{color:var(--amber-dk)}.riskrow .pc.red{color:var(--red)}
