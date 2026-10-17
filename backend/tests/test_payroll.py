@@ -1,9 +1,11 @@
 import asyncio
 from datetime import date
+
 from owed.config import settings
 from owed.db import conn
 from owed.runs import create, replay_run
 from owed.runs.payroll import run_payroll, snapshot, target_for
+
 
 def test_payroll_complete_real_data():
     before = settings.scoring_interval_ms

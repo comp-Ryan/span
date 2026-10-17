@@ -3,18 +3,18 @@ import asyncio
 import logging
 from datetime import date, timedelta
 from functools import lru_cache
-from uuid import uuid4
 from typing import Literal
+from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
-from pydantic import BaseModel, Field
 from psycopg.types.json import Jsonb
+from pydantic import BaseModel, Field
 
 from owed.config import settings
 from owed.db import conn
 from owed.events import emit
 from owed.finance import queries as q
-from owed.finance.model import load, band
+from owed.finance.model import band, load
 from owed.runs import create, finish
 
 router = APIRouter()

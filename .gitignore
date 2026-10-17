@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 backend/models/*.pkl
+
+.local/
+backend/server.log
