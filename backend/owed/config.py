@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     gemini_api_key: str = ""
     sentry_dsn: str = ""
+    photon_project_id: str = ""
+    photon_sms_sender_id: str = ""
+    photon_email_sender_id: str = ""
+    photon_demo_recipient: str = ""
+    photon_webhook_token: str = ""
     photon_api_key: str = ""
     planner: str = "gemini"            # gemini | jev
     finance_tools: str = "owed_model"  # owed_model | jev

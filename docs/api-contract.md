@@ -270,3 +270,8 @@ Photon's published voice API exposes SIP destinations, not a bidirectional webso
 Websocket messages follow Twilio Media Streams: `connected`, `start` (customParameters: `token`, `company`; mediaFormat: mono `audio/x-mulaw`, 8000 Hz), `media` (base64 payload), `stop`.
 Backend sends `media` and `clear` (barge-in). Wrong credentials close with 1008; missing configuration closes with 1013.
 Gemini native audio output transcription feeds ElevenLabs Flash v2.5. When ElevenLabs is unconfigured, Gemini native audio is used. Caller transcript fragments are `node.update.data.caller_text` on the call context node; Owed transcript fragments are `speech` events.
+
+### Photon 2.0 callback setup
+`POST /inbound/photon?token=<PHOTON_WEBHOOK_TOKEN>` accepts the provider event envelope with `data.id` or `data.message.id` identifying the message. The token can alternatively be sent as `X-Owed-Webhook-Token`. Until Beta signature headers are verified, this callback token plus an authenticated fetch of the canonical Photon message protects ingestion. Disable access logging of callback query strings.
+Only human text messages in a space linked to a sent reminder are classified. Repeated completed message IDs return `{ "ok": true, "duplicate": true }`; unrelated events return `{ "ok": true, "ignored": true }`.
+Reminder draft `source` additionally permits `"template"` for the deterministic fallback. A successful send means Photon accepted it for delivery, not that the customer received it; `provider_status` records Photon's acknowledgment.
