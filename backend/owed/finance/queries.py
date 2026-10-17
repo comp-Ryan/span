@@ -54,7 +54,7 @@ def payroll_due(con, company_id: str, as_of: date, target: date) -> dict:
     headcount = con.execute("""select count(*) n from employees where company_id=%s and hired_date<=%s
                                and (released_date is null or released_date>%s)""", (company_id, as_of, as_of)).fetchone()["n"]
     return {"weekly": round(weekly, 2), "due_by_target": round(sum(p["amount"] for p in schedule), 2), "next_pay_date": next_date,
-            "headcount": headcount, "trailing_runs": len(rows)}
+            "headcount": headcount, "trailing_runs": len(rows), "schedule": schedule}
 
 
 def bills_due(con, company_id: str, as_of: date, target: date) -> list[dict]:
