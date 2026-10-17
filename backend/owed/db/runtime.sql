@@ -20,3 +20,7 @@ create table if not exists action_jobs(decision_id text primary key,status text 
 create table if not exists bill_deferrals(company_id text,bill_id text,due_date date,run_id text,primary key(company_id,bill_id));
 create table if not exists draw_holds(company_id text primary key,run_id text,amount numeric(14,2));
 create table if not exists forecast_payments(payment_id text primary key);
+alter table runs add column if not exists parent_run_id text;
+alter table runs add column if not exists target_date date;
+alter table runs add column if not exists excluded_customer_id text;
+create index if not exists runs_parent on runs(parent_run_id);

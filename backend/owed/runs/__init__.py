@@ -18,13 +18,20 @@ def require_company(company):
     return row
 
 
-def create(company, question, source, intent):
+def create(company, question, source, intent, parent_run_id=None, target_date=None, excluded_customer_id=None):
     require_company(company)
     run_id = 'run-' + uuid4().hex
     with conn() as c:
-        c.execute('''insert into runs(run_id,company_id,question,source,intent)
-                     values (%s,%s,%s,%s,%s)''', (run_id, company, question, source, intent))
-    emit(run_id, 'run.start', {'question': question, 'source': source})
+        if parent_run_id and not c.execute('select 1 from runs where run_id=%s and company_id=%s',
+                                            (parent_run_id, company)).fetchone():
+            raise HTTPException(404, 'Parent run not found in this company')
+        c.execute('''insert into runs(run_id,company_id,question,source,intent,parent_run_id,target_date,excluded_customer_id)
+                     values (%s,%s,%s,%s,%s,%s,%s,%s)''',
+                  (run_id, company, question, source, intent, parent_run_id, target_date, excluded_customer_id))
+        data = {'question': question, 'source': source}
+        if parent_run_id:
+            data['parent_run_id'] = parent_run_id
+        emit(run_id, 'run.start', data, connection=c)
     return run_id
 
 
@@ -38,7 +45,7 @@ def finish(run_id, status='open'):
 def list_runs(company: str = settings.demo_company):
     require_company(company)
     with conn() as c:
-        rows = c.execute('''select run_id,question,source,started_at,status,answer_title,report_id
+        rows = c.execute('''select run_id,question,source,started_at,status,answer_title,report_id,parent_run_id
                             from runs where company_id=%s order by started_at desc''', (company,)).fetchall()
     return {'runs': rows}
 

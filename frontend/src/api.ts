@@ -2,8 +2,8 @@ import type { RawEvent } from './types'
 
 const BASE = '/api'
 
-export async function startRun(company: string, question: string, source = 'web') {
-  const r = await fetch(`${BASE}/ask?company=${encodeURIComponent(company)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question, source }) })
+export async function startRun(company: string, question: string, source = 'web', parentRunId?: string) {
+  const r = await fetch(`${BASE}/ask?company=${encodeURIComponent(company)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question, source, parent_run_id: parentRunId }) })
   return r.json() as Promise<{ run_id: string; intent: string }>
 }
 export async function resolveDecision(decisionId: string, optionId: string, company: string) {

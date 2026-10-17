@@ -38,7 +38,11 @@ TOOLS = [
 
 
 def route_intent(question):
-    text = question.lower()
+    text = question.lower().replace('’', "'")
+    if 'what if' in text and any(term in text for term in ("doesn't pay", 'does not pay', 'never pays', "won\'t pay")):
+        return 'what_if_customer'
+    if any(term in text for term in ("who's late", 'who is late', 'show late', 'overdue invoices')):
+        return 'show_late'
     if 'payroll' in text:
         return 'payroll_check'
     if 'order' in text:

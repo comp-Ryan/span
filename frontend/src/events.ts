@@ -12,7 +12,7 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
   const d = ev.data || {}
   switch (ev.event) {
     case 'run.start':
-      return { ...emptyRun(), run_id: d.run_id || ev.run_id || '', question: d.question || '', source: d.source || 'web', company_id: d.company_id || '', status: 'open', startedAt: now,
+      return { ...emptyRun(), run_id: d.run_id || ev.run_id || '', parent_run_id: d.parent_run_id, question: d.question || '', source: d.source || 'web', company_id: d.company_id || '', status: 'open', startedAt: now,
         turns: [{ kind: 'you', text: d.question || '', at: now }] }
     case 'node.create': {
       const n: GraphNode = { node_id: d.node_id, type: d.type, title: d.title, status: d.status || 'running', parent: d.parent ?? null, data: d.data || {}, rows: [], rounds: [], createdAt: now, doneAt: d.status === 'done' ? now : undefined }
