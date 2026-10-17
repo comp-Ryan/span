@@ -3,7 +3,7 @@ export type NodeStatus = 'running' | 'done' | 'failed' | 'waiting'
 
 export interface ScoreRow {
   invoice_id: string; customer: string; amount: number; days_past_due: number
-  p_paid_by_target: number; p_never: number; band: 'green' | 'amber' | 'red'; source?: string
+  p_paid_by_target: number; p_never: number; band: 'green' | 'amber' | 'red'; source?: string; expected_days_to_pay?: number
 }
 export interface Lever {
   id: string; label: string; recovers: number
