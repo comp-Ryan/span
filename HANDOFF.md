@@ -1,4 +1,4 @@
-# HANDOFF — Owed backend (for Astra)
+# HANDOFF — Span backend (for Astra)  ·  product name is Span; the Python package stays `owed`
 
 Written Sat Oct 17, 2026 ~3:30 PM PT by Claude. Ryan + Claude are moving to the Paper frontend. Devin has tasks 1–4 in `docs/devin/`. **Astra owns everything else in the backend from here.**
 

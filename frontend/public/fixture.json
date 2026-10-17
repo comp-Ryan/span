@@ -6540,7 +6540,7 @@
     "data": {
      "sent_at": "...",
      "reminder_id": "rem-0001",
-     "pay_link": "https://owed.example/pay/tok_1"
+     "pay_link": "https://span.example/pay/tok_1"
     }
    }
   },
@@ -6579,7 +6579,7 @@
     "data": {
      "sent_at": "...",
      "reminder_id": "rem-0002",
-     "pay_link": "https://owed.example/pay/tok_2"
+     "pay_link": "https://span.example/pay/tok_2"
     }
    }
   },
@@ -6618,7 +6618,7 @@
     "data": {
      "sent_at": "...",
      "reminder_id": "rem-0003",
-     "pay_link": "https://owed.example/pay/tok_3"
+     "pay_link": "https://span.example/pay/tok_3"
     }
    }
   },

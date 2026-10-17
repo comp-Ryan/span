@@ -2,7 +2,7 @@
 
 Hackathon: LA Hacks AI 2026, UCLA. Sat Oct 17 – Sun Oct 18, 2026. Deadline Sun 12:00 PM (confirm on Devpost).
 Builder: Ryan, solo. Workflow: Ryan builds the frontend in Paper; Claude builds the backend from this spec and `docs/api-contract.md`; Devin gets self-contained chunks for the Cognition entry.
-Working name: **Owed** (Claude's call; "Veri" was dropped because veri.studio is a sponsor). Ryan picks the real domain at GoDaddy.
+Name: **Span** (chosen by Ryan, Oct 17 ~4:40 PM; earlier working names "Veri" and "Owed" are retired). Domain to be bought at GoDaddy.
 
 ## Intent
 

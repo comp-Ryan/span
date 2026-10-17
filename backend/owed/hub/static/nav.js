@@ -2,7 +2,7 @@
   const pages=[["timeline","Timeline"],["questions","Questions"],["architecture","Architecture"],["spec","Spec"]];
   const here=location.pathname.replace("/","")||"timeline";
   const nav=document.createElement("nav");
-  nav.innerHTML='<b>OWED · hub</b>'+pages.map(([p,l])=>`<a href="/${p}" class="${p===here?'on':''}">${l}</a>`).join("")+'<span class="right" id="clock"></span>';
+  nav.innerHTML='<b>SPAN · hub</b>'+pages.map(([p,l])=>`<a href="/${p}" class="${p===here?'on':''}">${l}</a>`).join("")+'<span class="right" id="clock"></span>';
   document.body.prepend(nav);
   const dl=new Date("2026-10-18T12:00:00-07:00");
   function tick(){const now=new Date();const ms=dl-now;const h=Math.floor(ms/3.6e6),m=Math.floor(ms%3.6e6/6e4);

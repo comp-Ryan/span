@@ -1,6 +1,6 @@
 # Working in this repo (for Devin and Astra)
 
-**Project:** Owed. A small-business owner calls a phone number and asks "am I making payroll Friday?" The backend answers with real numbers from the Intuit QuickBooks hackathon dataset, streams its reasoning as workflow nodes to a web canvas, and when told "yes" chases customers for money. Read `docs/superpowers/specs/2026-10-17-owed-design.md` (the spec) and `docs/api-contract.md` (the contract) before anything else. The contract is the source of truth for every endpoint and event shape; change the contract file first if you must change a shape.
+**Project:** Span (code and package names still say `owed`; that is fine). A small-business owner calls a phone number and asks "am I making payroll Friday?" The backend answers with real numbers from the Intuit QuickBooks hackathon dataset, streams its reasoning as workflow nodes to a web canvas, and when told "yes" chases customers for money. Read `docs/superpowers/specs/2026-10-17-owed-design.md` (the spec) and `docs/api-contract.md` (the contract) before anything else. The contract is the source of truth for every endpoint and event shape; change the contract file first if you must change a shape.
 
 **Hackathon deadline:** Sunday Oct 18, 2026, 12:00 PM Pacific. No buffer. Prefer working code over perfect code; prefer small PRs that merge today.
 

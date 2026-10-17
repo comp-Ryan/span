@@ -5,7 +5,7 @@ import { playFixture, replay, resolveDecision, startRun, subscribe } from './api
 import DailyCashChart from './DailyCashChart'
 
 const COMPANY = 'company-020'
-const BRAND = (import.meta.env.VITE_BRAND as string) || 'Owed'
+const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
 const LIVE = new URLSearchParams(location.search).has('live')
 const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
 
@@ -258,7 +258,7 @@ function Conversations({ actions, decisions, onDecide }: { actions: GraphNode[];
         <div className="bubbles">
           {items.map(a => {
             const d = a.data
-            if (d.kind === 'reminder') return <div key={a.node_id} className="bub out"><div>{String(d.draft?.body || a.title).replace('{pay_link}', 'owed.co/p/8f3a')}</div><span className="meta">{BRAND} for Palletbay · {a.status === 'failed' ? 'failed' : d.channel === 'simulated' ? 'simulated — not sent' : a.status === 'done' ? 'accepted by provider' : 'sending…'}</span>{d.pay_link && <a href={d.pay_link} target="_blank" rel="noreferrer">Open invoice pay page</a>}</div>
+            if (d.kind === 'reminder') return <div key={a.node_id} className="bub out"><div>{String(d.draft?.body || a.title).replace('{pay_link}', 'pay.span.app/8f3a')}</div><span className="meta">{BRAND} for Palletbay · {a.status === 'failed' ? 'failed' : d.channel === 'simulated' ? 'simulated — not sent' : a.status === 'done' ? 'accepted by provider' : 'sending…'}</span>{d.pay_link && <a href={d.pay_link} target="_blank" rel="noreferrer">Open invoice pay page</a>}</div>
             if (d.kind === 'reply') return <div key={a.node_id} className="bub in"><div>{d.text}</div><span className="meta">{full} · {d.simulated ? 'simulated reply' : `read by ${BRAND}`}  · {String(d.classification || '').replace('_', ' ')}</span></div>
             if (d.kind === 'negotiation') return <div key={a.node_id} className="neg">
               <div className="fine" style={{ textAlign: 'center' }}>{BRAND} is negotiating with {full}’s agent{a.status === 'running' ? '…' : ''}</div>
