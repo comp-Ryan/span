@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     solana_rpc_url: str = "https://api.devnet.solana.com"
     solana_recipient: str = ""
     solana_usdc_mint: str = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+    # vendor portal via Browser Use (docs/devin/task-4-mock-portal.md)
+    browser_use_api_key: str = ""
+    portal_public_url: str = ""   # public base URL the cloud browser can reach; defaults to public_base_url
 
 
 settings = Settings()

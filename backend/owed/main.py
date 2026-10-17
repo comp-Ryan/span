@@ -26,6 +26,7 @@ from owed.config import settings
 from owed.hub import STATIC as HUB_STATIC, router as hub_router
 from owed.payments import router as pay_router
 from owed.payments import visa
+from owed.portal import router as portal_router, configured as portal_configured
 
 from owed.observability import init as init_observability
 
@@ -53,6 +54,7 @@ for router in (product_router, cash_router, events_router, runs_router, payroll_
                pay_router):
     app.include_router(router)
     app.include_router(router, prefix='/api')
+app.include_router(portal_router)
 
 
 @app.exception_handler(HTTPException)
@@ -74,6 +76,7 @@ def health():
             "drafter": "template_fallback", "photon": bool(settings.photon_api_key and settings.photon_project_id),
             "visa": "sandbox" if visa.configured() else "simulated", "solana": "devnet",
             "agentverse": bool(settings.agentverse_api_key and settings.agent_public_endpoint), "jev": False,
+            "browser_use": portal_configured(),
             "planner": settings.planner, "finance_tools": settings.finance_tools}
 
 
