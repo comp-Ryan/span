@@ -221,3 +221,29 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .riskrow .am{width:64px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .riskrow .pc{width:40px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 .riskrow .pc.amber{color:var(--amber-dk)}.riskrow .pc.red{color:var(--red)}
+
+/* two-column workspace: workflow left, live panels right */
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:24px;align-items:start}
+.steps{display:flex;flex-direction:column;min-width:0}
+.vstep{display:flex;width:100%}.vstep>.node{flex:1 1 100%;max-width:100%}
+.vstep .node{width:100%!important;flex-direction:row;align-items:flex-start;gap:18px;flex-wrap:wrap}
+.vstep .node h3{width:200px;flex-shrink:0;padding-top:4px}
+.vstep .node>*:not(h3){flex:1;min-width:220px}
+.vstep .verdict{flex-direction:row;align-items:center;justify-content:flex-start;gap:14px;text-align:left;padding:12px 16px}
+.vstep .verdict .big{font-size:22px;line-height:26px}
+.vstep .verdict .sub{font-size:14px}
+.vconn{width:1px;height:22px;background:var(--muted2);margin-left:27px;position:relative}
+.vconn::after{content:"";position:absolute;left:-4px;bottom:-1px;border:4px solid transparent;border-top:6px solid var(--muted2)}
+.steps .levers{gap:14px}
+.steps .lever{padding:12px}
+.steps .convs{flex-wrap:wrap}
+.steps .conv{flex:1 1 300px}
+.live{display:flex;flex-direction:column;gap:14px;position:sticky;top:80px}
+.live .chart{margin-top:0}
+.live .card{margin-top:0}
+.status{display:flex;flex-direction:column;gap:8px;border-width:2px;animation:pop .4s ease-out both}
+.status.bad{border-color:var(--red);background:#FFF1F0}.status.tight{border-color:var(--amber);background:var(--amber-bg)}.status.ok{border-color:var(--green);background:var(--green-bg)}.status.pending{border-style:dashed}
+.status .big{font-size:26px;line-height:30px;font-weight:700;letter-spacing:-.01em}
+.status .sub{font-size:14px;font-weight:600;color:var(--amber-dk)}.status.ok .sub{color:var(--green)}.status.bad .sub{color:var(--red)}
+.status svg{flex-shrink:0;width:120px;height:auto}
+.rlink{display:inline-block;margin-top:16px;color:var(--blue);font-weight:600;font-size:13px}

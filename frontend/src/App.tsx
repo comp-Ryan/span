@@ -91,8 +91,7 @@ function VerdictNode({ n, fc }: { n: GraphNode; fc?: GraphNode }) {
   const risk = fc?.data.pessimistic?.gap
   const cls = cushion < 0 ? 'bad' : cushion < need * 0.1 ? '' : 'ok'
   const word = cushion < 0 ? 'No.' : cushion < need * 0.1 ? 'Barely.' : 'Yes.'
-  return <div className={`node verdict ${cls}`} style={{ width: 270 }}>
-    <Gauge cushion={cushion} need={need} />
+  return <div className={`node verdict ${cls}`}>
     <div className="big">{word}</div>
     <div className="sub">{cushion < 0 ? `${money(-cushion)} short` : `${money(cushion)} to spare`}</div>
     <div className="fine">{risk > 0 ? `${money(risk)} short if the slow payers slip` : cushion < 0 ? 'even if the usual payers pay' : 'covered even if the slow payers slip'}</div>
@@ -157,8 +156,8 @@ function buildSeries(ctx?: GraphNode, sc?: GraphNode, fc?: GraphNode, received =
   const walk = (inf: number[]) => { let v = bank; const pts = [v]; for (let d = 1; d <= days; d++) { v += inf[d] - out[d]; pts.push(v) } return pts }
   return { good: walk(inflowGood), bad: walk(inflowBad), days, target, pay, bank }
 }
-function CashChart({ ctx, sc, fc, received = 0 }: { ctx?: GraphNode; sc?: GraphNode; fc?: GraphNode; received?: number }) {
-  const W = 780, H = 220, base = 176, top = 14
+function CashChart({ ctx, sc, fc, received = 0, W = 780 }: { ctx?: GraphNode; sc?: GraphNode; fc?: GraphNode; received?: number; W?: number }) {
+  const H = 220, base = 176, top = 14
   const { good, bad, days, target, pay, bank } = useMemo(() => buildSeries(ctx, sc, fc, received), [ctx, sc, fc, received])
   const step = W / days, mid = Math.floor(days / 2)
   const maxV = Math.max(...good, 1) * 1.08, minV = Math.min(...bad, 0)
@@ -203,6 +202,25 @@ function Outcome({ fc, payments, levers }: { fc?: GraphNode; payments: GraphNode
   </div>
 }
 const shift = (d?: string, days = 0) => { if (!d) return undefined; const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10) }
+function StatusPanel({ ans, fc, payments }: { ans?: GraphNode; fc?: GraphNode; payments: GraphNode[] }) {
+  const d = fc?.data || {}; const gap = d.gap ?? ans?.data.gap ?? 0; const need = d.need ?? 0
+  const cushion = gap > 0 ? -gap : (d.cushion ?? (d.need != null && (d.cash_at_target ?? 0) >= d.need ? d.cash_at_target - d.need : (d.cash_at_target ?? 0)))
+  const risk = d.pessimistic?.gap
+  const state = !fc || fc.status !== 'done' ? 'pending' : cushion < 0 ? 'bad' : cushion < need * 0.1 ? 'tight' : 'ok'
+  const word = state === 'pending' ? 'Working it out' : state === 'bad' ? 'No.' : state === 'tight' ? 'Barely.' : 'Yes.'
+  return <div className={`card status ${state}`}>
+    <div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Payroll through {fmtDate(d.target_date) || 'Oct 20'}</div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <Gauge cushion={state === 'pending' ? 0 : cushion} need={need || 20000} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div className="big">{word}</div>
+        {state !== 'pending' && <div className="sub">{cushion < 0 ? `${money(-cushion)} short` : `${money(cushion)} to spare`}</div>}
+        {state !== 'pending' && <div className="fine">{risk > 0 ? `${money(risk)} short if slow payers slip` : cushion < 0 ? 'even if the usual payers pay' : 'if the usual payers pay'}</div>}
+        {payments.length > 0 && <div className="fine" style={{ color: 'var(--green)', fontWeight: 600 }}>{payments.length} payment{payments.length > 1 ? 's' : ''} landed</div>}
+      </div>
+    </div>
+  </div>
+}
 function RiskPanel({ sc, fc }: { sc?: GraphNode; fc?: GraphNode }) {
   const risky = (sc?.rows || []).filter(r => r.band !== 'green')
   const byCust = new Map<string, { customer: string; amount: number; wp: number; n: number; band: string }>()
@@ -227,7 +245,10 @@ function whoOf(n: GraphNode): string {
 }
 function Conversations({ actions, decisions, onDecide }: { actions: GraphNode[]; decisions: Decision[]; onDecide: (d: Decision, opt: string) => void }) {
   const groups = new Map<string, GraphNode[]>()
-  for (const a of actions) { const w = a.data.customer_id || whoOf(a); groups.set(w, [...(groups.get(w) || []), a]) }
+  // key every action to one customer: use customer_id when present, else map the first word of the name back to the reminder's id
+  const idByFirst = new Map<string, string>()
+  for (const a of actions) if (a.data.customer_id) idByFirst.set(whoOf(a), a.data.customer_id)
+  for (const a of actions) { const w = a.data.customer_id || idByFirst.get(whoOf(a)) || whoOf(a); groups.set(w, [...(groups.get(w) || []), a]) }
   if (!groups.size) return null
   return <div className="convs">
     {[...groups.entries()].map(([who, items], gi) => {
@@ -265,28 +286,32 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
   const chosen = decision?.resolved
   const verdictRef = useRef<HTMLDivElement | null>(null), contRef = useRef<HTMLDivElement | null>(null)
   const leverRefs = useMemo(() => levers.map(() => ({ current: null as HTMLDivElement | null })), [levers.length])
-  return <section className="thread" ref={contRef}>
+  return <section className="thread">
     {isFollowUp && <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up · branches from this run</div>}
     {isFollowUp && <h1 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 14 }}>{run.question}</h1>}
-    <div className="flow">
-      {ctx && <BooksNode n={ctx} />}
-      {sc && <><div className="arrow">{I.arrow}</div><ScoredNode n={sc} /></>}
-      {fc && <><div className="arrow">{I.arrow}</div><CashNode n={fc} ctx={ctx} /></>}
-      {ans && <><div className="arrow">{I.arrow}</div><div ref={verdictRef} style={{ display: 'flex' }}><VerdictNode n={ans} fc={fc} /></div></>}
+    <div className="workspace">
+      <div className="steps" ref={contRef}>
+        {ctx && <div className="vstep"><BooksNode n={ctx} /></div>}
+        {sc && <><div className="vconn" /><div className="vstep"><ScoredNode n={sc} /></div></>}
+        {fc && <><div className="vconn" /><div className="vstep"><CashNode n={fc} ctx={ctx} /></div></>}
+        {ans && <><div className="vconn" /><div className="vstep" ref={verdictRef}><VerdictNode n={ans} fc={fc} /></div></>}
+        {levers.length > 0 && <>
+          <Fork fromRef={verdictRef} toRefs={leverRefs} containerRef={contRef} />
+          <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={opt => decision && onDecide(decision, opt)} /></div>)}</div>
+        </>}
+        {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
+        {actions.length > 0 && <Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} />}
+        {run.report_id && <a className="rlink" href={`/report/${run.report_id}`}>Open one-page report</a>}
+      </div>
+      <aside className="live">
+        <StatusPanel ans={ans} fc={fc} payments={payments} />
+        {fc && fc.status === 'done' && (LIVE
+          ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
+          : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} W={420} />)}
+        {sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
+        {payments.length > 0 && <Outcome fc={fc} payments={payments} levers={levers} />}
+      </aside>
     </div>
-    {levers.length > 0 && <>
-      <Fork fromRef={verdictRef} toRefs={leverRefs} containerRef={contRef} />
-      <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex' }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={opt => decision && onDecide(decision, opt)} /></div>)}</div>
-    </>}
-    {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
-    {fc && fc.status === 'done' && <div className="split">
-      {LIVE ? <div className="chart-wrap"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
-            : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} />}
-      <RiskPanel sc={sc} fc={fc} />
-    </div>}
-    {actions.length > 0 && <Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} />}
-    {payments.length > 0 && <Outcome fc={fc} payments={payments} levers={levers} />}
-    {run.report_id && <a className="rlink" href={`/report/${run.report_id}`}>Open one-page report</a>}
   </section>
 }
 
