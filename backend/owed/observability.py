@@ -1,9 +1,11 @@
 """Request tracing, Google GenAI monitoring, logs, and secret-free telemetry."""
 import logging
 from urllib.parse import urlsplit, urlunsplit
+
 import sentry_sdk
 from sentry_sdk.integrations.google_genai import GoogleGenAIIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+
 from owed.config import settings
 
 

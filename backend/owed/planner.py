@@ -1,9 +1,9 @@
 """Bounded Gemini tool loop. Finance access is company-scoped; actions require approval."""
 import asyncio
 import logging
-import sentry_sdk
 from uuid import uuid4
 
+import sentry_sdk
 from fastapi.encoders import jsonable_encoder
 from google import genai
 from google.genai import types
