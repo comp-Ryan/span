@@ -8,6 +8,7 @@ from owed.runs import router as runs_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from owed.runs.payroll import router as payroll_router
 from owed.config import settings
 from owed.hub import STATIC as HUB_STATIC, router as hub_router
 
@@ -21,6 +22,7 @@ app.mount("/hub/static", StaticFiles(directory=HUB_STATIC), name="hub-static")
 app.include_router(hub_router)
 app.include_router(events_router)
 app.include_router(runs_router)
+app.include_router(payroll_router)
 
 
 @app.exception_handler(HTTPException)

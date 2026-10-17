@@ -38,17 +38,22 @@ def payroll_due(con, company_id: str, as_of: date, target: date) -> dict:
                           where company_id=%s and run_date > %s - interval '56 days' and run_date <= %s
                           group by run_date order by run_date""", (company_id, as_of, as_of)).fetchall()
     weekly = sum(f(r["amt"]) for r in rows) / 8.0 if rows else 0.0
-    weeks = max((target - as_of).days, 1) / 7.0
-    # next pay date: continue the most recent weekday pattern
-    next_date = None
-    if rows:
-        last = rows[-1]["run_date"]
-        next_date = last + timedelta(days=7)
-        while next_date <= as_of:
-            next_date += timedelta(days=7)
+    # Preserve observed pay weekdays instead of prorating wages across calendar days.
+    weekday_amounts = {}
+    for row in rows:
+        weekday = row["run_date"].weekday()
+        weekday_amounts[weekday] = weekday_amounts.get(weekday, 0.0) + f(row["amt"]) / 8.0
+    schedule = []
+    day = as_of + timedelta(days=1)
+    while day <= target:
+        if day.weekday() in weekday_amounts:
+            schedule.append({"date": day, "amount": round(weekday_amounts[day.weekday()], 2)})
+        day += timedelta(days=1)
+    next_date = next((as_of + timedelta(days=i) for i in range(1, 8)
+                      if (as_of + timedelta(days=i)).weekday() in weekday_amounts), None)
     headcount = con.execute("""select count(*) n from employees where company_id=%s and hired_date<=%s
                                and (released_date is null or released_date>%s)""", (company_id, as_of, as_of)).fetchone()["n"]
-    return {"weekly": round(weekly, 2), "due_by_target": round(weekly * weeks, 2), "next_pay_date": next_date,
+    return {"weekly": round(weekly, 2), "due_by_target": round(sum(p["amount"] for p in schedule), 2), "next_pay_date": next_date,
             "headcount": headcount, "trailing_runs": len(rows)}
 
 
