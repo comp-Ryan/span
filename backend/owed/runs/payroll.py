@@ -1,6 +1,7 @@
 """Deterministic payroll workflow grounded in the books and trained model."""
 import asyncio
 import logging
+import sentry_sdk
 from datetime import date, timedelta
 from functools import lru_cache
 from typing import Literal
@@ -33,6 +34,7 @@ def target_for(question: str) -> date:
         return q.AS_OF_DEFAULT + timedelta(days=14)
     return q.AS_OF_DEFAULT + timedelta(days=(4 - q.AS_OF_DEFAULT.weekday()) % 7 or 7)
 
+@sentry_sdk.trace(op="finance.snapshot")
 def snapshot(company: str, target: date):
     with conn() as c:
         company_row = q.company(c, company)

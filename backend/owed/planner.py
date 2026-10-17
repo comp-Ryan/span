@@ -1,6 +1,7 @@
 """Bounded Gemini tool loop. Finance access is company-scoped; actions require approval."""
 import asyncio
 import logging
+import sentry_sdk
 from uuid import uuid4
 
 from fastapi.encoders import jsonable_encoder
@@ -56,6 +57,7 @@ class ToolContext:
         self.parent = 'context'
         self.snap = None
 
+    @sentry_sdk.trace(op="gen_ai.execute_tool")
     async def execute(self, name, args):
         node = 'tool-' + uuid4().hex
         kind = {'forecast_cash': 'forecast', 'predict_payment': 'scoring', 'score_customer': 'scoring',

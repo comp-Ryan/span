@@ -8,6 +8,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import httpx
+import sentry_sdk
 from psycopg.types.json import Jsonb
 
 from owed.config import settings
@@ -220,6 +221,7 @@ def template_narrative(r: dict, ctx: dict, forecast: dict) -> str:
     return f"{p1}\n\n{p2.strip()}"
 
 
+@sentry_sdk.trace(op="gen_ai.chat", name="report.gemini_narrative")
 def gemini_narrative(r: dict) -> str | None:
     if not settings.gemini_api_key:
         return None

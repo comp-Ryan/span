@@ -25,9 +25,9 @@ from owed.hub import STATIC as HUB_STATIC, router as hub_router
 from owed.payments import router as pay_router
 from owed.payments import visa
 
-if settings.sentry_dsn:
-    import sentry_sdk
-    sentry_sdk.init(dsn=settings.sentry_dsn, traces_sample_rate=1.0, enable_logs=True, send_default_pii=False)
+from owed.observability import init as init_observability
+
+init_observability()
 
 @asynccontextmanager
 async def lifespan(app):

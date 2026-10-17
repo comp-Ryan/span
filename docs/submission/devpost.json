@@ -13,5 +13,13 @@
     "built_with": "python, fastapi, postgresql, tigerdata, gemini, scikit-learn, qwen, veri, uagents, fetch.ai, photon, visa, solana, elevenlabs, sentry, devin, vultr, paper",
     "sentry_bug_writeup": "",
     "disclosures": "Customer agents in the demo are simulated from each customer's real payment history in the dataset. No dataset rows were modified."
+  },
+  "sentry_bug_writeup": {
+    "status": "verified with local Sentry SDK trace; cloud upload pending DSN",
+    "bug": "Cash forecast excluded overdue unpaid bills by filtering due dates BETWEEN as_of and target.",
+    "impact": "Palletbay omitted four overdue liabilities totaling $1,598.55. The two-week expected payroll gap was incorrectly $0; corrected gap is $384.94.",
+    "fix": "Include unpaid bills issued by dataset as_of and due on or before target. A regression test checks the reconciled total of $10,866.86.",
+    "evidence_before": "sentry-bills-before.json",
+    "evidence_after": "sentry-bills-after.json"
   }
 }
