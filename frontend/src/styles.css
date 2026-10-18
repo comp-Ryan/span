@@ -181,7 +181,7 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .stat .sv{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
 .wflow{border:1px solid var(--line2);border-radius:10px;background:var(--bg);padding:14px;overflow:auto}
 .wflow svg{display:block;max-width:100%;height:auto;max-height:560px;margin:0 auto}
-.steps{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rsteps{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .step{display:inline-flex;align-items:center;gap:7px;font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .step-arrow{color:var(--muted2);display:inline-flex}
 .dids{display:flex;flex-direction:column;gap:10px}
@@ -224,7 +224,7 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 
 /* two-column workspace: workflow left, live panels right */
 .workspace{display:grid;grid-template-columns:440px minmax(0,1fr);gap:24px;align-items:start}
-.steps{display:flex;flex-direction:column;min-width:0}
+.steps{display:flex;flex-direction:column;min-width:0;align-items:stretch;flex-wrap:nowrap;gap:0}
 .vstep{display:flex;width:100%}.vstep>.node{flex:1 1 100%;max-width:100%}
 .vstep .node{width:100%!important;flex-direction:row;align-items:flex-start;gap:18px;flex-wrap:wrap}
 .vstep .node h3{width:200px;flex-shrink:0;padding-top:4px}
@@ -288,3 +288,17 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .report{display:flex;flex-direction:column;gap:10px;border-style:dashed}
 .report.ready{border-style:solid;border-color:var(--green)}
 .report .btn{align-self:flex-start;text-decoration:none;height:34px}
+
+.live>*{min-width:0;max-width:100%}
+.status,.status *{overflow-wrap:anywhere;white-space:normal}
+
+.preview .x{border:0;background:transparent;color:var(--muted2);font-size:16px;line-height:16px;cursor:pointer;padding:0 2px;flex-shrink:0}
+.preview .x:hover{color:var(--text)}
+.preview{max-width:340px}
+.turn span,.tool span{overflow-wrap:anywhere}
+
+.reasoning{cursor:pointer}
+.vstep .reasoning{flex-direction:column;gap:10px}
+.vstep .reasoning h3{width:100%}
+.detail{display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:19px;color:var(--text);max-width:720px}
+.detail b{display:block;margin-bottom:2px}
