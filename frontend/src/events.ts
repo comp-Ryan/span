@@ -15,7 +15,7 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
       return { ...emptyRun(), run_id: d.run_id || ev.run_id || '', parent_run_id: d.parent_run_id, question: d.question || '', source: d.source || 'web', company_id: d.company_id || '', status: 'open', startedAt: now,
         turns: [{ kind: 'you', text: d.question || '', at: now }] }
     case 'node.create': {
-      const n: GraphNode = { node_id: d.node_id, type: d.type, title: d.title, status: d.status || 'running', parent: d.parent ?? null, data: d.data || {}, rows: [], rounds: [], createdAt: now, doneAt: d.status === 'done' ? now : undefined }
+      const n: GraphNode = { node_id: d.node_id, type: d.type, title: d.title, status: d.status || 'running', parent: d.parent ?? null, parent_run_id: d.parent_run_id, data: d.data || {}, rows: [], rounds: [], createdAt: now, doneAt: d.status === 'done' ? now : undefined }
       const turns = run.turns.slice()
       if (n.type !== 'answer' && n.type !== 'action') turns.push({ kind: 'tool', text: TOOL_LABEL[n.type] || n.type, meta: n.title, at: now })
       if (n.type === 'action') turns.push({ kind: 'tool', text: n.title, meta: d.data?.kind, at: now })

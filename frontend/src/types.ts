@@ -12,7 +12,7 @@ export interface Lever {
 }
 export interface Decision { decision_id: string; node_id: string; prompt: string; options: { id: string; label: string }[]; auto_resolves_in_s: number | null; default?: string; resolved?: string }
 export interface GraphNode {
-  node_id: string; type: NodeType; title: string; status: NodeStatus; parent: string | null
+  node_id: string; type: NodeType; title: string; status: NodeStatus; parent: string | null; parent_run_id?: string
   data: Record<string, any>; rows: ScoreRow[]; progress?: { done: number; total: number }; rounds: any[]
   createdAt: number; doneAt?: number
 }
