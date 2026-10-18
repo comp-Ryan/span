@@ -281,7 +281,8 @@ def build_report(con, run_id: str, report_id: str | None = None, narrate: bool =
     decided = {d["node_id"]: ("open" if _decision_open(con, d, nodes) else "resolved") for d in st["decisions"]}
     report["workflow"]["svg"] = render_svg(report["workflow"]["nodes"], decided)
     try:
-        report["narrative"] = (gemini_narrative(report) if narrate else None) or template_narrative(report, ctx, first_fc)
+        detail = next((n.get("data", {}).get("detail") for n in report.get("workflow", {}).get("nodes", []) if n.get("type") == "answer" and n.get("data", {}).get("detail")), None)
+        report["narrative"] = detail or (gemini_narrative(report) if narrate else None) or template_narrative(report, ctx, first_fc)
     except Exception:
         log.exception("narrative failed")
         report["narrative"] = report["answer"]

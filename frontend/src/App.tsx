@@ -308,6 +308,21 @@ function ToolNode({ n }: { n: GraphNode }) {
   const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
   return <div className={`node ${n.status}`}>{head(I.book, 'grey', n.title)}{facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}</div>
 }
+function Detail({ text }: { text: string }) {
+  const blocks = text.split(/\n{2,}/).map(b => b.trim()).filter(Boolean)
+  return <div className="detail">{blocks.map((b, i) => {
+    const lines = b.split('\n').map(l => l.replace(/\*\*|`/g, ''))
+    if (/^#+\s/.test(lines[0])) return <div key={i}><b>{lines[0].replace(/^#+\s*/, '')}</b>{lines.slice(1).map((l, j) => <div key={j}>{l.replace(/^\s*[-*]\s+/, '• ')}</div>)}</div>
+    return <div key={i}>{lines.map((l, j) => <div key={j}>{l.replace(/^\s*[-*]\s+/, '• ')}</div>)}</div>
+  })}</div>
+}
+function Reasoning({ detail }: { detail: string }) {
+  const [open, setOpen] = useState(false)
+  return <div className={`node reasoning ${open ? 'open' : ''}`} onClick={() => setOpen(o => !o)}>
+    <h3><span className="ic grey">{I.book}</span>Full reasoning<span className="fine" style={{ marginLeft: 'auto' }}>{open ? 'hide' : 'show'} · also in the report</span></h3>
+    {open && <Detail text={detail} />}
+  </div>
+}
 function PlannerThread({ run, onAsk, reportFailedFor, retryReportFor }: { run: RunState; onAsk: (q: string) => void; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
   const nodes = run.order.map(id => run.nodes[id])
   const ans = nodes.find(n => n.type === 'answer')
@@ -332,6 +347,7 @@ function PlannerThread({ run, onAsk, reportFailedFor, retryReportFor }: { run: R
         {tools.map((n, i) => { const el = <ToolNode n={n} />; if (el === null && !n.data?.levers) return null; return <div key={n.node_id}>{i > 0 && <div className="vconn" />}{n.data?.levers
           ? <div className="levers">{(n.data.levers as Lever[]).map((l, li) => <div key={l.id} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={li === 0} decision={fakeDecision} chosen={chosen} onChoose={(opt, selected) => { setChosen(opt); if (opt !== 'no') { const names = (l.targets || []).filter(t => !selected || selected.includes(t.customer_id)).map(t => t.customer.split(' ')[0]); onAsk(`Yes, text ${names.join(', ')} with a pay link.`) } }} /></div>)}</div>
           : <div className="vstep">{el}</div>}</div> })}
+        {ans?.data.detail && <><div className="vconn" /><div className="vstep"><Reasoning detail={ans.data.detail} /></div></>}
         {!ans && <div className="thinking" style={{ marginTop: 14 }}><i/><i/><i/> {BRAND} is thinking</div>}
       </div>
     </div>
