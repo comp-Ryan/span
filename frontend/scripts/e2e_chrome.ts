@@ -91,7 +91,7 @@ async function railPages(browser: Browser) {
   await context.close()
 }
 
-async function chatAndDecisions(browser: Browser, fakeAudio: string) {
+async function chatAndDecisions(browser: Browser) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['microphone'] })
   const page = await context.newPage(); page.setDefaultTimeout(30000)
   const errors = watch(page)
@@ -240,7 +240,7 @@ async function main() {
   const args = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', ...(existsSync(wav) ? [`--use-file-for-fake-audio-capture=${wav}`] : [])]
   const browser = await chromium.launch({ channel: 'chrome', headless: !process.env.E2E_HEADED, args })
   log(`Chrome ${browser.version()} (${process.env.E2E_HEADED ? 'headed' : 'headless'})`)
-  try { await railPages(browser); await chatAndDecisions(browser, wav) } finally { await browser.close() }
+  try { await railPages(browser); await chatAndDecisions(browser) } finally { await browser.close() }
   writeFileSync(join(OUT, 'report.json'), JSON.stringify({ base: BASE, database: manifest.database, chrome: 'channel chrome', results }, null, 2))
   const failed = results.filter(r => r.ok === false)
   console.log(`\n${results.filter(r => r.ok).length} passed, ${failed.length} failed, ${results.filter(r => r.ok === null).length} informational → ${join(OUT, 'report.json')}`)

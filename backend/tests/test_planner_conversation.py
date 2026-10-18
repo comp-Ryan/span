@@ -544,3 +544,37 @@ def test_followup_after_the_question_does_not_ask_again(monkeypatch):
     asyncio.run(planner.run_planner('run-1', 'company-1', 'No', date(2026, 10, 20), client=NS(aio=NS(models=Models())),
                                     parent_context={'parent_question': 'q', 'parent_speech': 's', 'pending_assumption': pending}))
     assert built.get('assumption_asked') is True
+
+
+def test_gemini_billing_and_rate_limit_errors_are_explained_and_retried(monkeypatch):
+    import asyncio
+    from types import SimpleNamespace as NS
+    from google.genai import errors
+
+    emitted = []
+    monkeypatch.setattr(planner, 'emit', lambda run_id, event, data: emitted.append((event, data)))
+    monkeypatch.setattr(planner, 'finish', lambda run_id, status: None)
+    monkeypatch.setattr(planner, 'conn', lambda: Connection(None))
+    monkeypatch.setattr(planner.types, 'Content', lambda role, parts: NS(role=role, parts=parts))
+    monkeypatch.setattr(planner.asyncio, 'sleep', lambda s: asyncio.sleep(0))
+
+    class Depleted:
+        async def generate_content(self, model, contents, config):
+            raise errors.ClientError(402, {'error': {'code': 402, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Your prepayment credits are depleted.'}})
+
+    asyncio.run(planner.run_planner('run-1', 'company-1', 'Am I okay?', date(2026, 10, 9), client=NS(aio=NS(models=Depleted()))))
+    error = next(d for e, d in emitted if e == 'node.create' and d['node_id'] == 'planner-error')
+    assert 'credits' in error['data']['error'] and '402' in error['data']['error']
+
+    calls = []
+
+    class Busy:
+        async def generate_content(self, model, contents, config):
+            calls.append(1)
+            if len(calls) < 3:
+                raise errors.ServerError(503, {'error': {'code': 503, 'status': 'UNAVAILABLE', 'message': 'overloaded'}})
+            return NS(candidates=[NS(content=NS(parts=[NS(function_call=None, thought=False, text='Fine.\n---\n## Why\nOk.')]))])
+
+    emitted.clear()
+    asyncio.run(planner.run_planner('run-2', 'company-1', 'Am I okay?', date(2026, 10, 9), client=NS(aio=NS(models=Busy()))))
+    assert len(calls) == 3 and any(d.get('node_id') == 'answer' for e, d in emitted if e == 'node.create')

@@ -9,7 +9,7 @@ from uuid import uuid4
 import sentry_sdk
 from fastapi.encoders import jsonable_encoder
 from google import genai
-from google.genai import types
+from google.genai import errors, types
 
 from owed.config import settings
 from owed.db import conn
@@ -477,6 +477,33 @@ def is_awaiting_input(spoken: str, detail: str = '') -> bool:
 
 MAX_STEPS = 12
 TIME_BUDGET_S = 45
+TRANSIENT = (429, 500, 502, 503, 504)
+
+
+async def generate(client, **kwargs):
+    """One Gemini call; transient failures (rate limit, overload) are retried twice before giving up."""
+    for attempt in range(3):
+        try:
+            return await client.aio.models.generate_content(**kwargs)
+        except errors.APIError as exc:
+            if exc.code not in TRANSIENT or attempt == 2:
+                raise
+            await asyncio.sleep(1.5 * (attempt + 1))
+
+
+def explain_gemini_error(exc):
+    """What the owner should see when Gemini itself fails, not a generic shrug."""
+    if isinstance(exc, errors.APIError):
+        if exc.code == 402:
+            return 'Gemini credits are exhausted (402). Top up the AI Studio project, then retry.'
+        if exc.code == 429:
+            return 'Gemini is rate-limited right now (429). Please retry in a moment.'
+        if exc.code in (401, 403):
+            return f'Gemini rejected the API key ({exc.code}). Check GEMINI_API_KEY.'
+        if exc.code in TRANSIENT:
+            return f'Gemini is busy ({exc.code}). Please retry in a moment.'
+        return f'Gemini returned an error ({exc.code}). Please retry.'
+    return str(exc) if isinstance(exc, ValueError) else 'The planner is unavailable. Please retry.'
 FINAL_NUDGE = ('Tool budget reached. Answer the owner now using only the tool results above, in the required '
                'two-part format; say plainly what you could not check.')
 
@@ -501,8 +528,8 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
             function_calling_config=types.FunctionCallingConfig(mode='NONE'))})
         started, final = time.monotonic(), False
         for step in range(MAX_STEPS):
-            response = await client.aio.models.generate_content(model=settings.gemini_model, contents=contents,
-                                                                config=final_config if final else config)
+            response = await generate(client, model=settings.gemini_model, contents=contents,
+                                      config=final_config if final else config)
             if not response.candidates or not response.candidates[0].content:
                 raise ValueError('Gemini returned no answer')
             content = response.candidates[0].content
@@ -538,9 +565,9 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
         raise ValueError('The tool limit was reached. Please narrow the question.')
     except Exception as exc:
         log.exception('Planner run failed: %s', run_id)
-        message = str(exc) if isinstance(exc, ValueError) else 'The planner is unavailable. Please retry.'
+        message = explain_gemini_error(exc)
         await asyncio.to_thread(emit, run_id, 'node.create', {'node_id': 'planner-error', 'type': 'answer',
-            'title': message, 'status': 'failed', 'parent': ctx.parent, 'data': {'spoken': message}})
+            'title': message, 'status': 'failed', 'parent': ctx.parent, 'data': {'spoken': message, 'error': message}})
         await asyncio.to_thread(finish, run_id, 'closed')
     finally:
         if owned and client is not None:
