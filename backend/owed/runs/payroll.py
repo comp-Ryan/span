@@ -143,7 +143,8 @@ async def run_payroll(run_id: str, company: str, target: date, parent_run_id=Non
         await event('node.update', {'node_id': 'n2', 'status': 'done'})
         current = 'n3'
         await event('node.create', {'node_id': 'n3', 'type': 'forecast', 'title': f"Forecasting without {excluded_customer['display_name']}" if excluded_customer else f'Forecasting {target.isoformat()}', 'status': 'running', 'parent': 'n2'})
-        await event('node.update', {'node_id': 'n3', 'status': 'done', 'data': snap['forecast']})
+        from owed.finance.history import emit_forecast
+        await asyncio.to_thread(emit_forecast, run_id, 'n3', snap, status='done')
         gap = snap['forecast']['gap']
         title = answer_title(snap['forecast'])
         if excluded_customer:

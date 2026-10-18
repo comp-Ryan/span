@@ -2,8 +2,8 @@ export type NodeType = 'context' | 'scoring' | 'forecast' | 'answer' | 'levers' 
 export type NodeStatus = 'running' | 'done' | 'failed' | 'waiting'
 
 export interface ScoreRow {
-  invoice_id: string; customer: string; amount: number; days_past_due: number
-  p_paid_by_target: number; p_never: number; band: 'green' | 'amber' | 'red'; source?: string; expected_days_to_pay?: number
+  invoice_id: string; customer_id?: string; customer: string; amount: number; days_past_due: number
+  p_paid_by_target: number; p_never: number; band: 'green' | 'amber' | 'red'; source?: string; expected_days_to_pay?: number | null
 }
 export interface Lever {
   id: string; label: string; recovers: number

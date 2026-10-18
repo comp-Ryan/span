@@ -1,32 +1,50 @@
-# Span — 2-minute demo video script
+# Span — live two-minute demo script
 
-Record with `cd frontend && npm run record` (writes `demo-out/demo.webm` + stills). This is a scripted fixture replay with voiceover, not an open-ended “try asking anything” demo and not a claim of a live phone call. Captions carry the numbers.
+`cd frontend && npm run record` builds the frontend, creates a **new isolated local
+Timescale database for every take**, launches its own API + local uAgent bureau,
+and clicks the actual UI. Outputs: `frontend/demo-out/live-<timestamp>/demo.webm`,
+optional MP4 (if ffmpeg is installed), stills, 1500×900 thumbnail, and `evidence.json`.
+The recording has no narration track; add this voiceover in editing. Gemini latency
+is real; trim waits, never substitute outcomes. Offline fixtures are explicitly
+separate: `npm run record:fixture`.
 
-**0:00–0:10 — The question.**
-Screen: General chat with Ryan's question in the workflow. VO: "Ryan runs Palletbay Storage. Payroll is coming up, and he wants to know: can the business make payroll over the next two weeks?"
-Show the question as the first workflow step.
+## 0:00–0:15 · Home and the question
+“Span turns the business owner's cash question into a visible workflow. These are
+Palletbay's books from the Intuit dataset, with October 6 as the accounting clock.”
+Show Home, then a new General chat: “Am I going to make payroll these next two weeks?
+Evergreen may be late.”
 
-**0:10–0:30 — Watch it think.**
-VO: "Span reads his actual books — six and a half grand in the bank, thirteen-three payroll, almost eleven grand in bills. Then it scores all 204 open invoices against each customer's real payment history — green will pay, amber maybe."
-Beat: scoring dots ticking (02-scoring). Call transcript dock opens briefly.
+## 0:15–0:35 · One clarification, not a guessed assumption
+“Before answering, Span asks one question: should Evergreen pay by payday?
+We say no. That answer becomes a branch of the original conversation.”
+Show the actual clarification and the owner reply. If the model doesn't clarify,
+stop the take and investigate; don't stage a replacement card.
 
-**0:30–0:45 — The honest answer.**
-VO: "The forecast: twenty-four grand goes out, under twenty-four comes in. The answer is no — about four hundred dollars short. Even if the usual payers pay."
-Beat: verdict card "No. $385 short" + gauge (03-verdict).
+## 0:35–0:55 · Forecast and explicit approval
+“Here is the expected cash line, and the downside if slow payers slip. The workflow
+shows the books, invoice scores and supported next steps. It asks before acting.”
+Read **the actual gap displayed in this take**, not a fixed $385 script. Review the
+selected recipients, then click the real **Yes, text them** decision.
 
-**0:45–1:05 — One approval at a time.**
-VO: "Span shows a supported next step and asks before acting. Ryan reviews the proposed reminders and approves that step; nothing else is bundled into the decision."
-Beat: lever cards, click "Yes, text them" (04-levers).
+## 0:55–1:20 · Messages and negotiation
+“Approved reminders are drafted, and a simulated customer asks for installments.
+Separate local uAgents negotiate within the owner's policy.”
+Show the simulated channel labels, the four-message exchange, and actual agreement.
+Do not claim real SMS delivery or an Agentverse registration.
 
-**1:05–1:30 — It chases the money.**
-VO: "The texts go out. Evergreen's agent replies — cash is tight. Span's agent negotiates, under Ryan's rules: two payments of five seventy-eight. First one lands on the Visa sandbox."
-Beat: conversation bubbles, negotiation rounds, "Agreed", $578 receipt (05-actions). Cash chart ticks up, outcome card flips green.
+## 1:20–1:40 · Payment and history
+“Open the installment's real pay link from Get paid. This is a simulated card payment,
+not a live charge. The receipt triggers a new forecast, saved alongside the previous
+one in the Timescale hypertable—the local Tiger Data-compatible development setup.”
+Read the actual receipt amount. If a shortfall remains, **say so**. Never force a
+successful-payroll claim or a green outcome. Chart revisions retain their assumptions.
 
-**1:30–1:50 — A follow-up.**
-VO: "Ryan asks what changes if Evergreen doesn't pay. Span keeps it on the same workflow, shows the new shortfall, and offers one next action. It waits for Ryan before doing anything else."
-Beat: follow-up thread appears with one pending "Yes, text Yeoman" decision (06-followup). Leave it pending; do not approve a batch of actions.
+## 1:40–2:00 · Continuity and the report
+“Saved chats keep their branches and their own names. Ask who's late to inspect
+another branch. Reports preserve the numbers and actions for the bookkeeper.”
+Show renamed/reloaded chat, the late-payer branch, and Reports. Close with Span logo.
 
-**1:50–2:00 — The report.**
-VO: "And it leaves a one-page report — the question, the numbers, what it did, what's still open. Reasoning on display, then a document that stays."
-Beat: `/report/:id` page + PDF (docs/devin/samples/report-page.png).
-End card: Span logo, "Call Span. Ask if you'll make payroll."
+**Disclosures:** live Gemini tool loop and local database; browser-typed interaction,
+not a live telephone call; simulated customer reply/messages/card payment; local
+uAgent exchange; dataset clock, probabilistic estimates, no Tiger Cloud deployment
+claim. Payment/model outputs must match `evidence.json` for the selected take.

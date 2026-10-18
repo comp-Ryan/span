@@ -1,4 +1,4 @@
-"""Read-only checks for /payments, /reports and /customers against the shared demo DB.
+"""Read-only checks for /payments, /reports and /customers against an isolated test DB.
 
 No lifespan (TestClient is not used as a context manager), so no workers or migrations run,
 and every request is a GET: nothing here writes to the database.

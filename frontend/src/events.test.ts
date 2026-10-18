@@ -140,3 +140,13 @@ describe('formatters', () => {
     expect([money(undefined), money(1234.5)]).toEqual(['—', '$1,235'])
   })
 })
+
+it('planner rows use the payroll ScoreRow shape without duplication across updates', () => {
+  let run = reduce(emptyRun(), { event: 'run.start', data: { run_id: 'planner' } })
+  run = reduce(run, { event: 'node.create', data: { node_id: 'tool-1', type: 'scoring', title: 'Reading history', data: { tool: 'score_customer', args: { customer_id: 'c' } } } })
+  const row = { invoice_id: 'inv', customer: 'Evergreen', amount: 20, days_past_due: 4, p_paid_by_target: .8, p_never: .02, band: 'green' }
+  const event = { event: 'node.update', data: { node_id: 'tool-1', status: 'done', data: { rows: [row] } } }
+  run = reduce(reduce(run, event), event)
+  expect(run.nodes['tool-1'].rows).toEqual([row])
+  expect(run.nodes['tool-1'].data.tool).toBe('score_customer')
+})

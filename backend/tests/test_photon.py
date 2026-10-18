@@ -48,6 +48,11 @@ def test_simulated_yes_actions_and_installment_payment(monkeypatch):
         envelope.encode_payload(counter(proposal, history).json())
         return envelope
     monkeypatch.setattr(negotiation, 'query', reply)
+    # Transport is mocked: provision its registry explicitly instead of depending on a running bureau.
+    with conn() as c:
+        c.execute("""insert into customer_agents(company_id,customer_id,address)
+            select distinct company_id,customer_id,'test-agent' from invoice_facts where company_id='company-020'
+            on conflict do nothing""")
     rid = create('company-020', 'payroll two weeks', 'web', 'payroll_check', target_date=date(2026,10,20))
     try:
         asyncio.run(run_payroll(rid, 'company-020', date(2026,10,20)))
@@ -83,6 +88,7 @@ def test_simulated_yes_actions_and_installment_payment(monkeypatch):
         assert len([e for e in replay_run(rid)['events'] if e['data'].get('data',{}).get('kind')=='reminder'])==count_before
     finally:
         with conn() as c:
+            c.execute("delete from customer_agents where address='test-agent'")
             c.execute('delete from forecast_payments where payment_id in (select payment_id from payments where pay_token in (select pay_token from pay_tokens where run_id=%s))', (rid,))
             c.execute('delete from payments where pay_token in (select pay_token from pay_tokens where run_id=%s)', (rid,))
             c.execute('delete from pay_tokens where run_id=%s', (rid,))

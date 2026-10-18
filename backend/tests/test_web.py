@@ -17,6 +17,8 @@ def test_production_static_and_deep_report_do_not_shadow_api(tmp_path):
     client = TestClient(test_app)
     assert client.get('/').text == '<html>Owed product</html>'
     assert client.get('/report/rep-test').text == '<html>Owed product</html>'
+    for path in ('/home', '/get-paid', '/reports', '/customers', '/customers/customer-1'):
+        assert client.get(path, headers={'accept': 'text/html,application/xhtml+xml'}).text == '<html>Owed product</html>'
     assert client.get('/api/health').json() == {'ok': True}
     assert client.get('/assets/app.js').status_code == 200
     for path in ('/assets/missing.js', '/api/missing', '/.env', '/owed/config.py'):

@@ -5,8 +5,8 @@ type Day = { date: string; inflow: number; outflow: number; balance: number }
 type Cash = { start: string; target: string; opening_balance: number; days: Day[]; pessimistic_days: Day[]; payroll_dates: string[] }
 
 /** Live mode draws API numbers only; failed requests never substitute a synthetic line. */
-export default function DailyCashChart({ company, target, revision, neverPays }: { company: string; target: string; revision: number | string; neverPays?: string }) {
-  const key = JSON.stringify([company, target, revision, neverPays])
+export default function DailyCashChart({ company, target, revision, neverPays, willPay }: { company: string; target: string; revision: number | string; neverPays?: string; willPay?: string }) {
+  const key = JSON.stringify([company, target, revision, neverPays, willPay])
   const [result, setResult] = useState<{ key: string; cash?: Cash; error?: string }>()
   const cash = result?.key === key ? result.cash : undefined
   const error = result?.key === key ? result.error : undefined
@@ -14,12 +14,13 @@ export default function DailyCashChart({ company, target, revision, neverPays }:
     const abort = new AbortController()
     const query = new URLSearchParams({ company, target })
     if (neverPays) query.set('never_pays', neverPays)
+    if (willPay) query.set('will_pay', willPay)
     fetch(`/api/cash?${query}`, { signal: abort.signal }).then(async r => {
       if (!r.ok) throw new Error('Cash projection unavailable')
       return r.json() as Promise<Cash>
     }).then(value => { setResult({ key, cash: value }) }).catch(e => { if (e.name !== 'AbortError') setResult({ key, error: e.message }) })
     return () => abort.abort()
-  }, [company, target, revision, neverPays, key])
+  }, [company, target, revision, neverPays, willPay, key])
   if (error) return <div className="chart" role="alert">{error}</div>
   if (!cash) return <div className="chart">Loading dated cash projection…</div>
   const W = 420, H = 200, bottom = 165, top = 22
