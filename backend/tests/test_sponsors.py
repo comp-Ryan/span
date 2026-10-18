@@ -61,3 +61,22 @@ def test_ordinary_requests_do_not_get_the_private_network_header():
         assert r.status_code == 200 and 'access-control-allow-private-network' not in r.headers
     finally:
         mp.undo()
+
+
+def test_openrouter_check_reports_the_account_balance_not_the_key_cap(monkeypatch):
+    """The key's limit minus usage ($4.81) is a spending cap; the account itself had $0, so only the free models answer."""
+    import httpx
+    real = httpx.AsyncClient
+    monkeypatch.setattr(settings, 'openrouter_api_key', 'sk-or-test')
+    monkeypatch.setattr(settings, 'openrouter_model', 'google/gemini-3.8-flash, nvidia/nemotron-3-ultra-550b-a55b:free')
+
+    def handle(request):
+        if request.url.path.endswith('/auth/key'):
+            return httpx.Response(200, json={'data': {'limit': 5, 'usage': 0.19}})
+        if request.url.path.endswith('/credits'):
+            return httpx.Response(200, json={'data': {'total_credits': 0, 'total_usage': 0.2}})
+        return httpx.Response(404)
+    monkeypatch.setattr(sponsors.httpx, 'AsyncClient', lambda **kw: real(transport=httpx.MockTransport(handle), **kw))
+    status, detail, configured = asyncio.run(sponsors.check_openrouter())
+    assert status == 'warn' and configured
+    assert '$4.81' not in detail and 'no credit' in detail and 'nemotron-3-ultra-550b-a55b:free' in detail

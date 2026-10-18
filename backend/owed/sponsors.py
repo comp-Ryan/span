@@ -42,15 +42,27 @@ async def check_gemini():
 async def check_openrouter():
     if not settings.openrouter_api_key:
         return 'off', 'no OpenRouter key; Gemini only', False
+    h = {'Authorization': 'Bearer ' + settings.openrouter_api_key}
     async with httpx.AsyncClient(timeout=TIMEOUT) as c:
-        r = await c.get('https://openrouter.ai/api/v1/auth/key', headers={'Authorization': 'Bearer ' + settings.openrouter_api_key})
-    if r.status_code != 200:
-        return 'fail', f'key check answered {r.status_code}', True
-    data = r.json().get('data') or {}
-    usage, limit = data.get('usage'), data.get('limit')
+        r = await c.get('https://openrouter.ai/api/v1/auth/key', headers=h)
+        if r.status_code != 200:
+            return 'fail', f'key check answered {r.status_code}', True
+        cr = await c.get('https://openrouter.ai/api/v1/credits', headers=h)  # the account balance; the key's limit is only a cap
     chain = [m.strip() for m in settings.openrouter_model.split(',') if m.strip()]
-    left = f'${float(limit) - float(usage):.2f} left' if isinstance(limit, (int, float)) and isinstance(usage, (int, float)) else 'balance unknown'
-    return 'pass', f'key ok, {left}; chain {chain[0]} → {chain[-1]} (free)', True
+    free = [m for m in chain if m.endswith(':free')]
+    balance = None
+    if cr.status_code == 200:
+        d = cr.json().get('data') or {}
+        try:
+            balance = float(d.get('total_credits') or 0) - float(d.get('total_usage') or 0)
+        except (TypeError, ValueError):
+            balance = None
+    if balance is not None and balance <= 0.01:
+        if not free:
+            return 'fail', 'key ok, but the account has no credit and no free model is in the chain', True
+        return 'warn', f'key ok, account has no credit, so the free model answers ({free[0]})', True
+    left = f'${balance:.2f} credit' if balance is not None else 'balance unknown'
+    return 'pass', f'key ok, {left}; chain {chain[0]} → {chain[-1]}', True
 
 
 async def check_elevenlabs():
