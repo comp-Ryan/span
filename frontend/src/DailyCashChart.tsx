@@ -5,7 +5,7 @@ type Day = { date: string; inflow: number; outflow: number; balance: number }
 type Cash = { start: string; target: string; opening_balance: number; days: Day[]; pessimistic_days: Day[]; payroll_dates: string[] }
 
 /** Live mode draws API numbers only; failed requests never substitute a synthetic line. */
-export default function DailyCashChart({ company, target, revision, neverPays }: { company: string; target: string; revision: number | string; neverPays?: string }) {
+export default function DailyCashChart({ company, target, revision, neverPays, scenario }: { company: string; target: string; revision: number | string; neverPays?: string; scenario?: string }) {
   const [cash, setCash] = useState<Cash | null>(null)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function DailyCashChart({ company, target, revision, neverPays }:
   const x = (i: number) => 8 + i / Math.max(1, cash.days.length - 1) * (W - 16)
   const path = (days: Day[]) => days.map((d, i) => `${i ? 'L' : 'M'}${x(i)} ${y(d.balance)}`).join(' ')
   return <div className="chart" data-testid="daily-cash-chart">
-    <div className="head" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}><b>Cash in the bank, day by day</b><div className="legend"><span>Green: expected receipts</span><span>Orange: payers below 70% slip</span></div></div>
+    <div className="head" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}><b>Cash in the bank, day by day{scenario && <span className="scenario">{scenario}</span>}</b><div className="legend"><span>Green: expected receipts</span><span>Orange: payers below 70% slip</span></div></div>
     <svg viewBox={`0 0 ${W} ${H}`} fill="none" role="img" aria-label="Server-projected expected and pessimistic cash balances">
       <path d={`M0 ${y(0)} H${W}`} stroke="#D52B1E" strokeDasharray="4 4" />
       {cash.payroll_dates.map(day => { const i = cash.days.findIndex(d => d.date === day); return <path key={day} d={`M${x(i)} ${top} V${bottom}`} stroke="#8D9096" strokeDasharray="3 4"><title>{day}: payroll</title></path> })}

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
 import { emptyRun, k, money, reduce } from './events'
-import { playFixture, replay, resolveDecision, startRun, subscribe } from './api'
+import { childRuns, playFixture, replay, resolveDecision, startRun, subscribe } from './api'
 import DailyCashChart from './DailyCashChart'
 
 const COMPANY = 'company-020'
@@ -55,6 +55,36 @@ function ScoredNode({ n }: { n: GraphNode }) {
     <div className="legend"><span><i style={{ background: 'var(--green)' }} />will pay</span><span><i style={{ background: 'var(--amber)' }} />maybe</span><span><i style={{ background: 'var(--red)' }} />unlikely</span></div>
     {n.data.overdue_only && <div style={{ maxHeight: 280, overflow: 'auto' }}>{n.rows.map(r => <div className="kv" key={r.invoice_id}><span>{r.customer}</span><b>{r.days_past_due}d · {money(r.amount)}</b></div>)}</div>}
     {n.rows.length > 0 && <div className="kv"><span style={{ color: 'var(--muted)' }}>Likely in time</span><b>${k(likely)} of ${k(owed)}</b></div>}
+  </div>
+}
+/** show_late branch: one scoring node whose rows are overdue invoices, most days late first. */
+function LateNode({ n }: { n: GraphNode }) {
+  const total = n.progress?.total || n.rows.length
+  const shown = n.rows.slice(0, 12)
+  return <div className={`node late ${n.status}`} data-testid="late-node">
+    <h3><span className="ic amber">{I.people}</span>{total ? `${total} overdue invoices` : 'Finding overdue invoices'}{n.status === 'running' && n.progress ? <span className="fine" style={{ marginLeft: 'auto' }}>{n.progress.done} / {n.progress.total}</span> : null}</h3>
+    <div className="latelist">
+      {shown.map((r, i) => <div className="laterow" key={r.invoice_id}>
+        <span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(r.customer)}</span>
+        <span className="nm">{r.customer}<span className="fine"> · {r.invoice_id}</span></span>
+        <span className={`days ${r.days_past_due > 30 ? 'red' : r.days_past_due > 14 ? 'amber' : ''}`}>{r.days_past_due}d late</span>
+        <span className="am">{money(r.amount)}</span>
+        <span className="pc" title={`${Math.round(r.p_paid_by_target * 100)}% likely by payday`}><i className="dot" style={{ background: r.band === 'green' ? 'var(--green)' : r.band === 'red' ? 'var(--red)' : 'var(--amber)' }} /></span>
+      </div>)}
+      {n.rows.length > shown.length && <div className="fine">+ {n.rows.length - shown.length} more, fewest days late last</div>}
+      {n.status === 'running' && n.rows.length === 0 && <div className="thinking"><i/><i/><i/> sorting by days late</div>}
+    </div>
+  </div>
+}
+function OverduePanel({ sc }: { sc: GraphNode }) {
+  const rows = sc.rows; const total = rows.reduce((a, r) => a + r.amount, 0)
+  const oldest = rows[0]; const unlikely = rows.filter(r => r.band === 'red')
+  const byCust = new Set(rows.map(r => r.customer))
+  return <div className="card risk" data-testid="overdue-panel">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="ic amber" style={{ width: 22, height: 22 }}>{I.people}</span><b style={{ fontSize: 14 }}>Who’s late</b></div>
+    <div className="kv" style={{ fontSize: 13 }}><span style={{ color: 'var(--muted)' }}>{rows.length} invoices from {byCust.size} customers</span><b>{money(total)} overdue</b></div>
+    {oldest && <div className="kv" style={{ fontSize: 13 }}><span style={{ color: 'var(--muted)' }}>Oldest</span><b>{oldest.customer} · {oldest.days_past_due} days</b></div>}
+    <div className="kv" style={{ fontSize: 13 }}><span style={{ color: 'var(--muted)' }}>Unlikely to pay by payday</span><b style={{ color: unlikely.length ? 'var(--red)' : undefined }}>{unlikely.length ? `${unlikely.length} · ${money(unlikely.reduce((a, r) => a + r.amount, 0))}` : 'none'}</b></div>
   </div>
 }
 function CashNode({ n, ctx }: { n: GraphNode; ctx?: GraphNode }) {
@@ -307,9 +337,12 @@ function PlannerThread({ run }: { run: RunState }) {
     </div>
   </section>
 }
-function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean }) {
+function Thread({ run, onDecide, isFollowUp, parent }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean; parent?: RunState }) {
   const byType = (t: string) => run.order.map(id => run.nodes[id]).find(n => n.type === t)
   const ctx = byType('context'), sc = byType('scoring'), fc = byType('forecast'), ans = byType('answer'), lv = byType('levers')
+  const late = !!sc?.data.overdue_only
+  // "Forecasting without Evergreen Juniper Flats Removals" -> "without Evergreen Juniper Flats Removals"
+  const scenario = fc?.data.excluded_customer_id ? (fc.title.match(/without .+$/i)?.[0] || 'without one customer') : undefined
   const actions = run.order.map(id => run.nodes[id]).filter(n => n.type === 'action')
   const payments = actions.filter(a => a.data.kind === 'payment'); const received = payments.reduce((a, p) => a + (p.data.amount || 0), 0)
   const levers: Lever[] = lv?.data.levers || []
@@ -318,23 +351,24 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
   const verdictRef = useRef<HTMLDivElement | null>(null), contRef = useRef<HTMLDivElement | null>(null)
   const leverRefs = useMemo(() => levers.map(() => ({ current: null as HTMLDivElement | null })), [levers.length])
   return <section className="thread">
-    {isFollowUp && <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up · branches from this run</div>}
+    {isFollowUp && <div className="branch" data-testid="branch-label"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up · branches from {parent ? <>“{parent.question}”</> : 'this run'}{scenario && <span className="scenario">{scenario}</span>}{late && <span className="scenario">overdue only</span>}</div>}
     {isFollowUp && <h1 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 14 }}>{run.question}</h1>}
     <div className="workspace">
       <aside className="live">
         {ctx && (LIVE && fc && fc.status === 'done'
-          ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
+          ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} scenario={scenario} /></div>
           : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} W={420} />)}
-        {sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
-        <div className={`card report ${run.report_id ? 'ready' : ''}`}>
+        {late && sc && <OverduePanel sc={sc} />}
+        {!late && sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
+        {!late && <div className={`card report ${run.report_id ? 'ready' : ''}`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>
           <div className="fine">{run.report_id ? 'Ready. Share it with your bookkeeper or print it.' : 'Builds itself from this run as it goes.'}</div>
           {run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : <div className="thinking"><i/><i/><i/> writing</div>}
-        </div>
+        </div>}
       </aside>
       <div className="steps" ref={contRef}>
         {ctx && <div className="vstep"><BooksNode n={ctx} /></div>}
-        {sc && <><div className="vconn" /><div className="vstep"><ScoredNode n={sc} /></div></>}
+        {sc && <>{ctx && <div className="vconn" />}<div className="vstep">{late ? <LateNode n={sc} /> : <ScoredNode n={sc} />}</div></>}
         {fc && <><div className="vconn" /><div className="vstep"><CashNode n={fc} ctx={ctx} /></div></>}
         {ans && <><div className="vconn" /><div className="vstep" ref={verdictRef}><VerdictNode n={ans} fc={fc} /></div></>}
         {levers.length > 0 && <>
@@ -418,10 +452,23 @@ export default function App() {
   const play = async (s = speed) => { stopRef.current(); setRuns([]); playing.current = true; const stop = await playFixture('/fixture.json', apply, s); stopRef.current = () => { playing.current = false; stop() } }
   useEffect(() => {
     if (RUN) {
-      const seen = new Set<string>()
-      const ingest = (ev: RawEvent) => { const d = ev.data; if (d.run_id !== RUN && !(d.parent_run_id === RUN)) return; if (d.id && seen.has(d.id)) return; if (d.id) seen.add(d.id); apply(ev) }
-      const off = subscribe(COMPANY, ingest)
-      replay(RUN).then(evs => { for (const e of evs) ingest(e) }).catch(() => {})
+      // Redraw the saved run and the branches that hang off it, then keep listening. Live events are held
+      // until history is in, so a node.update never lands before its run.start.
+      let ready = false
+      const seen = new Set<string>(), accepted = new Set<string>([RUN]), pending: RawEvent[] = []
+      const ingest = (ev: RawEvent) => {
+        const d = ev.data
+        if (ev.event === 'run.start' && d.parent_run_id && accepted.has(d.parent_run_id)) accepted.add(d.run_id)
+        if (!accepted.has(d.run_id) || (d.id && seen.has(d.id))) return
+        if (d.id) seen.add(d.id); apply(ev)
+      }
+      const off = subscribe(COMPANY, ev => { if (ready) ingest(ev); else pending.push(ev) })
+      ;(async () => {
+        const kids = await childRuns(RUN, COMPANY).catch(() => [])
+        const history = (await Promise.all([RUN, ...kids].map(id => replay(id, COMPANY)))).flat()
+        const combined = [...history, ...pending].sort((a, b) => Number(a.data.id) - Number(b.data.id))
+        combined.forEach(ingest); pending.length = 0; ready = true
+      })().catch(e => setError(String(e)))
       return off
     }
     if (LIVE) {
@@ -501,9 +548,9 @@ export default function App() {
           <div className="eyebrow"><span className="av">R</span><span>Ryan · by {main.source === 'call' ? 'phone' : main.source} · Sat 3:52 PM</span><span className="sep" /><span>Thread 1 of 3 today</span><span className="sep" /><span className="link">Through Oct 20</span></div>
           <h1 className="q">{main.question}</h1>
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
-        {runs.map((r, i) => (r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => id === 'n2' || id === 'n3' || id === 'f3')))
+        {runs.map((r, i) => r.order.some(id => id.startsWith('tool-') || id === 'context' || id === 'planner-error')
           ? <PlannerThread key={r.run_id} run={r} />
-          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
+          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} parent={runs.find(p => p.run_id === r.parent_run_id)} />)}
       </main>
     </div>
     {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} />}

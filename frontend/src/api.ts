@@ -45,3 +45,9 @@ export async function playFixture(url: string, onEvent: (e: RawEvent) => void, s
   })()
   return () => { stopped = true }
 }
+/** Follow-up branches of a run (oldest first), so /?run=<id> can redraw the whole thread. */
+export async function childRuns(parentRunId: string, company = 'company-020'): Promise<string[]> {
+  const r = await fetch(`${BASE}/runs?company=${encodeURIComponent(company)}`); const j = await r.json()
+  const runs: { run_id: string; parent_run_id?: string | null; started_at: string }[] = j.runs || []
+  return runs.filter(x => x.parent_run_id === parentRunId).sort((a, b) => a.started_at.localeCompare(b.started_at)).map(x => x.run_id)
+}
