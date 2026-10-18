@@ -1,50 +1,49 @@
-# Span — live two-minute demo script
+# Span — two-minute demo script (live flow)
 
-`cd frontend && npm run record` builds the frontend, creates a **new isolated local
-Timescale database for every take**, launches its own API + local uAgent bureau,
-and clicks the actual UI. Outputs: `frontend/demo-out/live-<timestamp>/demo.webm`,
-optional MP4 (if ffmpeg is installed), stills, 1500×900 thumbnail, and `evidence.json`.
-The recording has no narration track; add this voiceover in editing. Gemini latency
-is real; trim waits, never substitute outcomes. Offline fixtures are explicitly
-separate: `npm run record:fixture`.
+`cd frontend && npm run record` records the real product, not a fixture: a fresh isolated copy
+of the local Timescale database for every take, its own API and local customer-agent bureau,
+the built frontend, real Gemini calls. Outputs land in `frontend/demo-out/live-<stamp>/`:
+`demo.webm`, numbered stills (`01-home` … `11-report`), `thumbnail-1500x900.png`, `report.pdf`
+and `evidence.json` (every run, every number). Add the voiceover in editing; trim Gemini
+waits, never substitute outcomes. Read the numbers from the take, not from this script.
 
-## 0:00–0:15 · Home and the question
-“Span turns the business owner's cash question into a visible workflow. These are
-Palletbay's books from the Intuit dataset, with October 6 as the accounting clock.”
-Show Home, then a new General chat: “Am I going to make payroll these next two weeks?
-Evergreen may be late.”
+## 0:00–0:12 · Home and the question (01-home)
+"This is Palletbay Storage, a small warehouse business on Intuit's QuickBooks dataset.
+The owner asks Span one question." Type or speak: **Am I going to make payroll these next two
+weeks?** (The mic is browser voice, a turn-based demo; the recording types it.)
 
-## 0:15–0:35 · One clarification, not a guessed assumption
-“Before answering, Span asks one question: should Evergreen pay by payday?
-We say no. That answer becomes a branch of the original conversation.”
-Show the actual clarification and the owner reply. If the model doesn't clarify,
-stop the take and investigate; don't stage a replacement card.
+## 0:12–0:30 · One clarifying question (02-clarifying-question)
+"Span reads the books and forecasts cash on payday. Before answering it asks the one thing the
+owner may know better than the model: the dependable late payer whose payment decides the
+verdict." Span: *Should I assume Evergreen Juniper Flats Removals will pay the $1,222 they owe
+by October 20, or treat them as not paying?* Owner: **I'm not sure, go with your estimate.**
+(Say "no" instead and the forecast recalculates without Evergreen: about $669 short.)
 
-## 0:35–0:55 · Forecast and explicit approval
-“Here is the expected cash line, and the downside if slow payers slip. The workflow
-shows the books, invoice scores and supported next steps. It asks before acting.”
-Read **the actual gap displayed in this take**, not a fixed $385 script. Review the
-selected recipients, then click the real **Yes, text them** decision.
+## 0:30–0:50 · Verdict and one action (03-verdict-approval)
+"Six and a half thousand in the bank, thirteen-three of payroll, almost eleven thousand of
+bills, 204 invoices scored. The honest answer: no, about $385 short." Span proposes exactly
+one action, texting the three reliable late payers, and waits. Click the real **Yes, text them**.
 
-## 0:55–1:20 · Messages and negotiation
-“Approved reminders are drafted, and a simulated customer asks for installments.
-Separate local uAgents negotiate within the owner's policy.”
-Show the simulated channel labels, the four-message exchange, and actual agreement.
-Do not claim real SMS delivery or an Agentverse registration.
+## 0:50–1:15 · Reminders, replies, negotiation (04-messages-negotiation)
+"Three reminders go out on a labeled simulated channel. Each customer's agent, simulated from
+that customer's real payment history, replies that cash is tight; Span's agent negotiates
+installments under the owner's rules." Show the exchange and the agreements.
 
-## 1:20–1:40 · Payment and history
-“Open the installment's real pay link from Get paid. This is a simulated card payment,
-not a live charge. The receipt triggers a new forecast, saved alongside the previous
-one in the Timescale hypertable—the local Tiger Data-compatible development setup.”
-Read the actual receipt amount. If a shortfall remains, **say so**. Never force a
-successful-payroll claim or a green outcome. Chart revisions retain their assumptions.
+## 1:15–1:35 · Payment and the outcome (05–07)
+"Each agreement comes with a real pay link. The first installments land on the Visa sandbox
+card." Show the pay page and the receipt, then the outcome card: it turns green only when the
+collected cash actually covers the gap; otherwise say how much is still short. The forecast
+history keeps every revision in the Timescale hypertable.
 
-## 1:40–2:00 · Continuity and the report
-“Saved chats keep their branches and their own names. Ask who's late to inspect
-another branch. Reports preserve the numbers and actions for the bookkeeper.”
-Show renamed/reloaded chat, the late-payer branch, and Reports. Close with Span logo.
+## 1:35–1:50 · A follow-up (08-what-if-evergreen)
+Owner: **What if Evergreen doesn't pay?** "Same chat, a branch: the new shortfall and one next
+action, pending until the owner says yes." Leave it pending.
 
-**Disclosures:** live Gemini tool loop and local database; browser-typed interaction,
-not a live telephone call; simulated customer reply/messages/card payment; local
-uAgent exchange; dataset clock, probabilistic estimates, no Tiger Cloud deployment
-claim. Payment/model outputs must match `evidence.json` for the selected take.
+## 1:50–2:00 · Get paid, Reports, the report (09–11)
+"Get paid shows the links and the money that came back. Reports keeps the one-page report:
+the question, the numbers, what Span did, what's still open." End on the Span logo.
+
+**Disclosures:** live Gemini planner and payment model on an isolated copy of the books;
+browser-typed interaction, not a telephone call; simulated reminders, customer replies and
+card payments (Visa sandbox / simulator, Solana devnet); local uAgents; dataset clock
+2026-10-06; local TimescaleDB, no Tiger Cloud deployment claim.

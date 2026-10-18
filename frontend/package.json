@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test:branches": "node --experimental-strip-types --test tests/branches.node.ts",
     "record": "tsx scripts/record_demo.ts",
-    "record:fixture": "tsx scripts/record_fixture.ts"
+    "record:fixture": "tsx scripts/record_fixture.ts",
+    "e2e": "tsx scripts/e2e_chrome.ts"
   },
   "dependencies": {
     "react": "^19.2.8",
