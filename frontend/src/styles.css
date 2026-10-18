@@ -350,3 +350,7 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .ask .sugg button{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:7px 12px;font:13px var(--font);color:var(--text);cursor:pointer}
 .ask .sugg button:hover{border-color:var(--green);color:var(--green)}
 .ask .sugg button:disabled{opacity:.6;cursor:default}
+.branch a{color:var(--blue);text-decoration:underline}
+[data-run-id]{scroll-margin-top:90px}
+.scenario-label{display:flex;flex-direction:column;gap:4px;padding:12px 16px 0;font-size:12px;color:var(--muted)}
+.scenario-label b{color:var(--text)}

@@ -13,7 +13,7 @@ export async function resolveDecision(decisionId: string, optionId: string, comp
   return r.json()
 }
 export async function replay(runId: string, company?: string): Promise<RawEvent[]> {
-  const r = await fetch(`${BASE}/runs/${runId}?company=${encodeURIComponent(company || "company-020")}`); const j = await r.json(); return j.events || []
+  const r = await fetch(`${BASE}/runs/${runId}?company=${encodeURIComponent(company || "company-020")}`); if (!r.ok) throw new Error('Could not replay this thread'); const j = await r.json(); return j.events || []
 }
 export async function getReport(id: string): Promise<ReportDoc> {
   const r = await fetch(`${BASE}/reports/${encodeURIComponent(id)}`)

@@ -2,13 +2,14 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
 import { emptyRun, k, money, plain, reduce } from './events'
-import { generateReport, playFixture, replay, resolveDecision, startRun, subscribe } from './api'
+import { generateReport, playFixture, resolveDecision, startRun } from './api'
 import DailyCashChart from './DailyCashChart'
+import { connectLive } from './live'
 
 const PARAMS = new URLSearchParams(location.search)
 const COMPANY = PARAMS.get('company') || 'company-020'
 const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
-const LIVE = new URLSearchParams(location.search).has('live')
+const LIVE = new URLSearchParams(location.search).has('live') || new URLSearchParams(location.search).has('run')
 const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
 const RUN = new URLSearchParams(location.search).get('run')
 const STATIC = new URLSearchParams(location.search).has('static')
@@ -323,7 +324,14 @@ function Reasoning({ detail }: { detail: string }) {
     {open && <Detail text={detail} />}
   </div>
 }
-function PlannerThread({ run, onAsk, reportFailedFor, retryReportFor }: { run: RunState; onAsk: (q: string) => void; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
+function BranchHeading({ run, parent }: { run: RunState; parent?: RunState }) {
+  if (!run.parent_run_id) return null
+  return <>
+    <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span><span>Follow-up · branches from <a href={`#thread-${run.parent_run_id}`}>{parent?.question || run.parent_run_id}</a></span></div>
+    <h2 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 14 }}>{run.question}</h2>
+  </>
+}
+function PlannerThread({ run, parent, onAsk, reportFailedFor, retryReportFor }: { run: RunState; parent?: RunState; onAsk: (q: string) => void; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
   const nodes = run.order.map(id => run.nodes[id])
   const ans = nodes.find(n => n.type === 'answer')
   const tools = nodes.filter(n => n.type !== 'answer')
@@ -334,6 +342,7 @@ function PlannerThread({ run, onAsk, reportFailedFor, retryReportFor }: { run: R
   const fakeDecision: Decision | undefined = levers.length ? { decision_id: 'ask-' + run.run_id, node_id: leverNode!.node_id, prompt: 'Text them?', options: [{ id: 'yes', label: 'Yes, text them' }, { id: 'no', label: 'Not now' }], auto_resolves_in_s: null } : undefined
   const ctxLike: GraphNode | undefined = fcNode ? { ...fcNode, data: { ...fcNode.data, payroll_due_by_target: fcNode.data.need } } : undefined
   return <section className="thread">
+    <BranchHeading run={run} parent={parent} />
     <div className="workspace">
       <aside className="live">
         <div className={`card status ${ans ? 'ok' : 'pending'}`} style={{ borderColor: ans ? 'var(--green)' : undefined, background: ans ? 'var(--green-bg)' : undefined }}>
@@ -370,8 +379,7 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
     const gapNow = fc ? (fc.data.gap > 0 ? -fc.data.gap : (fc.data.need != null && (fc.data.cash_at_target ?? 0) >= fc.data.need ? fc.data.cash_at_target - fc.data.need : (fc.data.cash_at_target ?? 0))) : undefined
     const gapWas = pfc ? (pfc.data.gap > 0 ? -pfc.data.gap : (pfc.data.need != null && (pfc.data.cash_at_target ?? 0) >= pfc.data.need ? pfc.data.cash_at_target - pfc.data.need : (pfc.data.cash_at_target ?? 0))) : undefined
     return <section className="thread followup">
-      <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up</div>
-      <h1 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 12 }}>{run.question}</h1>
+      <BranchHeading run={run} parent={parent} />
       <div className="steps" ref={contRef}>
         {scenario && <div className="fine" style={{ marginBottom: 10 }}>Scenario: {scenario.title.replace(/^What-if scenario\s*/i, '')}{scenario.data?.excluded_customer ? ` · without ${scenario.data.excluded_customer}` : ''}</div>}
         {fc && fc.status === 'done' && gapNow != null && <div className="vstep"><div className={`node verdict ${gapNow < 0 ? 'bad' : gapNow < (fc.data.need || 1) * 0.1 ? '' : 'ok'}`}>
@@ -389,12 +397,13 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
     </section>
   }
   return <section className="thread">
-    {isFollowUp && <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up · branches from this run</div>}
-    {isFollowUp && <h1 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 14 }}>{run.question}</h1>}
+    {isFollowUp && <BranchHeading run={run} parent={parent} />}
     <div className="workspace">
       <aside className="live">
-        {ctx && (LIVE && fc && fc.status === 'done'
-          ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
+        {ctx && (LIVE
+          ? fc?.status === 'done'
+            ? <div className="chart-wrap card">{fc.data.excluded_customer_id && <div className="scenario-label"><b>What-if scenario</b><span>{fc.title.replace(/^Forecasting /, '')}</span><span>Actual payments already received stay in cash.</span></div>}<DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
+            : <div className="card chart">Calculating this thread’s cash projection…</div>
           : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} W={420} />)}
         {sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
         <div className={`card report ${run.report_id ? 'ready' : ''}`}>
@@ -492,37 +501,7 @@ export default function App() {
   const playing = useRef(false)
   const play = async (s = speed) => { stopRef.current(); setRuns([]); playing.current = true; const stop = await playFixture('/fixture.json', apply, s); stopRef.current = () => { playing.current = false; stop() } }
   useEffect(() => {
-    if (RUN) {
-      const seen = new Set<string>()
-      const ingest = (ev: RawEvent) => { const d = ev.data; if (d.run_id !== RUN && !(d.parent_run_id === RUN)) return; if (d.id && seen.has(d.id)) return; if (d.id) seen.add(d.id); apply(ev) }
-      const off = STATIC ? () => {} : subscribe(COMPANY, ingest)
-      replay(RUN).then(evs => { for (const e of evs) ingest(e) }).catch(() => {})
-      return off
-    }
-    if (LIVE) {
-      let cancelled = false, ready = false
-      const accepted = new Set<string>(), seen = new Set<string>(), pending: RawEvent[] = []
-      const ingest = (ev: RawEvent) => {
-        const d = ev.data
-        if (ev.event === 'run.start' && d.parent_run_id && accepted.has(d.parent_run_id)) accepted.add(d.run_id)
-        if (!accepted.has(d.run_id) || (d.id && seen.has(d.id))) return
-        if (d.id) seen.add(d.id)
-        apply(ev)
-      }
-      const off = subscribe(COMPANY, ev => { if (ready) ingest(ev); else pending.push(ev) })
-      ;(async () => {
-        try {
-          const savedRun = new URLSearchParams(location.search).get('run')
-          const root = savedRun ? { run_id: savedRun } : await startRun(COMPANY, 'Am I going to make payroll these next two weeks?')
-          accepted.add(root.run_id)
-          const history = await replay(root.run_id, COMPANY)
-          if (cancelled) return
-          const combined = [...history, ...pending].sort((a, b) => Number(a.data.id) - Number(b.data.id))
-          combined.forEach(ingest); pending.length = 0; ready = true
-        } catch (e) { if (!cancelled) setError(String(e)) }
-      })()
-      return () => { cancelled = true; off() }
-    }
+    if (RUN || LIVE) return connectLive(COMPANY, RUN, apply, e => setError(String(e)), STATIC)
     if (!playing.current) play(); return () => stopRef.current()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -591,9 +570,11 @@ export default function App() {
           <div className="eyebrow"><span className="av">R</span><span>Ryan · by {main.source === 'call' ? 'phone' : main.source} · Sat 3:52 PM</span><span className="sep" /><span>Thread 1 of 3 today</span><span className="sep" /><span className="link">Through Oct 20</span></div>
           <h1 className="q">{main.question}</h1>
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
-        {runs.map((r, i) => (r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => id === 'n2' || id === 'n3' || id === 'f3')))
-          ? <PlannerThread key={r.run_id} run={r} onAsk={followUp} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />
-          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} parent={runs[0]} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />)}
+        {runs.map(r => <div key={r.run_id} id={`thread-${r.run_id}`} data-run-id={r.run_id}>
+          {(r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => ['context', 'scoring', 'forecast'].includes(r.nodes[id].type))))
+            ? <PlannerThread run={r} parent={runs.find(p => p.run_id === r.parent_run_id)} onAsk={followUp} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />
+            : <Thread run={r} onDecide={onDecide} isFollowUp={!!r.parent_run_id} parent={runs.find(p => p.run_id === r.parent_run_id)} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />}
+        </div>)}
       </main>
     </div>
     {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} />}
