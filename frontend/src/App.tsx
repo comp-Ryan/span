@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
-import { emptyRun, k, money, reduce } from './events'
+import { emptyRun, k, money, plain, reduce } from './events'
 import { generateReport, playFixture, replay, resolveDecision, startRun, subscribe } from './api'
 import DailyCashChart from './DailyCashChart'
 
@@ -28,7 +28,6 @@ const I = {
 }
 const AV_COLORS = ['#0077C5', '#7A5AF8', '#E08A00', '#2CA01C', '#D52B1E']
 const initials = (s: string) => s.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
-const plain = (t: string) => (t || '').replace(/[#*_`>]+/g, '').replace(/\n{2,}/g, ' ').replace(/\s+/g, ' ').trim()
 const fmtDate = (s?: string) => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
 
 /* ---------- nodes ---------- */
