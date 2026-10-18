@@ -7,16 +7,28 @@
 <meta name="description" content="Call Span. Ask if you’ll make payroll. Watch the answer get made.">
 <link rel="icon" href="img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{--green:#2ca01c;--ink:#393a3d;--muted:#6b6c72;--line:#e3e5e8;--bg:#f4f5f8;--card:#fff}
+  :root{--green:#2f8f2b;--green-dk:#1f3d2b;--ink:#263129;--muted:#6b7570;--line:#e3e7e2;--bg:#f6f7f4;--card:#fff}
   *{box-sizing:border-box}
-  body{margin:0;font:16px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+  body{margin:0;font:16px/1.55 Figtree,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
   .wrap{max-width:1040px;margin:0 auto;padding:22px 20px 60px}
-  header{display:flex;align-items:center;gap:12px;margin-bottom:56px}
-  header nav{margin-left:auto;display:flex;gap:22px;font-size:14px;font-weight:500}header nav a{color:var(--muted);text-decoration:none}header nav a:hover{color:var(--ink)}
-  .hero{text-align:center;position:sticky;top:0;height:100vh;z-index:0;margin:0;display:flex;align-items:center}
-  .voice{max-width:1100px;margin:0 auto;height:min(78vh,620px);width:100%}
+  header{display:flex;align-items:center;gap:12px;padding:6px 0 22px;border-bottom:1px solid var(--line);margin-bottom:0;position:relative;z-index:3;background:var(--bg)}
+  header nav{margin-left:auto;display:flex;gap:22px;align-items:center;font-size:15px;font-weight:600}header nav a{color:var(--ink);text-decoration:none}header nav a.pill{background:var(--green);color:#fff;padding:12px 22px;border-radius:999px}
+  .hero{position:sticky;top:0;height:100vh;z-index:0;margin:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:40px;align-items:start;padding-top:72px;box-sizing:border-box}
+  @media (max-width:900px){.hero{grid-template-columns:1fr;height:auto;position:relative;padding:24px 0}}
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:18px}
+  .eyebrow i{width:8px;height:8px;border-radius:4px;background:var(--green);display:inline-block}
+  h1{font-size:clamp(36px,5.2vw,64px);line-height:1.02;letter-spacing:-.03em;font-weight:800;color:var(--green-dk);margin:0 0 22px}
+  h1 em{font-style:normal;color:var(--green)}
+  .lead{font-size:18px;color:var(--muted);max-width:520px;margin:0 0 26px;line-height:1.6}
+  .cta{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .cta .btn.primary{height:50px;padding:0 24px;font-size:16px;border-radius:999px}
+  .cta a.text{color:var(--ink);font-weight:600;text-decoration:none;font-size:15px}
+  .fineprint{font-size:12.5px;color:var(--muted);margin-top:18px;line-height:1.5}
+  .vcard{background:#eef2ec;border:1px solid var(--line);border-radius:22px;padding:18px 18px 6px;box-shadow:0 20px 50px rgba(31,61,43,.08)}
+  .vcard .cap{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 4px 6px}
+  .voice{height:min(62vh,520px);width:100%;background:#fff;border-radius:16px;border:1px solid var(--line)}
   @media (max-width:700px){.voice{height:380px}}
   .voice canvas{width:100%;height:100%;display:block}
   .hero .copy{max-width:760px;margin:0 auto}
@@ -62,7 +74,6 @@
   .frame .dock .badge{background:var(--green);color:#fff;border-radius:9px;padding:1px 7px;font-size:10px}
   .frame .wave{display:flex;gap:2px;align-items:center}
   .frame .wave i{display:block;width:3px;border-radius:2px;background:#cfd2d8;height:6px}
-  @media (prefers-color-scheme:dark){.frame{box-shadow:0 18px 50px rgba(0,0,0,.5)}.frame .rail{background:#1a1c20}.frame .rail span.on{background:#1f3a1c}.frame .top .srch{border-color:#3a3d44;color:#6f727a}.frame .tool,.frame .verdict,.frame .lever,.frame .chip,.frame .b,.frame .dock{background:#23262b;color:var(--ink)}.frame .canvas{background-image:radial-gradient(#2c2f35 .9px,transparent 1px)}.frame .verdict .pill{background:#3a1d1d}.frame .av{background:#33363c;color:#e8e9ec}}
   header img{width:36px;height:36px}
   header b{font-size:20px;letter-spacing:-.01em}
   h1{font-size:clamp(30px,4.6vw,48px);line-height:1.1;margin:0 0 14px;letter-spacing:-.03em;font-weight:800}
@@ -70,8 +81,13 @@
   .cta{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0}
   .btn{display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:22px;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600}
   .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .three{position:relative;z-index:2;background:var(--bg);display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:34px 0 46px;border-top:1px solid var(--line)}
+  @media (max-width:800px){.three{grid-template-columns:1fr}}
+  .three .num{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:10px}
+  .three b{display:block;font-size:19px;letter-spacing:-.01em;color:var(--green-dk);margin-bottom:8px}
+  .three p{margin:0;color:var(--muted);font-size:15px;line-height:1.55}
   .run{position:relative;z-index:2;width:100vw;margin:0 0 0 calc(50% - 50vw);height:calc(10 * 80vh)}
-  .run .sticky{position:sticky;top:0;min-height:100vh;background:var(--bg);border-radius:28px 28px 0 0;box-shadow:0 -24px 70px rgba(0,0,0,.35);padding:56px 24px 24px;transform-origin:50% 0;will-change:transform;box-sizing:border-box}
+  .run .sticky{position:sticky;top:0;min-height:100vh;background:#fff;border-radius:28px 28px 0 0;box-shadow:0 -24px 70px rgba(31,61,43,.14);padding:56px 24px 24px;transform-origin:50% 0;will-change:transform;box-sizing:border-box;border-top:1px solid var(--line)}
   .run .sheet{max-width:1040px;margin:0 auto}
   .integrations,.nums,footer{position:relative;z-index:2;background:var(--bg)}
   .integrations{padding-top:24px}
@@ -86,6 +102,7 @@
   .timeline li.done{opacity:.8}.timeline li.done .dot{background:var(--green);border-color:var(--green)}
   .timeline li.active{opacity:1}.timeline li.active .dot{border-color:var(--green);background:var(--card);box-shadow:0 0 0 4px rgba(44,160,28,.18);animation:pulse 1.2s infinite}
   .timeline li.active b{color:var(--green)}
+  .timeline li b{color:var(--green-dk)}
   @keyframes pulse{50%{box-shadow:0 0 0 7px rgba(44,160,28,.08)}}
   .stage{position:relative;min-height:380px;max-height:calc(100vh - 140px);overflow:hidden}
   .panel[data-panel="8"] .paper{max-width:none;display:flex;justify-content:center;background:transparent;border:0;box-shadow:none}
@@ -115,7 +132,6 @@
   .frame-lite .trend.small{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px}
   .two-up{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media (max-width:700px){.two-up{grid-template-columns:1fr}}
-  @media (prefers-color-scheme:dark){.frame-lite{background-image:radial-gradient(#2c2f35 .9px,transparent 1px)}.frame-lite .av{background:#33363c;color:#e8e9ec}.frame-lite .av.s{background:var(--green);color:#fff}.frame-lite .b{border-color:#3a3d44}.frame-lite .verdict .pill{background:#3a1d1d}}
   .wf{position:relative;display:flex;flex-direction:column;gap:34px;padding:8px 0}
   .wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
   .wires path{fill:none;stroke:#a9aeb8;stroke-width:1.6}
@@ -141,7 +157,6 @@
   .node.busy .lbl i::after{content:"";display:inline-block;width:6px;height:6px;border-radius:3px;background:var(--green);margin-left:5px;animation:blink 1s infinite}
   @keyframes blink{50%{opacity:.2}}
   @media (max-width:700px){.wrow.three{grid-template-columns:1fr}.wrow.two{grid-template-columns:1fr}.wires{display:none}}
-  @media (prefers-color-scheme:dark){.node.ok,.node.paid{background:#1f3a1c;border-color:#2f5a2a}.wires path{stroke:#5a5e67}.wires .arrow{fill:#5a5e67}.node{box-shadow:none}}
   .demo video{display:block;width:100%;border-radius:14px;border:1px solid var(--line);background:#000}
   .demo .fine{font-size:13px;color:var(--muted);margin:10px 2px 0}
   .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:44px}
@@ -193,31 +208,35 @@
   .sponsors th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
   .sponsors td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}.sponsors tr:last-child td{border-bottom:0}
   .sponsors .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  @media (prefers-color-scheme:dark){.spill.pass{background:#1f3a1c;color:#7fd474}.spill.warn{background:#3a3212;color:#e5c25a}.spill.fail{background:#3a1d1d;color:#f28b82}.spill.off,.spill.info{background:#2a2d33;color:var(--muted)}}
   .nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:0 auto 44px;max-width:920px}
   .nums div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}.nums b{display:block;font-size:30px;letter-spacing:-.02em;line-height:1.1;margin-bottom:4px}.nums span{font-size:13px;color:var(--muted)}
   footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:18px;line-height:1.6;max-width:920px;margin:0 auto}
-  @media (prefers-color-scheme:dark){
-    .mlist{background:#1a1c20}.mrow em{background:#1f3a1c;color:#7fd474}
-    .bub.in{background:#2a2d33;color:var(--ink)}
-    .bub.out.agent{background:#1f3a1c;border-color:#2f5a2a;color:var(--ink)}
-    .bub.in.agent{background:#3a3212;border-color:#5a4d1a;color:var(--ink)}
-    .rails span{border-color:#3a3d44}.rails .on{border-color:var(--green)}
-    .field{border-color:#3a3d44}.stats{background:#2f3136}
-    .frame .top .srch{background:#1d1f23}
-  }
   .shead{text-align:left}
   @media (prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important}}
   footer a{color:inherit}
-  @media (prefers-color-scheme:dark){:root{--ink:#e8e9ec;--muted:#a6a8b0;--line:#2f3136;--bg:#141518;--card:#1d1f23}.honest{background:#2a2612;border-color:#4a4120;color:#e5d7a3}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header><img src="img/logo.png" alt=""><b>span</b><nav><a href="#demo">How it works</a><a href="demo.html">Demo video</a><a href="https://github.com/comp-Ryan/span">GitHub</a></nav></header>
+  <header><img src="img/logo.png" alt=""><b>span</b><nav><a href="#demo">How it works</a><a href="https://github.com/comp-Ryan/span">GitHub</a><a class="pill" href="demo.html">Watch the demo &#8599;</a></nav></header>
   <div class="hero">
-    <div class="voice" id="voice"><canvas id="voicegraph" aria-label="A voice at the center connecting books, invoices, forecast, customers, pay links and the report" role="img"></canvas></div>
+    <div class="copy">
+      <div class="eyebrow"><i></i>A clearer picture of your cash</div>
+      <h1>Your money questions.<br><em>A clear next step.</em></h1>
+      <p class="lead">Meet Span, the cash assistant for your small business. Ask about payroll, late invoices, or what comes next. See the numbers behind the answer, and stay in control of every action.</p>
+      <p class="cta"><a class="btn primary" href="demo.html">Watch the demo &#8594;</a><a class="text" href="#demo">How it works &#8595;</a><a class="text" href="https://github.com/comp-Ryan/span">Source</a></p>
+      <p class="fineprint">Demo-company books. Nothing is sent without your approval. Customer agents are simulated from real payment history.</p>
+    </div>
+    <div class="vcard">
+      <div class="cap"><span>From question to next step</span><span>Live sequence</span></div>
+      <div class="voice" id="voice"><canvas id="voicegraph" aria-label="A voice at the center connecting books, invoices, forecast, customers, pay links and the report" role="img"></canvas></div>
+    </div>
   </div>
+  <section class="three">
+    <div><span class="num">01 / Ask</span><b>Talk about your business.</b><p>Start with a question, not a spreadsheet. Follow up as your plans change.</p></div>
+    <div><span class="num">02 / Understand</span><b>See how the answer adds up.</b><p>Follow the workflow, inspect the numbers, and keep the one-page report.</p></div>
+    <div><span class="num">03 / Act</span><b>Your approval comes first.</b><p>Choose whom to remind, watch the conversation, and track payments as they arrive.</p></div>
+  </section>
   <section id="demo" class="run" aria-label="How a run unfolds">
     <div class="sticky">
     <div class="sheet">
@@ -427,8 +446,8 @@
 (function () {
   var canvas = document.getElementById('voicegraph'); if (!canvas) return;
   var ctx = canvas.getContext('2d'), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var css = getComputedStyle(document.documentElement), dark = matchMedia('(prefers-color-scheme: dark)').matches;
-  var C = { green: '#2ca01c', red: '#d93025', amber: '#e08a1e', blue: '#2d7ff9', ink: css.getPropertyValue('--ink').trim() || '#393a3d', muted: css.getPropertyValue('--muted').trim() || '#6b6c72', line: dark ? '#3a3d44' : '#d7dae0', card: css.getPropertyValue('--card').trim() || '#fff' };
+  var css = getComputedStyle(document.documentElement), dark = false;
+  var C = { green: '#2f8f2b', red: '#d93025', amber: '#e08a1e', blue: '#2d7ff9', ink: css.getPropertyValue('--ink').trim() || '#263129', muted: css.getPropertyValue('--muted').trim() || '#6b7570', line: '#d9ded7', card: '#fff' };
   var W = 0, H = 0, dpr = Math.min(2, window.devicePixelRatio || 1);
   var nodes = [
     { id: 'you', label: 'You', sub: 'phone · browser', a: -90 },
@@ -475,7 +494,7 @@
     var accent = bb.kind === 'you' ? C.green : bb.kind === 'bad' ? C.red : bb.kind === 'good' ? C.green : bb.kind === 'cust' ? C.amber : C.blue;
     var grow = k < 0.18 ? ease(k / 0.18) : k > 0.82 ? 1 - ease((k - 0.82) / 0.18) : 1;
     if (grow <= 0.01) return;
-    ctx.font = '500 12.5px Inter, system-ui, sans-serif';
+    ctx.font = '500 12.5px Figtree, system-ui, sans-serif';
     var w = 24; bb.lines.forEach(function (l) { w = Math.max(w, ctx.measureText(l).width + 30); }); w = Math.max(w, ctx.measureText(bb.title).width + 30); w = Math.min(w, 300);
     var h = 16 + 18 + bb.lines.length * 17;
     var lift = (bb.dy || 0) - 10 * grow;
@@ -485,8 +504,8 @@
     ctx.strokeStyle = C.line; ctx.lineWidth = 1; roundRect(-w / 2, -h / 2, w, h, 12); ctx.stroke();
     ctx.fillStyle = accent; roundRect(-w / 2, -h / 2 + 10, 3, h - 20, 1.5); ctx.fill();
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.fillStyle = accent; ctx.font = '700 10.5px Inter, system-ui, sans-serif'; ctx.fillText(bb.title.toUpperCase(), -w / 2 + 14, -h / 2 + 11);
-    ctx.fillStyle = C.ink; ctx.font = '500 12.5px Inter, system-ui, sans-serif';
+    ctx.fillStyle = accent; ctx.font = '700 10.5px Figtree, system-ui, sans-serif'; ctx.fillText(bb.title.toUpperCase(), -w / 2 + 14, -h / 2 + 11);
+    ctx.fillStyle = C.ink; ctx.font = '500 12.5px Figtree, system-ui, sans-serif';
     bb.lines.forEach(function (l, i) { ctx.fillText(l, -w / 2 + 14, -h / 2 + 28 + i * 17); });
     ctx.restore(); ctx.textBaseline = 'alphabetic';
   }
@@ -557,8 +576,8 @@
       if (n.id === 'pay') { roundRect(n.x - 9, n.y - 6, 18, 12, 2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(n.x - 9, n.y - 2); ctx.lineTo(n.x + 9, n.y - 2); ctx.stroke(); if (paidOn) { ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(n.x + 7, n.y + 7, 4, 0, Math.PI * 2); ctx.fill(); } }
       if (n.id === 'report') { ctx.strokeRect(n.x - 6, n.y - 8, 12, 16); for (var r3 = 0; r3 < 3; r3++) { ctx.beginPath(); ctx.moveTo(n.x - 3, n.y - 4 + r3 * 4); ctx.lineTo(n.x + 3, n.y - 4 + r3 * 4); ctx.stroke(); } }
       // labels
-      ctx.textAlign = 'center'; ctx.fillStyle = on ? C.ink : C.muted; ctx.font = '600 13px Inter, system-ui, sans-serif'; ctx.fillText(n.label, n.x, n.y + 38);
-      ctx.fillStyle = C.muted; ctx.font = '11px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.fillStyle = on ? C.ink : C.muted; ctx.font = '600 13px Figtree, system-ui, sans-serif'; ctx.fillText(n.label, n.x, n.y + 38);
+      ctx.fillStyle = C.muted; ctx.font = '11px Figtree, system-ui, sans-serif';
       var sub = n.sub; if (n.id === 'you' && verdict && !yes) sub = '“No. $385 short.”'; if (n.id === 'you' && yes) sub = '“Yes, text them.”'; if (n.id === 'forecast' && covered) sub = 'cushion +$43'; if (n.id === 'pay' && paidOn) sub = '$1,691 received'; if (n.id === 'customers' && replies) sub = '3 replies · 3 agreements'; if (n.id === 'report' && reportOn) sub = 'written';
       ctx.fillText(sub, n.x, n.y + 53);
     });
