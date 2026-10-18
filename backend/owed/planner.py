@@ -573,8 +573,10 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
                 backup = OpenRouterClient(settings.openrouter_api_key, settings.openrouter_model)
                 client, model_name = backup, settings.openrouter_model
                 await asyncio.to_thread(emit, run_id, 'node.update', {'node_id': 'context', 'data': {
-                    'planner': 'openrouter', 'planner_model': model_name, 'gemini_error': exc.code}})
+                    'planner': 'openrouter', 'planner_model': backup.model, 'gemini_error': exc.code}})
                 response = await generate(client, model=model_name, contents=contents, config=cfg)
+                if getattr(response, 'model', None) and response.model != backup.model:  # a later model in the chain answered
+                    await asyncio.to_thread(emit, run_id, 'node.update', {'node_id': 'context', 'data': {'planner_model': response.model}})
             if not response.candidates or not response.candidates[0].content:
                 raise ValueError('Gemini returned no answer')
             content = response.candidates[0].content

@@ -97,6 +97,7 @@ def test_planner_fails_over_to_openrouter_when_gemini_credits_are_depleted(monke
     class FakeBackup:
         def __init__(self, key, model, transport=None):
             used['key'], used['model'] = key, model
+            self.model = model.split(',')[0].strip()
             self.aio = NS(models=self, aclose=self.aclose)
 
         async def generate_content(self, model, contents, config):
@@ -120,3 +121,74 @@ def test_settings_accept_the_open_router_key_spellings(monkeypatch):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv('OPEN_ROUTER', 'sk-or-alias')
     assert Settings(_env_file=None).openrouter_api_key == 'sk-or-alias'
+
+
+def _config():
+    return types.GenerateContentConfig(system_instruction='x', tools=[types.Tool(function_declarations=planner.TOOLS)])
+
+
+def _ask(client, model='m'):
+    return asyncio.run(client.aio.models.generate_content(model=model, contents=[types.Content(role='user', parts=[types.Part(text='hi')])], config=_config()))
+
+
+def test_openrouter_retries_with_the_affordable_token_cap():
+    bodies = []
+
+    def handle(request):
+        bodies.append(json.loads(request.content))
+        if len(bodies) == 1:
+            return httpx.Response(402, json={'error': {'message': 'This request requires more credits, or fewer max_tokens. You requested up to 4096 tokens, but can only afford 3485.'}})
+        return httpx.Response(200, json={'choices': [{'message': {'role': 'assistant', 'content': 'Fine.'}}]})
+
+    client = OpenRouterClient('sk-or-test', 'google/gemini-3.8-flash', transport=httpx.MockTransport(handle))
+    response = _ask(client, 'google/gemini-3.8-flash')
+    assert [b['max_tokens'] for b in bodies] == [4096, 3421]  # what is left, minus a margin
+    assert response.candidates[0].content.parts[0].text == 'Fine.' and response.model == 'google/gemini-3.8-flash'
+
+
+def test_openrouter_falls_through_the_model_chain_when_credits_run_out():
+    bodies = []
+
+    def handle(request):
+        body = json.loads(request.content); bodies.append(body)
+        if body['model'] == 'google/gemini-3.8-flash':
+            return httpx.Response(402, json={'error': {'message': 'Insufficient credits'}})
+        return httpx.Response(200, json={'choices': [{'message': {'role': 'assistant', 'content': 'Free answer.'}}]})
+
+    client = OpenRouterClient('sk-or-test', 'google/gemini-3.8-flash, nvidia/nemotron-3-ultra-550b-a55b:free', transport=httpx.MockTransport(handle))
+    assert client.model == 'google/gemini-3.8-flash' and client.models == ['google/gemini-3.8-flash', 'nvidia/nemotron-3-ultra-550b-a55b:free']
+    response = _ask(client)
+    assert [b['model'] for b in bodies] == ['google/gemini-3.8-flash', 'nvidia/nemotron-3-ultra-550b-a55b:free']
+    assert response.candidates[0].content.parts[0].text == 'Free answer.' and response.model == 'nvidia/nemotron-3-ultra-550b-a55b:free'
+    # the conversation stays on the model that answered
+    _ask(client)
+    assert bodies[-1]['model'] == 'nvidia/nemotron-3-ultra-550b-a55b:free' and len(bodies) == 3
+
+
+def test_openrouter_rate_limit_is_retried_once_before_moving_on(monkeypatch):
+    from owed import planner_backup
+    naps = []
+
+    async def nap(seconds):
+        naps.append(seconds)
+    monkeypatch.setattr(planner_backup.asyncio, 'sleep', nap)
+    bodies = []
+
+    def handle(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(429, json={'error': {'message': 'Provider returned error'}}) if len(bodies) == 1 else httpx.Response(200, json={'choices': [{'message': {'role': 'assistant', 'content': 'ok'}}]})
+
+    client = OpenRouterClient('sk-or-test', 'nvidia/nemotron-3-ultra-550b-a55b:free', transport=httpx.MockTransport(handle))
+    assert _ask(client).candidates[0].content.parts[0].text == 'ok' and len(bodies) == 2 and naps == [1.5]
+
+
+def test_every_model_failing_reports_the_last_error():
+    client = OpenRouterClient('sk-or-test', 'a, b:free', transport=httpx.MockTransport(lambda r: httpx.Response(402, json={'error': {'message': 'Insufficient credits'}})))
+    with pytest.raises(ValueError, match=r'OpenRouter backup failed \(402\).*Insufficient credits'):
+        _ask(client)
+
+
+def test_default_backup_chain_ends_with_a_free_tool_capable_model():
+    from owed.config import Settings
+    chain = [m.strip() for m in Settings.model_fields['openrouter_model'].default.split(',')]
+    assert chain[0] == 'google/gemini-3.8-flash' and chain[-1].endswith(':free') and len(chain) >= 2

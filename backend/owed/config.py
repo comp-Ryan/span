@@ -21,7 +21,8 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     # Backup planner when Gemini cannot answer (credits, key, outage): OpenAI-compatible OpenRouter.
     openrouter_api_key: str = Field("", validation_alias=AliasChoices("OPENROUTER_API_KEY", "OPENROUTER_KEY", "OPEN_ROUTER", "OPEN_ROUTER_API_KEY"))
-    openrouter_model: str = "google/gemini-3.8-flash"
+    # Backup chain, first that answers wins: paid Gemini via OpenRouter, then free tool-capable models (rate-limited, $0).
+    openrouter_model: str = "google/gemini-3.8-flash, nvidia/nemotron-3-ultra-550b-a55b:free, nvidia/nemotron-3-super-120b-a12b:free"
     environment: str = "development"
     release: str = "hackathon"
     sentry_dsn: str = ""

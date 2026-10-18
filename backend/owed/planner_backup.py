@@ -4,7 +4,9 @@ run_planner keeps building google-genai `types.Content` turns; this client trans
 turns) to OpenAI messages and returns Gemini-shaped responses (candidates → content → parts with
 function_call / text), so the loop, approvals and canvas events do not change.
 """
+import asyncio
 import json
+import re
 from types import SimpleNamespace as NS
 
 import httpx
@@ -90,14 +92,34 @@ def to_openai_messages(system, contents):
     return messages
 
 
+AFFORDABLE = re.compile(r'can only afford (\d+)')
+FALL_THROUGH = {402, 403, 404, 408, 429, 500, 502, 503, 504}
+
+
 class OpenRouterClient:
     """Minimal stand-in for genai.Client: `aio.models.generate_content(model, contents, config)` and `aio.aclose()`."""
 
     def __init__(self, api_key, model, base_url='https://openrouter.ai/api/v1', transport=None, max_tokens=4096):
-        self.model, self.max_tokens = model, max_tokens
+        # `model` may be a chain: "paid-model, free-model". Credits gone (402), model gone (404), rate limit (429) or a
+        # provider outage move the conversation to the next model; it then stays there so a thread does not flip-flop.
+        names = model.split(',') if isinstance(model, str) else list(model)
+        self.models = [m.strip() for m in names if m and m.strip()] or ['google/gemini-3.8-flash']
+        self.model, self.max_tokens = self.models[0], max_tokens
+        self.current = None
         self._http = httpx.AsyncClient(base_url=base_url, timeout=90, transport=transport, headers={
             'Authorization': f'Bearer {api_key}', 'HTTP-Referer': 'https://github.com/comp-Ryan/span', 'X-Title': 'Span'})
         self.aio = NS(models=NS(generate_content=self.generate_content), aclose=self.aclose)
+
+    async def _post(self, body):
+        """(response, error message or None)."""
+        response = await self._http.post('/chat/completions', json=body)
+        if response.status_code < 400:
+            return response, None
+        try:
+            detail = (response.json().get('error') or {}).get('message') or response.text
+        except ValueError:
+            detail = response.text
+        return response, str(detail)
 
     async def aclose(self):
         await self._http.aclose()
@@ -112,13 +134,32 @@ class OpenRouterClient:
         if declarations:
             body['tools'] = to_openai_tools(declarations)
             body['tool_choice'] = 'none' if mode.endswith('NONE') else 'auto'
-        response = await self._http.post('/chat/completions', json=body)
-        if response.status_code >= 400:
-            try:
-                detail = (response.json().get('error') or {}).get('message') or response.text
-            except ValueError:
-                detail = response.text
-            raise ValueError(f'OpenRouter backup failed ({response.status_code}): {str(detail)[:200]}')
+        # The chain is the client's: the Gemini-side model name the planner passes is ignored on purpose.
+        start = self.current or self.models[0]
+        chain = self.models[self.models.index(start):]
+        failures = []
+        for name in chain:
+            body['model'], body['max_tokens'] = name, self.max_tokens
+            response, detail = await self._post(body)
+            if detail and response.status_code == 402:
+                hint = AFFORDABLE.search(detail)  # "...can only afford 3485": spend what is left before giving up on this model
+                if hint and int(hint.group(1)) - 64 >= 256:
+                    body['max_tokens'] = int(hint.group(1)) - 64
+                    response, detail = await self._post(body)
+            if detail and response.status_code == 429:
+                await asyncio.sleep(1.5)
+                response, detail = await self._post(body)
+            if detail is None:
+                self.current = name
+                break
+            failures.append((response.status_code, detail))
+            if response.status_code not in FALL_THROUGH:
+                break
+        else:
+            name = None
+        if failures and (detail is not None):
+            status, detail = failures[-1]
+            raise ValueError(f'OpenRouter backup failed ({status}): {str(detail)[:200]}')
         message = ((response.json().get('choices') or [{}])[0].get('message')) or {}
         parts = []
         text = message.get('content')
@@ -134,4 +175,4 @@ class OpenRouterClient:
                 args = {}
             parts.append(NS(text=None, function_response=None, thought=False,
                             function_call=NS(name=fn.get('name'), args=args if isinstance(args, dict) else {}, id=call.get('id') or f'call_{i}')))
-        return NS(candidates=[NS(content=NS(role='model', parts=parts))], provider='openrouter')
+        return NS(candidates=[NS(content=NS(role='model', parts=parts))], provider='openrouter', model=name)

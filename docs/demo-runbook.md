@@ -13,7 +13,9 @@ cd frontend && npm run dev                                                      
 
 Open http://127.0.0.1:5173/home in Chrome. **Ask** opens an empty live chat; Span never starts a question on its
 own. The old recorded replay is only at `/?replay` and is labeled "Demo replay". If Gemini credits are out, the planner answers
-through OpenRouter automatically (`/api/health` → `planner_backup: "openrouter"`).
+through OpenRouter automatically (`/api/health` → `planner_backup: "openrouter"`), walking the `OPENROUTER_MODEL` chain: paid
+Gemini Flash first, then free tool-capable models (`nvidia/nemotron-3-ultra-550b-a55b:free`, then `…-super-120b-a12b:free`), so a
+$0 balance on both providers still answers, a little slower. The context node shows `planner_model` when a later model answered.
 
 ## The two-minute story
 
