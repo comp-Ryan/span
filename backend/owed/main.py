@@ -72,9 +72,10 @@ async def validation_error(request: Request, exc: RequestValidationError):
 @app.get("/health")
 def health():
     from owed.db import conn
+    from owed.version import api_branch, api_version
     with conn() as c:
         c.execute('select 1')
-    return {"ok": True, "db": "postgres", "gemini": bool(settings.gemini_api_key),
+    return {"ok": True, "version": api_version(), "branch": api_branch(), "db": "postgres", "gemini": bool(settings.gemini_api_key),
             "drafter": "template_fallback", "photon": bool(settings.photon_api_key and settings.photon_project_id),
             "visa": "sandbox" if visa.configured() else "simulated",
             "solana": "devnet" if settings.solana_recipient.strip() else "unconfigured",

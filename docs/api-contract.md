@@ -300,7 +300,8 @@ Shown in the footer and the write-up.
 ```
 
 ## GET /health
-`{ "ok": true, "db": "tiger", "gemini": true, "drafter": "finetuned" | "gemini_fallback", "photon": true, "visa": "sandbox", "solana": "devnet", "agentverse": true, "jev": false }`
+`{ "ok": true, "version": "e4cf265", "branch": "wip/live-demo", "db": "tiger", "gemini": true, "drafter": "finetuned" | "gemini_fallback", "photon": true, "visa": "sandbox", "solana": "devnet", "agentverse": true, "jev": false }`
+- `version` is the git short commit the backend runs from (`SPAN_VERSION` overrides it; `unknown` outside a checkout) and `branch` its branch, so a stale backend or tab is visible at a glance. `scripts/chat.py` prints both on start.
 
 ## Demo defaults
 - Owner rules (server config, shown read-only in the footer): installments allowed if customer paid-rate ≥ 0.8; max discount 5%; disputes escalate to owner; max 4 negotiation rounds.
