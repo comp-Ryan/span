@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
 import { emptyRun, k, money, reduce } from './events'
-import { playFixture, replay, resolveDecision, startRun, subscribe } from './api'
+import { generateReport, playFixture, replay, resolveDecision, startRun, subscribe } from './api'
 import DailyCashChart from './DailyCashChart'
 
 const COMPANY = 'company-020'
@@ -308,7 +308,7 @@ function ToolNode({ n }: { n: GraphNode }) {
   const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
   return <div className={`node ${n.status}`}>{head(I.book, 'grey', n.title)}{facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}</div>
 }
-function PlannerThread({ run, onAsk }: { run: RunState; onAsk: (q: string) => void }) {
+function PlannerThread({ run, onAsk, reportFailedFor, retryReportFor }: { run: RunState; onAsk: (q: string) => void; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
   const nodes = run.order.map(id => run.nodes[id])
   const ans = nodes.find(n => n.type === 'answer')
   const tools = nodes.filter(n => n.type !== 'answer')
@@ -326,7 +326,7 @@ function PlannerThread({ run, onAsk }: { run: RunState; onAsk: (q: string) => vo
           <div style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{ans ? plain(ans.data.spoken || ans.title) : 'Working it out…'}</div>
         </div>
         {ctxLike && <CashChart ctx={ctxLike} fc={fcNode} W={420} />}
-        <div className={`card report ${run.report_id ? 'ready' : ''}`}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>{run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : <div className="fine">Builds itself from this run.</div>}</div>
+        <div className={`card report ${run.report_id ? 'ready' : ''}`}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>{run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : reportFailedFor?.(run) ? <button className="btn" onClick={() => retryReportFor?.(run)}>Generate report</button> : run.status === 'closed' ? <div className="thinking"><i/><i/><i/> writing</div> : <div className="fine">Builds itself when this run finishes.</div>}</div>
       </aside>
       <div className="steps">
         {tools.map((n, i) => { const el = <ToolNode n={n} />; if (el === null && !n.data?.levers) return null; return <div key={n.node_id}>{i > 0 && <div className="vconn" />}{n.data?.levers
@@ -337,7 +337,7 @@ function PlannerThread({ run, onAsk }: { run: RunState; onAsk: (q: string) => vo
     </div>
   </section>
 }
-function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean }) {
+function Thread({ run, onDecide, isFollowUp, reportFailedFor, retryReportFor }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
   const byType = (t: string) => run.order.map(id => run.nodes[id]).find(n => n.type === t)
   const ctx = byType('context'), sc = byType('scoring'), fc = byType('forecast'), ans = byType('answer'), lv = byType('levers')
   const actions = run.order.map(id => run.nodes[id]).filter(n => n.type === 'action')
@@ -358,8 +358,8 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
         {sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
         <div className={`card report ${run.report_id ? 'ready' : ''}`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>
-          <div className="fine">{run.report_id ? 'Ready. Share it with your bookkeeper or print it.' : 'Builds itself from this run as it goes.'}</div>
-          {run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : <div className="thinking"><i/><i/><i/> writing</div>}
+          <div className="fine">{run.report_id ? 'Ready. Share it with your bookkeeper or print it.' : run.status === 'closed' ? 'Putting the page together.' : 'Builds itself when this run finishes.'}</div>
+          {run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : reportFailedFor?.(run) ? <button className="btn" onClick={() => retryReportFor?.(run)}>Generate report</button> : run.status === 'closed' ? <div className="thinking"><i/><i/><i/> writing</div> : <div className="fine" style={{ color: 'var(--muted2)' }}>waiting for the run to finish</div>}
         </div>
       </aside>
       <div className="steps" ref={contRef}>
@@ -385,7 +385,11 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay }: { run: R
   const onCall = run.status === 'open'
   const lastOwed = [...run.turns].reverse().find(t => t.kind === 'owed')
   const [preview, setPreview] = useState<string | null>(null)
-  useEffect(() => { if (!open && lastOwed) { setPreview(lastOwed.text); const t = setTimeout(() => setPreview(null), 6000); return () => clearTimeout(t) } }, [lastOwed?.text, open])
+  useEffect(() => {
+    if (open || !lastOwed || Date.now() - lastOwed.at > 8000) { setPreview(null); return }
+    const short = plain(lastOwed.text); setPreview(short.length > 150 ? short.slice(0, 147).replace(/\s+\S*$/, '') + '…' : short)
+    const t = setTimeout(() => setPreview(null), 7000); return () => clearTimeout(t)
+  }, [lastOwed?.text, lastOwed?.at, open])
   const mm = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`
   const scroller = useRef<HTMLDivElement | null>(null)
   useEffect(() => { scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' }) }, [run.turns.length, open])
@@ -408,7 +412,7 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay }: { run: R
       <div className="dinput"><input placeholder={`Ask ${BRAND} a follow-up, or just say it…`} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }} /><button className="btn primary" style={{ height: 32, padding: '0 14px' }} onClick={send}>Ask</button></div>
       {!live && <div className="controls" style={{ justifyContent: 'flex-end' }}>demo replay · <button onClick={() => onReplay(1)}>restart</button><button onClick={() => onReplay(3)}>3× speed</button><a href="?live">connect live</a></div>}
     </div>}
-    {!open && preview && <div className="preview" onClick={() => setOpen(true)}><span className="av">{BRAND[0]}</span><span>{preview}</span></div>}
+    {!open && preview && <div className="preview" onClick={() => setOpen(true)}><span className="av">{BRAND[0]}</span><span style={{ flex: 1 }}>{preview}</span><button className="x" aria-label="close" onClick={e => { e.stopPropagation(); setPreview(null) }}>×</button></div>}
     {!open && <button className="bubble" onClick={() => setOpen(true)}>
       <span className="ic green">{I.phone}</span>
       <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
@@ -513,6 +517,21 @@ export default function App() {
     ]
     let t = 0; for (const e of evs) { t += 650; setTimeout(() => apply({ ...e, data: { ...e.data, ts: now } }), t) }
   }
+  // ask the backend for the one-page report once a run has ended without one (live/planner runs)
+  const asked = useRef<Set<string>>(new Set())
+  const [reportFailed, setReportFailed] = useState<Record<string, boolean>>({})
+  useEffect(() => {
+    if (!LIVE && !RUN) return
+    for (const r of runs) {
+      if (r.status !== 'closed' || r.report_id || asked.current.has(r.run_id)) continue
+      asked.current.add(r.run_id)
+      generateReport(r.run_id, COMPANY).then(res => {
+        if (res?.report_id) apply({ event: 'report.ready', data: { run_id: r.run_id, report_id: res.report_id } })
+        else setReportFailed(f => ({ ...f, [r.run_id]: true }))
+      }).catch(() => setReportFailed(f => ({ ...f, [r.run_id]: true })))
+    }
+  }, [runs])
+  const retryReport = (r: RunState) => { asked.current.delete(r.run_id); setReportFailed(f => ({ ...f, [r.run_id]: false })); setRuns(x => x.slice()) }
   const main = runs[0]
   return <div className="app">
     <header className="topbar">
@@ -532,8 +551,8 @@ export default function App() {
           <h1 className="q">{main.question}</h1>
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
         {runs.map((r, i) => (r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => id === 'n2' || id === 'n3' || id === 'f3')))
-          ? <PlannerThread key={r.run_id} run={r} onAsk={followUp} />
-          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
+          ? <PlannerThread key={r.run_id} run={r} onAsk={followUp} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />
+          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />)}
       </main>
     </div>
     {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} />}

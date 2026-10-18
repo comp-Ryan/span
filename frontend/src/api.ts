@@ -45,3 +45,9 @@ export async function playFixture(url: string, onEvent: (e: RawEvent) => void, s
   })()
   return () => { stopped = true }
 }
+
+export async function generateReport(runId: string, company: string): Promise<{ report_id: string } | null> {
+  const r = await fetch(`${BASE}/reports/generate?run_id=${encodeURIComponent(runId)}&company=${encodeURIComponent(company)}`, { method: 'POST' })
+  if (!r.ok) return null
+  return r.json()
+}
