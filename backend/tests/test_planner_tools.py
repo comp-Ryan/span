@@ -130,13 +130,20 @@ def test_actions_require_approval_and_never_send(ctx, snap):
     invoice = snap['scored'][0]['invoice_id']
     sent = run(ctx, 'send_message', {'invoice_id': invoice})
     assert sent['status'] == 'approval_required' and sent['invoice_id'] == invoice
-    bill = snap['bills'][0]['bill_id']
+    tolerant = [b for b in snap['bills'] if b['hist_days_vs_due'] is not None and float(b['hist_days_vs_due']) >= 7]
+    strict = [b for b in snap['bills'] if b['hist_days_vs_due'] is None or float(b['hist_days_vs_due']) < 7]
+    if strict:  # the action worker refuses these, so no approval is opened
+        refused = run(ctx, 'defer_bill', {'bill_id': strict[0]['bill_id']})
+        assert refused['status'] == 'not_supported' and refused['bill_id'] == strict[0]['bill_id']
+    assert run(ctx, 'defer_bill', {'bill_id': 'bill-nope'}) == {'error': 'Unpaid bill not found in this company'}
+    if not tolerant:
+        return
+    bill = tolerant[0]['bill_id']
     deferred = run(ctx, 'defer_bill', {'bill_id': bill})
     assert deferred == {'status': 'waiting_for_owner', 'decision_id': sent['decision_id']}
     resolve(sent['decision_id'], 'no', COMPANY)
     deferred = run(ctx, 'defer_bill', {'bill_id': bill})
     assert deferred['status'] == 'approval_required' and deferred['bill_id'] == bill
-    assert run(ctx, 'defer_bill', {'bill_id': 'bill-nope'}) == {'error': 'Unpaid bill not found in forecast window'}
     with conn() as c:
         rows = c.execute('select decision_id,node_id,payload,resolved from decisions where run_id=%s order by created_at',
                          (ctx.run_id,)).fetchall()
@@ -144,7 +151,7 @@ def test_actions_require_approval_and_never_send(ctx, snap):
     assert [r['payload'] for r in rows] == [{'kind': 'send_message', 'invoice_id': invoice}, {'kind': 'defer_bill', 'bill_id': bill}]
     assert [r['resolved'] for r in rows] == ['no', None]
     created, _ = node_events(ctx)
-    assert [r['node_id'] for r in rows] == [created[0]['node_id'], created[2]['node_id']]
+    assert [r['node_id'] for r in rows] == [created[0]['node_id'], created[-1]['node_id']]
     assert all(n['type'] == 'action' for n in created)
 
 

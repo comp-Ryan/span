@@ -37,6 +37,9 @@ def target_for(question: str) -> date:
     return q.AS_OF_DEFAULT + timedelta(days=(4 - q.AS_OF_DEFAULT.weekday()) % 7 or 7)
 
 
+DETERMINISTIC = ('payroll_check', 'what_if_customer', 'show_late')
+
+
 def planner_for_call(source: str, intent: str, gemini_configured: bool) -> bool:
     """Use the conversational planner for configured voice payroll questions only."""
     return source == 'call' and intent == 'payroll_check' and gemini_configured
@@ -184,7 +187,17 @@ def ask(body: Ask, tasks: BackgroundTasks, company: str = settings.demo_company)
     if any(word in body.question.lower() for word in ('friday', 'two weeks', '2 weeks')):
         target = target_for(body.question)
     intent = route_intent(body.question)
-    customer = branch_customer(company, body.question) if intent == 'what_if_customer' else None
+    customer = None
+    if parent and intent in DETERMINISTIC and parent.get('intent') not in DETERMINISTIC and settings.gemini_api_key:
+        # A reply to the planner (e.g. answering its clarifying question) continues that conversation.
+        intent = 'followup'
+    if intent == 'what_if_customer':
+        try:
+            customer = branch_customer(company, body.question)
+        except HTTPException:
+            if not settings.gemini_api_key:
+                raise
+            intent = 'free_question'  # "What if my biggest customer doesn't pay?": the planner identifies them.
     run_id = create(company, body.question, body.source, intent, body.parent_run_id, target,
                     customer['id'] if customer else None)
     parent_context = None

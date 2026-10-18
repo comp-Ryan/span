@@ -298,6 +298,17 @@ function HistoryStrip({ history }: { history: { amount: number; status: string; 
     <div className="legend"><span><i style={{ background: 'var(--green)' }} />on time-ish</span><span><i style={{ background: 'var(--amber)' }} />late</span><span><i style={{ background: 'var(--red)' }} />very late / lost</span></div>
   </div>
 }
+const smoney = (v: number) => v < 0 ? `−${money(-v)}` : money(v)
+/** Weekly low balances from the planner's cash tools; red below zero, faint bars = without the new cost. */
+function WeeklyCash({ weeks, baseline }: { weeks: { week_ending: string; low: number }[]; baseline?: { week_ending: string; low: number }[] }) {
+  const all = [...weeks, ...(baseline || [])].map(w => Math.abs(w.low)); const max = Math.max(1, ...all)
+  const bar = (v: number, faint?: boolean) => <i style={{ display: 'block', width: faint ? 6 : 10, height: Math.max(2, (Math.abs(v) / max) * 36), background: v < 0 ? 'var(--red)' : 'var(--green)', opacity: faint ? 0.35 : 1, borderRadius: 2, alignSelf: v < 0 ? 'flex-start' : 'flex-end' }} />
+  return <div style={{ display: 'flex', gap: 10, alignItems: 'stretch', margin: '2px 0 8px' }}>{weeks.map((w, i) => <div key={w.week_ending} title={`Week to ${fmtDate(w.week_ending)} · low ${smoney(w.low)}${baseline?.[i] ? ` (without: ${smoney(baseline[i].low)})` : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+    <div style={{ height: 36, display: 'flex', alignItems: 'flex-end', gap: 2 }}>{baseline?.[i] && baseline[i].low >= 0 && bar(baseline[i].low, true)}{w.low >= 0 && bar(w.low)}</div>
+    <div style={{ height: 1, width: '100%', minWidth: 14, background: 'var(--line, #ddd)' }} />
+    <div style={{ height: 36, display: 'flex', alignItems: 'flex-start', gap: 2 }}>{baseline?.[i] && baseline[i].low < 0 && bar(baseline[i].low, true)}{w.low < 0 && bar(w.low)}</div>
+    <span className="fine" style={{ fontSize: 10 }}>{fmtDate(w.week_ending)}</span></div>)}</div>
+}
 function ToolNode({ n }: { n: GraphNode }) {
   const d = n.data || {}
   const head = (icon: React.ReactNode, cls: string, title: string, extra?: React.ReactNode) => <h3><span className={`ic ${cls}`}>{icon}</span>{title}{extra}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
@@ -305,6 +316,30 @@ function ToolNode({ n }: { n: GraphNode }) {
   if (d.company) { const c = d.company; return <div className={`node ${n.status}`}>{head(I.book, 'blue', 'Looked up the company')}<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
     <div className="kv"><span style={{ color: 'var(--muted)' }}>{c.display_name} · {c.industry_title}</span><b>{c.distressed ? 'cash-strained' : 'healthy'}</b></div>
     <div className="kv"><span style={{ color: 'var(--muted)' }}>In the bank</span><b>{money(c.cash)}</b></div><div className="kv"><span style={{ color: 'var(--muted)' }}>Owed to you</span><b>{money(c.receivables)}</b></div><div className="kv"><span style={{ color: 'var(--muted)' }}>You owe</span><b>{money(c.payables)}</b></div></div></div> }
+  if (Array.isArray(d.weekly) && d.low_point) return <div className={`node ${n.status}`}>{head(I.book, 'blue', d.spend ? `Tested ${money(d.spend.amount)}${d.spend.frequency === 'once' ? '' : ' ' + d.spend.frequency} against cash` : `Daily cash to ${fmtDate(d.target_date)}`)}<WeeklyCash weeks={d.weekly} baseline={d.weekly_baseline} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {d.spend && <div className="kv"><span style={{ color: 'var(--muted)' }}>Low point without it</span><b>{smoney(d.baseline.low_point.balance)} · {fmtDate(d.baseline.low_point.date)}</b></div>}
+      <div className="kv"><span style={{ color: 'var(--muted)' }}>{d.spend ? 'Low point with it' : 'Low point'}</span><b style={{ color: d.low_point.balance < 0 ? 'var(--red)' : undefined }}>{smoney(d.low_point.balance)} · {fmtDate(d.low_point.date)}</b></div>
+      {!d.spend && d.first_negative_date && <div className="kv"><span style={{ color: 'var(--muted)' }}>First day below zero</span><b>{fmtDate(d.first_negative_date)}</b></div>}
+      {!d.spend && d.pessimistic_low_point && <div className="kv"><span style={{ color: 'var(--muted)' }}>If slow payers slip</span><b>{smoney(d.pessimistic_low_point.balance)}</b></div>}
+    </div></div>
+  if (Array.isArray(d.bills) && d.through_date) return <div className={`node ${n.status}`}>{head(I.book, 'blue', `${d.count} unpaid bill${d.count === 1 ? '' : 's'} through ${fmtDate(d.through_date)}`, <b style={{ marginLeft: 8 }}>{money(d.total)}</b>)}<div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 220, overflow: 'auto' }}>
+    {d.bills.map((b: any) => <div className="kv" key={b.bill_id}><span style={{ color: 'var(--muted)' }}>{b.vendor_name} · {b.status === 'overdue' ? <span style={{ color: 'var(--red)' }}>overdue {fmtDate(b.due_date)}</span> : `due ${fmtDate(b.due_date)}`}</span><b>{money(b.amount)}</b></div>)}
+    {d.bills.length === 0 && <div className="fine">No unpaid bills match.</div>}</div></div>
+  if (d.order && d.payment_outlook) { const po = d.payment_outlook; return <div className={`node ${n.status}`}>{head(I.people, 'blue', `${money(d.order.amount)} order · ${d.order.customer} · net ${d.order.terms_days}`)}<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div className="kv"><span style={{ color: 'var(--muted)' }}>Likely paid</span><b>{fmtDate(po.expected_pay_date)} (~{Math.round(po.expected_days_late)} days late)</b></div>
+    <div className="kv"><span style={{ color: 'var(--muted)' }}>Chance it is never paid</span><b>{Math.round(po.p_never * 100)}%</b></div>
+    <div className="kv"><span style={{ color: 'var(--muted)' }}>They would owe you</span><b>{money(d.exposure_after_order)}</b></div>
+    {d.low_point && <div className="kv"><span style={{ color: 'var(--muted)' }}>Cash low point after up-front cost</span><b style={{ color: d.low_point.balance < 0 ? 'var(--red)' : undefined }}>{smoney(d.low_point.balance)} · {fmtDate(d.low_point.date)}</b></div>}
+  </div></div> }
+  if (d.aging && d.owed_total != null) { const total = Math.max(1, d.owed_total); const cols: Record<string, string> = { not_yet_due: 'var(--green)', '1_30_days': 'var(--amber)', '31_60_days': 'var(--amber)', '61_90_days': 'var(--red)', over_90_days: 'var(--red)' }
+    return <div className={`node ${n.status}`}>{head(I.book, 'blue', `${money(d.owed_total)} owed to you`)}<div style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', margin: '2px 0 8px' }}>{Object.entries(d.aging as Record<string, number>).filter(([, v]) => v > 0).map(([key, v]) => <i key={key} title={`${key.replace(/_/g, ' ')} · ${money(v)}`} style={{ width: `${(v / total) * 100}%`, background: cols[key], opacity: key === '1_30_days' ? 0.7 : 1 }} />)}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><div className="kv"><span style={{ color: 'var(--muted)' }}>Overdue</span><b>{money(d.overdue_total)} · {d.overdue_invoices} invoices</b></div><div className="kv"><span style={{ color: 'var(--muted)' }}>Not yet due</span><b>{money(d.not_yet_due_total)}</b></div><div className="kv"><span style={{ color: 'var(--muted)' }}>Likely in next 30 days</span><b>{money(d.expected_in_30_days)}</b></div></div></div> }
+  if (Array.isArray(d.customers) && d.customers.length && d.customers[0].open_balance !== undefined) return <div className={`node ${n.status}`}>{head(I.people, 'blue', d.ranked_by ? `Ranked customers · ${String(d.ranked_by).replace(/_/g, ' ')}` : d.customers.length === 1 ? 'Found the customer' : `${d.matches ?? d.customers.length} customers match “${d.query}”`)}<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    {d.customers.slice(0, 6).map((c: any, i: number) => <div className="kv" key={c.id} style={{ alignItems: 'center' }}><span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}><span className="av" style={{ background: AV_COLORS[i % 5], width: 18, height: 18, borderRadius: 9, color: '#fff', fontSize: 9, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>{initials(c.display_name)}</span><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.display_name}</span></span><b style={{ whiteSpace: 'nowrap' }}>{c.avg_days_late != null ? `${Math.round(c.avg_days_late)}d late avg · ` : ''}{money(c.overdue_balance)} overdue</b></div>)}
+  </div></div>
+  if (d.customers && !d.customers.length) return <div className={`node ${n.status}`}>{head(I.people, 'grey', `No customer matches “${d.query ?? ''}”`)}</div>
+  if (d.status === 'not_supported') return <div className={`node ${n.status}`}>{head(I.book, 'grey', `Deferral not scheduled · ${d.vendor_name ?? d.bill_id}`)}<div className="fine">{d.reason}</div></div>
   if (d.customers) return <div className={`node ${n.status}`}>{head(I.people, 'blue', `Looked up ${d.customers.length} customers`)}<div className="chips">{d.customers.slice(0, 8).map((c: any, i: number) => <span className="chip" key={c.id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(c.display_name)}</span>{c.display_name.split(' ').slice(0, 2).join(' ')}</span>)}{d.customers.length > 8 && <span className="fine">+{d.customers.length - 8} more</span>}</div></div>
   if (d.history) return <div className={`node ${n.status}`}>{head(I.people, 'green', 'Checked their payment history')}<HistoryStrip history={d.history} /></div>
   if (n.type === 'forecast' || d.cash_at_target != null) return <CashNode n={{ ...n, title: 'Cash on ' + fmtDate(d.target_date) }} />

@@ -31,6 +31,9 @@ QUESTIONS = [
     {'q': 'Am I okay?'},
     {'q': "What's the weather?"},
     {'q': 'Should I take a big new order?', 'followup': 'It is $5,000 from Evergreen, net 30, materials cost $2,000 up front.'},
+    {'q': "What if my biggest customer doesn't pay?"},
+    {'q': 'Can I pay the Havenwood bill on time and still make payroll?'},
+    {'q': 'How many weeks of cash do I have?'},
 ]
 
 
