@@ -660,7 +660,9 @@ export default function App() {
     stopSpeaking()
     dispatchCall({ type: 'speech_started' })
     let finished = false
-    const done = () => { if (!finished) { finished = true; audioRef.current = null; dispatchCall({ type: 'speech_ended' }) } }
+    const done = () => { if (!finished) { finished = true; clearTimeout(watchdog); audioRef.current = null; dispatchCall({ type: 'speech_ended' }) } }
+    // Audio that never reports 'ended' (blocked autoplay, a muted tab) must not leave the call stuck in 'speaking'.
+    const watchdog = setTimeout(done, Math.min(60000, 4000 + text.length * 70))
     const fallback = () => {
       try {
         if (!('speechSynthesis' in window)) return done()

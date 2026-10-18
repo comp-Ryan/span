@@ -166,15 +166,22 @@ async function chatAndDecisions(browser: Browser) {
     await page.getByRole('button', { name: 'Call Span' }).click()
     const status = page.locator('[data-testid="call-controls"] [role="status"], [data-testid="call-controls"] [role="alert"]')
     const greeting = await speech
-    const asked = page.waitForResponse(r => r.url().includes('/api/ask?') && r.request().method() === 'POST', { timeout: 60000 })
+    let asked: Promise<any> = page.waitForResponse(r => r.url().includes('/api/ask?') && r.request().method() === 'POST', { timeout: 25000 }).catch(() => null)
     await until(async () => (await status.textContent()) || '', t => t.startsWith('Listening'), 'listening after the greeting', 40000)
-    const ask = await asked  // Chrome's fake microphone plays the question file; Web Speech transcribes it
+    let ask = await asked  // Chrome's fake microphone plays the question file; Web Speech may or may not transcribe it headless
+    let how = 'spoken'
+    if (!ask) {  // no transcript from the fake microphone: keep the call going by typing the question into the call panel
+      how = 'typed (no headless transcript)'
+      asked = page.waitForResponse(r => r.url().includes('/api/ask?') && r.request().method() === 'POST', { timeout: 30000 })
+      const box = page.locator('.dinput input'); await box.fill('Will I make payroll in two weeks?'); await box.press('Enter')
+      ask = await asked
+    }
     const callRun = (await ask.json()).run_id
     await until(() => replay(callRun), r => r.events.some((e: any) => e.event === 'run.end'), 'answer to the spoken question', 120000)
     await until(async () => (await status.textContent()) || '', t => t.startsWith('Listening') || t.startsWith('Span is speaking'), 'Span speaking or listening again', 40000)
     await page.getByRole('button', { name: 'Hang up' }).click()
     await until(async () => (await status.textContent()) || '', t => t.startsWith('Browser call'), 'hung up', 10000)
-    return `greeting via ${greeting ? `ElevenLabs (${greeting.status()})` : 'browser voice'}; spoken question became ${callRun}`
+    return `greeting via ${greeting ? `ElevenLabs (${greeting.status()})` : 'browser voice'}; ${how} question became ${callRun}`
   })
   let token = '', amount = 0
   await check('after approval: simulated reminders, negotiation and a pay link appear', async () => {
