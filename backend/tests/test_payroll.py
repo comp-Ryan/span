@@ -26,6 +26,42 @@ def test_payroll_complete_real_data():
         assert snap['payroll']['due_by_target'] > 2844.64
         assert events[-1]['event'] == 'run.end'
         assert any(e['event'] == 'decision' for e in events)
+        updates = {}
+        for e in events:
+            if e['event'] == 'node.update' and 'data' in e['data']:
+                updates[e['data']['node_id']] = e['data']['data']
+        progress = [e['data']['progress'] for e in events if 'progress' in e['data']]
+        assert [p['done'] for p in progress] == list(range(1, 205)) and {p['total'] for p in progress} == {204}
+        assert nodes[1]['title'] == 'Scoring 204 open invoices'
+        assert updates['n1']['bank_balance'] == snap['bank']
+        assert updates['n1']['payroll_amount'] == snap['payroll']['due_by_target']
+        assert updates['n1']['company'] == 'Palletbay Storage & Warehousing'
+        fc = updates['n3']
+        assert fc['owed_total'] == snap['forecast']['owed_total'] == 28508.72
+        assert fc['cash_at_target'] == round(fc['bank_balance'] + fc['expected_by_target']
+                                             - fc['bills_due_by_target'] - fc['owner_draw_by_target'], 2)
+        assert fc['gap'] == round(max(0, fc['need'] - fc['cash_at_target']), 2)
+        assert fc['pessimistic']['cash_at_target'] <= fc['cash_at_target']
+        assert fc['conservative']['cash_at_target'] <= fc['cash_at_target']
+        assert abs(sum(r['amount'] * r['p_paid_by_target'] for r in rows) - fc['expected_by_target']) < .05
+        answer = nodes[3]
+        assert answer['data']['answer'] == ('no' if fc['gap'] else 'yes') and answer['data']['gap'] == fc['gap']
+        assert answer['data']['spoken'].startswith(answer['title'])
+        levers = updates['n5']['levers']
+        assert updates['n5']['recommended'] == [l['id'] for l in levers]
+        chase = next(l for l in levers if l['id'] == 'chase')
+        assert len({t['customer_id'] for t in chase['targets']}) == len(chase['targets']) <= 3
+        assert chase['recovers'] == round(sum(t['amount'] for t in chase['targets']), 2)
+        decision = next(e['data'] for e in events if e['event'] == 'decision')
+        assert decision['node_id'] == 'n5' and decision['auto_resolves_in_s'] is None
+        assert [o['id'] for o in decision['options']] == ['yes', 'chase_only', 'no']
+        speech = [e['data']['text'] for e in events if e['event'] == 'speech']
+        assert speech == [answer['data']['spoken']]
+        with conn() as c:
+            row = c.execute('select node_id,resolved from decisions where decision_id=%s', (decision['decision_id'],)).fetchone()
+            run = c.execute('select status,answer_title from runs where run_id=%s', (rid,)).fetchone()
+        assert row == {'node_id': 'n5', 'resolved': None}
+        assert run['answer_title'] == answer['title'] and run['status'] == 'open'
     finally:
         settings.scoring_interval_ms = before
         with conn() as c:
