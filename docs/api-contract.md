@@ -449,3 +449,13 @@ Production page navigation: `/home`, `/get-paid`, `/reports`, `/customers` and
 `/customers/:id` serve the built SPA for browser requests that prefer `text/html`.
 Unprefixed `/reports` and `/customers` retain JSON for API clients; `/api/*` always
 retains its existing API behavior, including real 404s. `/hub` is unaffected.
+
+### GET /cash/history?company=&limit=30
+
+Company-scoped series for the Home "Forecast over time" chart: one point per saved payroll
+forecast, oldest first, newest `limit` (1–200). Response: `{storage: "timescaledb", company,
+points: [{forecast_id, run_id, node_id, computed_at, target, cash_at_target, need, gap,
+pessimistic_gap, excluded_customer_id, assumed_customer_id}]}`. Points come from
+`forecast_history`, whose dated lines live in the `cash_projection` hypertable; every forecast
+the planner, the payroll run or a payment refresh emits adds one point. Reads never write.
+Unknown company → 404. `GET /forecasts` remains the per-run view with the dated lines.

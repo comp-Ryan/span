@@ -1,3 +1,4 @@
+import type { HistoryPoint } from './forecastTrend'
 import type { Brief, CashProjection, Company, CustomerDetail, CustomerRow, Health, HeatmapResponse, PaymentsResponse, RawEvent, ReportDoc, ReportsResponse, RunSummary } from './types'
 
 const BASE = '/api'
@@ -29,6 +30,7 @@ export const getCompanies = () => getJson<{ companies: Company[] }>('/companies'
 export const getBrief = (company: string) => getJson<Brief>(`/brief?company=${encodeURIComponent(company)}`)
 export const getRuns = (company: string) => getJson<{ runs: RunSummary[] }>(`/runs?company=${encodeURIComponent(company)}`).then(j => j.runs)
 export const getCash = (company: string, target: string) => getJson<CashProjection>(`/cash?${new URLSearchParams({ company, target })}`)
+export const getCashHistory = (company: string, limit = 30) => getJson<{ storage: string; points: HistoryPoint[] }>(`/cash/history?${new URLSearchParams({ company, limit: String(limit) })}`)
 export const getPayments = (company: string) => getJson<PaymentsResponse>(`/payments?company=${encodeURIComponent(company)}`)
 export const getReports = (company: string) => getJson<ReportsResponse>(`/reports?company=${encodeURIComponent(company)}`)
 export const getCustomers = (company: string) => getJson<{ customers: CustomerRow[] }>(`/customers?company=${encodeURIComponent(company)}`).then(j => j.customers)

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { getBrief, getCash, getCompanies, getRuns, startRun } from './api'
+import { getBrief, getCash, getCashHistory, getCompanies, getRuns, startRun } from './api'
+import { coverageSeries, type HistoryPoint } from './forecastTrend'
 import type { Brief, CashProjection, Company, RunSummary } from './types'
 import { money as moneyPos } from './events'
 import { listenOnce, type VoiceStatus } from './browserVoice'
@@ -82,6 +83,38 @@ function Sparkline({ cash }: { cash: CashProjection }) {
     <text x="6" y={H - 4} fontSize="11" fill="#6B6C72">{fmtDay(cash.start)} · {money(cash.opening_balance)}</text>
     <text x={W - 6} y={H - 4} fontSize="11" fill="#393A3D" fontWeight="600" textAnchor="end">{fmtDay(cash.target)} · {money(end?.balance)}</text>
   </svg>
+}
+
+/** Forecast over time: every saved payroll forecast (cash_projection hypertable), newest on the right. */
+function ForecastTrend({ company }: { company: string }) {
+  const [state, setState] = useState<{ company: string; points?: HistoryPoint[]; error?: string }>({ company })
+  useEffect(() => {
+    let on = true
+    setState({ company })
+    getCashHistory(company).then(r => { if (on) setState({ company, points: r.points }) }).catch(e => { if (on) setState({ company, error: String(e.message || e) }) })
+    return () => { on = false }
+  }, [company])
+  const series = coverageSeries(state.company === company && state.points ? state.points : [])
+  const W = 560, H = 110, top = 12, bottom = 86
+  const y = (v: number) => bottom - (v - series.low) / Math.max(1, series.high - series.low) * (bottom - top)
+  const x = (i: number) => 8 + i / Math.max(1, series.points.length - 1) * (W - 16)
+  const path = series.points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.coverage).toFixed(1)}`).join(' ')
+  const last = series.points.at(-1)
+  return <section className="card spark trend" data-testid="forecast-trend">
+    <div className="head"><b>Forecast over time</b>
+      {series.latest && <span className="fine">latest: {series.latest.coverage < 0 ? `${money(series.latest.coverage)} short` : `${money(series.latest.coverage)} to spare`} on {fmtDay(series.latest.target)}</span>}
+    </div>
+    {state.error ? <div className="fine" role="alert" style={{ color: 'var(--red)' }}>Forecast history unavailable: {state.error}</div>
+      : !state.points ? <div className="thinking" style={{ height: 60 }}><i/><i/><i/> loading</div>
+      : series.points.length === 0 ? <div className="fine">No saved forecasts yet. Ask about payroll and each forecast is kept here.</div>
+      : <svg viewBox={`0 0 ${W} ${H}`} fill="none" role="img" aria-label="Payroll coverage across saved forecasts" style={{ width: '100%', height: 'auto', display: 'block' }}>
+        <path d={`M0 ${y(0)} H${W}`} stroke="#8D9096" strokeWidth="1" strokeDasharray="4 4" />
+        <path d={path} stroke="#2CA01C" strokeWidth="2" strokeLinejoin="round" />
+        {series.points.map((p, i) => <circle key={p.forecast_id} cx={x(i)} cy={y(p.coverage)} r="3.5" fill={p.coverage < 0 ? '#D52B1E' : '#2CA01C'}><title>{new Date(p.computed_at).toLocaleString()} · {p.label} · {money(p.coverage)}</title></circle>)}
+        <text x="8" y={H - 4} fontSize="11" fill="#6B6C72">{series.points.length} saved forecast{series.points.length === 1 ? '' : 's'} · TimescaleDB hypertable</text>
+        {last && <text x={W - 8} y={H - 4} fontSize="11" fill="#393A3D" fontWeight="600" textAnchor="end">{money(last.coverage)}</text>}
+      </svg>}
+  </section>
 }
 
 export default function Home() {
@@ -194,6 +227,8 @@ export default function Home() {
             <div className="legend"><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--green)' }} />expected</span><span><i style={{ width: 14, height: 0, borderTop: '2px dashed var(--amber)', borderRadius: 0 }} />if slow payers slip</span><span><i style={{ width: 14, height: 0, borderTop: '2px dashed var(--red)', borderRadius: 0 }} />zero</span></div>
           </section>
         </div>
+
+        <ForecastTrend company={company} />
 
         <section className="card threads" data-testid="recent-threads">
           <div className="head"><b>Recent threads</b><span className="fine">{recent.length ? `${recent.length} of ${(runs || []).length}` : ''}</span></div>

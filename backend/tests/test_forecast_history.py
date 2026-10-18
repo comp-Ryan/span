@@ -76,3 +76,23 @@ def test_history_and_event_roll_back_together(run_id, monkeypatch):
         emit_forecast(run_id, 'forecast-test', snapshot('company-020', date(2026, 10, 20)))
     assert history('company-020', run_id, 20)['forecasts'] == []
     assert replay_run(run_id, 'company-020')['events'] == before
+
+
+def test_cash_history_is_a_compact_company_series_for_the_home_chart(run_id):
+    from owed.finance.history import cash_history
+    ctx = ToolContext(run_id, 'company-020', date(2026, 10, 20))
+    assert 'error' not in asyncio.run(ctx.execute('forecast_cash', {}))
+    assert 'error' not in asyncio.run(ctx.execute('forecast_cash', {'customer_id': 'cust-customer-37', 'will_pay': False}))
+    body = cash_history('company-020', 30)
+    assert body['storage'] == 'timescaledb'
+    points = [p for p in body['points'] if p['run_id'] == run_id]
+    assert len(points) == 2 and points[0]['computed_at'] <= points[1]['computed_at']  # oldest first
+    first, second = points
+    assert first['target'] == '2026-10-20' and first['cash_at_target'] - first['need'] == pytest.approx(-first['gap'], abs=0.01)
+    assert second['gap'] > first['gap'] and second['excluded_customer_id'] == 'cust-customer-37'
+    assert {'forecast_id', 'run_id', 'computed_at', 'target', 'cash_at_target', 'need', 'gap', 'pessimistic_gap'} <= set(first)
+    client = TestClient(app)
+    assert client.get('/api/cash/history?company=company-020&limit=1').json()['points'][-1]['forecast_id'] == second['forecast_id']
+    assert client.get('/api/cash/history?company=company-404').status_code == 404
+    assert client.get('/api/cash/history?company=company-020&limit=0').status_code == 422
+    assert client.get('/cash/history?company=company-020').status_code == 200
