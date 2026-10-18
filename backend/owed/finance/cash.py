@@ -62,6 +62,7 @@ def projection(snap, target, never_pays=None, top3_pay_this_week=False):
             'payroll_dates': [p['date'].isoformat() for p in payroll],
             'low_point': low_point(days), 'pessimistic_low_point': low_point(pessimistic_days),
             'assumptions': {'top3_pay_this_week': top3_pay_this_week, 'never_pays': never_pays,
+                            'will_pay': snap.get('forecast', {}).get('assumed_customer_id'),
                             'pessimistic_threshold': PESSIMISTIC_THRESHOLD,
                             'clock': 'dataset', 'inflows': 'probability_weighted_on_expected_date',
                             'payroll': 'trailing_8_week_weekday_average',
@@ -70,12 +71,18 @@ def projection(snap, target, never_pays=None, top3_pay_this_week=False):
 
 @router.get('/cash')
 def cash(company: str = settings.demo_company, target: date | None = None,
-         never_pays: str | None = None, top3_pay_this_week: bool = False):
+         never_pays: str | None = None, top3_pay_this_week: bool = False, will_pay: str | None = None):
     require_company(company)
     target = target or q.AS_OF_DEFAULT + timedelta(days=90)
     if not q.AS_OF_DEFAULT <= target <= q.AS_OF_DEFAULT + timedelta(days=366):
         raise HTTPException(422, 'Target must be within 366 days of the dataset clock')
+    if never_pays and will_pay:
+        raise HTTPException(422, 'Choose only one customer assumption')
     snap = snapshot(company, target)
+    if will_pay:
+        if will_pay not in {r['customer_id'] for r in snap['scored']}:
+            raise HTTPException(404, 'Customer has no open invoices in this company')
+        snap = snapshot(company, target, assumed_customer_id=will_pay)
     if never_pays and never_pays not in {r['customer_id'] for r in snap['scored']}:
         raise HTTPException(404, 'Customer has no open invoices in this company')
     return projection(snap, target, never_pays, top3_pay_this_week)

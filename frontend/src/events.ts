@@ -18,7 +18,7 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
           ? [{ kind: 'you', text: d.question, at: now }]
           : [] }
     case 'node.create': {
-      const n: GraphNode = { node_id: d.node_id, type: d.type, title: d.title, status: d.status || 'running', parent: d.parent ?? null, parent_run_id: d.parent_run_id, data: d.data || {}, rows: [], rounds: [], createdAt: now, doneAt: d.status === 'done' ? now : undefined }
+      const n: GraphNode = { node_id: d.node_id, type: d.type, title: d.title, status: d.status || 'running', parent: d.parent ?? null, parent_run_id: d.parent_run_id, data: d.data || {}, rows: d.data?.rows || [], rounds: [], createdAt: now, doneAt: d.status === 'done' ? now : undefined }
       const turns = run.turns.slice()
       if (n.type !== 'answer' && n.type !== 'action') turns.push({ kind: 'tool', text: TOOL_LABEL[n.type] || n.type, meta: n.title, at: now })
       if (n.type === 'action') turns.push({ kind: 'tool', text: n.title, meta: d.data?.kind, at: now })
@@ -30,6 +30,7 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
       if (n.type === 'forecast' && d.data?.cash_at_target != null && n.data.initial_cash_at_target == null) { n.data.initial_cash_at_target = d.data.cash_at_target; n.data.initial_need = d.data.need }
       if (d.status) { n.status = d.status; if (d.status === 'done') n.doneAt = now }
       if (d.progress) n.progress = d.progress
+      if (Array.isArray(d.data?.rows)) n.rows = d.data.rows
       if (d.row) n.rows.push(d.row)
       if (d.data?.round) n.rounds.push(d.data.round)
       let turns = run.turns

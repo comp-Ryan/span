@@ -1,6 +1,6 @@
 """Execute approved levers and recompute forecasts from runtime payment records."""
 import asyncio
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from psycopg.types.json import Jsonb
@@ -120,11 +120,19 @@ def refresh_forecasts(company):
         runs=c.execute('''select r.run_id,r.question,r.target_date,r.excluded_customer_id from runs r where r.company_id=%s and exists
             (select 1 from events e where e.run_id=r.run_id and e.event='node.create' and e.data->>'type'='forecast')''',(company,)).fetchall()
     for run in runs:
-        snap=snapshot(company,run['target_date'] or target_for(run['question']),run['excluded_customer_id'])
         with conn() as c:
             nodes=c.execute("select data->>'node_id' node_id from events where run_id=%s and event='node.create' and data->>'type'='forecast'",(run['run_id'],)).fetchall()
-            for node in nodes:
-                emit(run['run_id'],'node.update',{'node_id':node['node_id'],'data':snap['forecast']},connection=c)
+        for node in nodes:
+            with conn() as c:
+                previous=c.execute("""select data->'data' data from events where run_id=%s
+                    and data->>'node_id'=%s and data->'data' ? 'cash_at_target' order by id desc limit 1""",
+                    (run['run_id'],node['node_id'])).fetchone()
+            assumptions = previous['data'] if previous else {}
+            target = date.fromisoformat(assumptions['target_date']) if assumptions.get('target_date') else run['target_date'] or target_for(run['question'])
+            snap=snapshot(company,target,assumptions.get('excluded_customer_id',run['excluded_customer_id']),assumptions.get('assumed_customer_id'))
+            from owed.finance.history import emit_forecast
+            emit_forecast(run['run_id'],node['node_id'],snap)
+
 
 
 async def payment_worker():

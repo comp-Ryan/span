@@ -21,6 +21,7 @@ from owed.decisions import router as decisions_router, worker as decision_worker
 from owed.agents.negotiation import router as negotiation_router
 from owed.actions import payment_worker
 from owed.finance.cash import router as cash_router
+from owed.finance.history import router as history_router
 from owed.api import router as product_router
 from owed.pages import router as pages_router
 from owed.config import settings
@@ -50,7 +51,7 @@ app = FastAPI(title="Span", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/hub/static", StaticFiles(directory=HUB_STATIC), name="hub-static")
 app.include_router(hub_router)
-for router in (product_router, cash_router, events_router, runs_router, payroll_router,
+for router in (product_router, cash_router, history_router, events_router, runs_router, payroll_router,
                voice_router, photon_router, decisions_router, negotiation_router, reports_router,
                pay_router, pages_router):
     app.include_router(router)

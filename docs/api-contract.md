@@ -410,3 +410,42 @@ The development/submission hub is at `/hub` → `/hub/timeline`, with `/hub/ques
 Product branding is **Span**. Python packages, `owed_model`, negotiation speaker `owed`,
 and the compatibility header `X-Owed-Webhook-Token` retain their existing identifiers.
 The repository is `https://github.com/comp-Ryan/span`; endpoint and event shapes are unchanged.
+
+## Planner workflow additions (PR #27 port)
+
+Planner `tool-*` node.create data includes `tool: string` and `args: object`.
+Existing raw `invoice` / `invoices` results remain unchanged; scoring tools additionally
+return `data.rows: ScoreRow[]` (the same invoice row shape as payroll scoring), and
+score_customer adds `summary: {n_paid, late_rate, avg_days_late, open_total, n_write_offs}`.
+Rates/averages are null with no paid history. Forecast/company/bills reads include
+`bank_balance`, `payroll_due_by_target`, `headcount`, `bills_due_by_target`, `target_date`, `as_of`.
+Planner answers retain `spoken`, `detail`, `awaiting_input` and optionally add
+`verdict: "yes"|"no"|"barely"`, `number: number`; clarification questions have no verdict.
+rank_chase returns the real `decision_id`, `status`, `recommended`, `levers`.
+An existing unresolved decision returns `waiting_for_owner` and that same ID, never another approval.
+
+### Customer assumptions and dated cash
+
+`GET /cash` additionally accepts `will_pay=<customer_id>` (assume that customer's
+remaining invoices pay by target), mutually exclusive with `never_pays`.
+Both parameters are company-scoped. `assumptions.will_pay` echoes the ID or null.
+The same assumption survives payment-triggered forecast refreshes.
+
+### GET /forecasts?company=&run_id=&limit=20
+
+Company-scoped persisted forecast history, oldest first within the most recent
+`limit` snapshots (1–100). Optional `run_id` must belong to that company or returns 404.
+Response: `{storage: "timescaledb", forecasts: [{forecast_id: string, run_id: string,
+node_id: string, computed_at: ISO timestamp, target: ISO date, forecast: object,
+days: CashDay[], pessimistic_days: CashDay[]}]}`. `CashDay` has the same
+`{date,inflow,outflow,balance}` shape as `/cash`. An empty company history returns `[]`.
+Each emitted forecast `node.update` additionally has `data.forecast_id: string`.
+Its event, history metadata and both daily series commit atomically. Historical
+snapshots are append-only, including payment refreshes; GET requests never create
+history. Daily rows live in the `cash_projection` Timescale hypertable (local
+TimescaleDB is the development stand-in for Tiger Cloud; no cloud claim implied).
+
+Production page navigation: `/home`, `/get-paid`, `/reports`, `/customers` and
+`/customers/:id` serve the built SPA for browser requests that prefer `text/html`.
+Unprefixed `/reports` and `/customers` retain JSON for API clients; `/api/*` always
+retains its existing API behavior, including real 404s. `/hub` is unaffected.

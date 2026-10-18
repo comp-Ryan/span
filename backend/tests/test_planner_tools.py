@@ -54,7 +54,8 @@ def test_forecast_cash_returns_snapshot_forecast(ctx, snap):
                 'conservative', 'pessimistic', 'owner_draw_by_target'):
         assert result[key] == jsonable_encoder(snap['forecast'][key])
     created, updated = node_events(ctx)
-    assert created[0]['type'] == 'forecast' and created[0]['title'] == 'Forecast cash'
+    assert created[0]['type'] == 'forecast' and created[0]['title'] == 'Forecasting cash'
+    assert created[0]['data'] == {'tool': 'forecast_cash', 'args': {}}
     assert created[0]['status'] == 'running' and created[0]['parent'] == 'context'
     assert updated[-1]['status'] == 'done' and updated[-1]['data']['gap'] == result['gap']
 
@@ -81,7 +82,13 @@ def test_forecast_cash_uses_the_owners_customer_assumption(ctx, snap):
 
 def test_rank_chase_matches_payroll_levers(ctx, snap):
     result = run(ctx, 'rank_chase')
-    assert result == {'levers': jsonable_encoder(levers_for(snap))}
+    assert result['levers'] == jsonable_encoder(levers_for(snap))
+    assert result['status'] == 'approval_required'
+    assert result['decision_id']
+    assert result['recommended'] == [lever['id'] for lever in result['levers']]
+    again = run(ctx, 'rank_chase')
+    assert again['status'] == 'waiting_for_owner'
+    assert again['decision_id'] == result['decision_id']
     chase = result['levers'][0]
     assert chase['id'] == 'chase' and 1 <= len(chase['targets']) <= 3
     assert all({'invoice_id', 'customer_id', 'customer', 'amount', 'reason'} <= set(t) for t in chase['targets'])
@@ -92,6 +99,8 @@ def test_score_customer_is_company_scoped(ctx, snap):
     result = run(ctx, 'score_customer', {'customer_id': EVERGREEN})
     assert result['customer'] == {'id': EVERGREEN, 'display_name': 'Evergreen Juniper Flats Removals'}
     assert result['history'] and result['invoices']
+    assert result['rows'] and {'customer', 'amount', 'band', 'source'} <= result['rows'][0].keys()
+    assert result['summary']['open_total'] == round(sum(r['amount'] for r in result['rows']), 2)
     assert {r['customer_id'] for r in result['invoices']} == {EVERGREEN}
     assert len(result['invoices']) == sum(r['customer_id'] == EVERGREEN for r in snap['scored'])
     with conn() as c:

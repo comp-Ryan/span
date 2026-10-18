@@ -64,17 +64,22 @@ class Connection:
         return self.row
 
 
+def fake_books(bank=100, forecast=None):
+    return {'forecast': {'bills_due_by_target': 0, **(forecast or {})}, 'bank': bank,
+            'payroll': {'due_by_target': 10, 'headcount': 1}}
+
+
 def test_forecast_tool_applies_the_explicit_customer_assumption(monkeypatch):
     calls = []
     monkeypatch.setattr(planner, 'conn', lambda: Connection({'id': 'customer-1'}))
 
     def fake_snapshot(company, target, excluded_customer_id=None, assumed_customer_id=None):
         calls.append((company, target, excluded_customer_id, assumed_customer_id))
-        return {'forecast': {}, 'bank': 100}
+        return fake_books()
 
     monkeypatch.setattr(planner, 'snapshot', fake_snapshot)
     ctx = planner.ToolContext('run-1', 'company-1', date(2026, 10, 9))
-    ctx.snap = {'forecast': {}, 'bank': 100}
+    ctx.snap = fake_books()
 
     no = ctx.read_tool('forecast_cash', {'customer_id': 'customer-1', 'will_pay': False})
     yes = ctx.read_tool('forecast_cash', {'customer_id': 'customer-1', 'will_pay': True})
@@ -89,10 +94,11 @@ def test_forecast_tool_applies_the_explicit_customer_assumption(monkeypatch):
 
 
 def test_forecast_uses_explicit_fourteen_day_target_and_persists_it(monkeypatch):
+    monkeypatch.setattr(planner, 'conn', lambda: Connection(None))
     calls = []
     monkeypatch.setattr(planner, 'snapshot', lambda company, target, **kwargs: (
         calls.append((company, target, kwargs)) or
-        {'forecast': {'cash_at_target': 125}, 'bank': 100}
+        fake_books(forecast={'cash_at_target': 125})
     ))
     ctx = planner.ToolContext('run-1', 'company-1', date(2026, 10, 9))
 
@@ -119,28 +125,29 @@ def test_forecast_rejects_invalid_explicit_target(monkeypatch, target, message):
     assert ctx.target == date(2026, 10, 9)
 
 
-def test_customer_scenario_uses_selected_target_and_preserves_baseline(monkeypatch):
+def test_customer_scenario_uses_selected_target_for_subsequent_levers(monkeypatch):
     calls = []
-    baseline = {'forecast': {'source': 'baseline'}, 'bank': 100}
+    baseline = fake_books(forecast={'source': 'baseline'})
     monkeypatch.setattr(planner, 'conn', lambda: Connection({'id': 'customer-1'}))
 
     def fake_snapshot(company, target, excluded_customer_id=None, assumed_customer_id=None):
         calls.append((company, target, excluded_customer_id, assumed_customer_id))
         if excluded_customer_id or assumed_customer_id:
-            return {'forecast': {'source': 'scenario'}, 'bank': 100}
+            return fake_books(forecast={'source': 'scenario'})
         return baseline
 
     monkeypatch.setattr(planner, 'snapshot', fake_snapshot)
     ctx = planner.ToolContext('run-1', 'company-1', date(2026, 10, 9))
-    ctx.snap = {'forecast': {'source': 'old'}, 'bank': 90}
+    ctx.snap = fake_books(90, {'source': 'old'})
 
     result = ctx.read_tool('forecast_cash', {
         'target_date': '2026-10-20', 'customer_id': 'customer-1', 'will_pay': True,
     })
 
-    assert result == {'source': 'scenario', 'bank_balance': 100, 'target_date': '2026-10-20'}
+    assert result['source'] == 'scenario' and result['bank_balance'] == 100 and result['target_date'] == '2026-10-20'
     assert ctx.target == date(2026, 10, 20)
-    assert ctx.snap is baseline
+    assert ctx.snap['forecast']['source'] == 'scenario'
+    assert baseline['forecast']['source'] == 'baseline'
     assert calls == [
         ('company-1', date(2026, 10, 20), None, None),
         ('company-1', date(2026, 10, 20), None, 'customer-1'),

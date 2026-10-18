@@ -10,7 +10,8 @@
     "test": "vitest run",
     "preview": "vite preview",
     "test:branches": "node --experimental-strip-types --test tests/branches.node.ts",
-    "record": "tsx scripts/record_demo.ts"
+    "record": "tsx scripts/record_demo.ts",
+    "record:fixture": "tsx scripts/record_fixture.ts"
   },
   "dependencies": {
     "react": "^19.2.8",

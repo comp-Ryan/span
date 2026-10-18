@@ -3,15 +3,17 @@ import { replay, startRun, subscribe } from './api'
 import { descendants, runIngestor } from './branches'
 
 /** Subscribe before replaying so the handoff cannot lose a newly created branch. */
-export function connectLive(company: string, savedRun: string | null, onEvent: (event: RawEvent) => void, onError: (error: unknown) => void, staticOnly = false) {
+export function connectLive(company: string, savedRun: string | null, onEvent: (event: RawEvent) => void, onError: (error: unknown) => void, staticOnly = false, fresh = false, onRoot?: (id: string) => void) {
   let cancelled = false, ready = false
   const pending: RawEvent[] = []
   const accept = runIngestor(onEvent)
   const off = staticOnly ? () => {} : subscribe(company, event => ready ? accept.ingest(event) : pending.push(event))
   ;(async () => {
     try {
+      if (fresh && !savedRun) { ready = true; return }
       const root = savedRun ? { run_id: savedRun } : await startRun(company, 'Am I going to make payroll these next two weeks?')
       accept.add(root.run_id)
+      onRoot?.(root.run_id)
       const history = await replay(root.run_id, company)
       // SSE's bounded initial replay is not a complete history of older branches.
       if (savedRun) {
@@ -28,5 +30,17 @@ export function connectLive(company: string, savedRun: string | null, onEvent: (
       ready = true
     } catch (error) { if (!cancelled) onError(error) }
   })()
-  return () => { cancelled = true; off() }
+  return Object.assign(() => { cancelled = true; off() }, {
+    watch: async (id: string) => {
+      ready = false
+      accept.add(id)
+      onRoot?.(id)
+      const history = await replay(id, company)
+      if (!cancelled) {
+        ;[...history, ...pending].sort((a, b) => Number(a.data.id) - Number(b.data.id)).forEach(accept.ingest)
+        pending.length = 0
+        ready = true
+      }
+    },
+  })
 }

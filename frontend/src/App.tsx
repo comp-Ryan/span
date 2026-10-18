@@ -3,6 +3,9 @@ import type React from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
 import { emptyRun, k, money, plain, reduce } from './events'
 import { generateReport, playFixture, resolveDecision, startRun } from './api'
+import ForecastHistory from './ForecastHistory'
+import ChatSidebar from './ChatSidebar'
+import { readChatTitle, writeChatTitle } from './chatHistory'
 import DailyCashChart from './DailyCashChart'
 import { connectLive } from './live'
 import { approvalChoice, assistantSpeechText, claimSpeechEvent, listenOnce, type VoiceStatus } from './browserVoice'
@@ -13,6 +16,7 @@ const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
 const LIVE = new URLSearchParams(location.search).has('live') || new URLSearchParams(location.search).has('run')
 const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
 const RUN = new URLSearchParams(location.search).get('run')
+const FRESH = PARAMS.has('new')
 const STATIC = new URLSearchParams(location.search).has('static')
 const BROWSER_VOICE = PARAMS.get('voice') === 'browser'
 
@@ -309,13 +313,10 @@ function WeeklyCash({ weeks, baseline }: { weeks: { week_ending: string; low: nu
     <div style={{ height: 36, display: 'flex', alignItems: 'flex-start', gap: 2 }}>{baseline?.[i] && baseline[i].low < 0 && bar(baseline[i].low, true)}{w.low < 0 && bar(w.low)}</div>
     <span className="fine" style={{ fontSize: 10 }}>{fmtDate(w.week_ending)}</span></div>)}</div>
 }
-function ToolNode({ n }: { n: GraphNode }) {
+/** Planner answer tools (cash outlook, affordability, bills, customers, receivables, orders): one card per result shape. */
+function AnswerToolNode({ n }: { n: GraphNode }) {
   const d = n.data || {}
   const head = (icon: React.ReactNode, cls: string, title: string, extra?: React.ReactNode) => <h3><span className={`ic ${cls}`}>{icon}</span>{title}{extra}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
-  if (n.type === 'context' && d.question && !d.company && !d.customers) return <div className={`node ${n.status}`}>{head(I.chat, 'grey', 'Heard the question')}<div style={{ fontSize: 14 }}>“{d.question}”</div></div>
-  if (d.company) { const c = d.company; return <div className={`node ${n.status}`}>{head(I.book, 'blue', 'Looked up the company')}<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-    <div className="kv"><span style={{ color: 'var(--muted)' }}>{c.display_name} · {c.industry_title}</span><b>{c.distressed ? 'cash-strained' : 'healthy'}</b></div>
-    <div className="kv"><span style={{ color: 'var(--muted)' }}>In the bank</span><b>{money(c.cash)}</b></div><div className="kv"><span style={{ color: 'var(--muted)' }}>Owed to you</span><b>{money(c.receivables)}</b></div><div className="kv"><span style={{ color: 'var(--muted)' }}>You owe</span><b>{money(c.payables)}</b></div></div></div> }
   if (Array.isArray(d.weekly) && d.low_point) return <div className={`node ${n.status}`}>{head(I.book, 'blue', d.spend ? `Tested ${money(d.spend.amount)}${d.spend.frequency === 'once' ? '' : ' ' + d.spend.frequency} against cash` : `Daily cash to ${fmtDate(d.target_date)}`)}<WeeklyCash weeks={d.weekly} baseline={d.weekly_baseline} />
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {d.spend && <div className="kv"><span style={{ color: 'var(--muted)' }}>Low point without it</span><b>{smoney(d.baseline.low_point.balance)} · {fmtDate(d.baseline.low_point.date)}</b></div>}
@@ -340,12 +341,108 @@ function ToolNode({ n }: { n: GraphNode }) {
   </div></div>
   if (d.customers && !d.customers.length) return <div className={`node ${n.status}`}>{head(I.people, 'grey', `No customer matches “${d.query ?? ''}”`)}</div>
   if (d.status === 'not_supported') return <div className={`node ${n.status}`}>{head(I.book, 'grey', `Deferral not scheduled · ${d.vendor_name ?? d.bill_id}`)}<div className="fine">{d.reason}</div></div>
-  if (d.customers) return <div className={`node ${n.status}`}>{head(I.people, 'blue', `Looked up ${d.customers.length} customers`)}<div className="chips">{d.customers.slice(0, 8).map((c: any, i: number) => <span className="chip" key={c.id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(c.display_name)}</span>{c.display_name.split(' ').slice(0, 2).join(' ')}</span>)}{d.customers.length > 8 && <span className="fine">+{d.customers.length - 8} more</span>}</div></div>
-  if (d.history) return <div className={`node ${n.status}`}>{head(I.people, 'green', 'Checked their payment history')}<HistoryStrip history={d.history} /></div>
-  if (n.type === 'forecast' || d.cash_at_target != null) return <CashNode n={{ ...n, title: 'Cash on ' + fmtDate(d.target_date) }} />
-  if (d.levers) return null
+  return <NoteNode n={n} />
+}
+function CustomerNode({ n }: { n: GraphNode }) {
+  const d = n.data, s = d.summary || {}, who = d.customer?.display_name || n.rows[0]?.customer || 'Customer'
+  const col = { green: 'var(--green)', amber: 'var(--amber)', red: 'var(--red)' }
+  const hist: any[] = (d.history || []).slice(-24)
+  const working = n.status === 'running' && !n.rows.length && !hist.length
+  return <div className={`node ${n.status}`}>
+    <h3><span className="ic green">{I.person}</span>{who}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>reading history…</span>}</h3>
+    {working ? <div className="thinking"><i/><i/><i/> scoring</div> : <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="fine">Open invoices · {n.rows.length}{s.open_total != null ? ` · ${money(s.open_total)}` : ''}</div>
+        <div className="dots">{n.rows.map(r => <i key={r.invoice_id} style={{ background: col[r.band] || col.amber }} title={`${r.invoice_id} · $${Math.round(r.amount)} · ${r.days_past_due}d · ${Math.round(r.p_paid_by_target * 100)}% by target`} />)}</div>
+        <div className="legend"><span><i style={{ background: 'var(--green)' }} />will pay</span><span><i style={{ background: 'var(--amber)' }} />maybe</span><span><i style={{ background: 'var(--red)' }} />unlikely</span></div>
+        {n.rows.slice(0, 4).map(r => <div className="kv" key={r.invoice_id}><span>{r.invoice_id}<span className="fine"> · {r.days_past_due > 0 ? `${r.days_past_due}d late` : 'not due yet'}</span></span><b>{money(r.amount)} · {Math.round(r.p_paid_by_target * 100)}%</b></div>)}
+      </div>
+      {hist.length > 0 && <HistoryStrip history={d.history} />}
+    </>}
+  </div>
+}
+function BillsNode({ n }: { n: GraphNode }) {
+  const bills: any[] = n.data.bills || []
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.cal}</span>Bills due by {fmtDate(n.data.target_date)}</h3>
+    {!bills.length ? <div className="fine">{n.status === 'running' ? 'reading…' : 'Nothing due in the window.'}</div>
+      : <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{bills.slice(0, 6).map(b => <div className="kv" key={b.bill_id}><span>{b.vendor_name}<span className="fine"> · {fmtDate(b.due_date)}</span></span><b>{money(Number(b.open_amount))}</b></div>)}{bills.length > 6 && <div className="fine">+ {bills.length - 6} more</div>}</div>}
+  </div>
+}
+function CustomersNode({ n }: { n: GraphNode }) {
+  const cs: any[] = n.data.customers || []
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.people}</span>{cs.length ? `${cs.length} customers` : 'Customers'}</h3>
+    {!cs.length ? <div className="fine">{n.status === 'running' ? 'reading…' : 'None on file.'}</div>
+      : <div className="chips">{cs.slice(0, 18).map((c, i) => <span className="chip" key={c.id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(c.display_name)}</span>{c.display_name}</span>)}{cs.length > 18 && <span className="chip plain">+ {cs.length - 18} more</span>}</div>}
+  </div>
+}
+function ApprovalNode({ n, decision, onDecide }: { n: GraphNode; decision?: Decision; onDecide: (d: Decision, opt: string) => void }) {
+  const d = n.data
+  const what = d.tool === 'defer_bill' ? `Defer bill ${d.bill_id}` : d.tool === 'send_message' ? `Send a reminder for ${d.invoice_id}` : n.title
+  return <div className={`node ${n.status}`}><h3><span className="ic amber">{I.star}</span>{what}</h3>
+    {d.error ? <div className="fine" style={{ color: 'var(--red)' }}>{d.error}</div>
+      : decision ? (decision.resolved ? <button className="btn done" disabled>{I.check} {decision.resolved === 'no' ? 'Not now' : 'Approved'}</button>
+        : <div style={{ display: 'flex', gap: 8 }}>{decision.options.map(o => <button key={o.id} className={`btn ${o.id === 'yes' ? 'primary' : ''}`} onClick={() => onDecide(decision, o.id)}>{o.label}</button>)}</div>)
+      : <div className="fine">{['approval_required', 'waiting_for_owner'].includes(d.status) ? 'Waiting for your approval' : n.status === 'running' ? 'working…' : 'Done'}</div>}
+  </div>
+}
+function DraftNode({ n }: { n: GraphNode }) {
+  const d = n.data
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.chat}</span>Draft · {d.invoice_id || ''}{d.tone && <span className="chip plain" style={{ marginLeft: 8 }}>{d.tone}</span>}</h3>
+    {d.body ? <div className="bub out" style={{ maxWidth: 420 }}><div>{String(d.body)}</div><span className="meta">not sent</span></div> : <div className="fine">drafting…</div>}
+  </div>
+}
+function NoteNode({ n }: { n: GraphNode }) {
+  const d = n.data || {}
   const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
-  return <div className={`node ${n.status}`}>{head(I.book, 'grey', n.title)}{facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}</div>
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.book}</span>{n.title}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
+    {d.error && <div className="fine" style={{ color: 'var(--red)' }}>{d.error}</div>}
+    {d.text && <div style={{ fontSize: 14, lineHeight: '20px' }}>{plain(d.text)}</div>}
+    {!d.text && facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}
+  </div>
+}
+/** Verdict strip: a yes/no word and the headline number lifted from the spoken answer. */
+function AnswerStrip({ n }: { n: GraphNode }) {
+  const d = n.data || {}
+  const v: string | undefined = d.verdict ?? (d.answer === 'yes' || d.answer === 'no' ? d.answer : undefined)
+  const num: number | undefined = d.number ?? (d.gap > 0 ? d.gap : undefined)
+  if (!v && num == null) return <div className={`node ${n.status}`}><h3><span className="ic green">{I.check}</span>Answer</h3><div style={{ fontSize: 15, lineHeight: '22px', fontWeight: 600 }}>{plain(d.spoken || n.title)}</div></div>
+  const cls = v === 'no' ? 'bad' : v === 'yes' ? 'ok' : ''
+  const word = v === 'yes' ? 'Yes.' : v === 'no' ? 'No.' : v === 'barely' ? 'Barely.' : money(num)
+  return <div className={`node verdict ${cls}`}>
+    <div className="big">{word}</div>
+    {v && num != null && <div className="sub">{money(num)}</div>}
+    <div className="fine" style={{ flex: 1 }}>{plain(d.spoken || n.title)}</div>
+  </div>
+}
+function toolOf(n: GraphNode): string {
+  if (n.data?.tool) return n.data.tool
+  const t = (n.title || '').toLowerCase().replace(/ /g, '_')  // runs recorded before data.tool existed
+  return ['forecast_cash', 'rank_chase', 'score_customer', 'predict_payment', 'query_books', 'draft_reminder', 'send_message', 'defer_bill', 'show_node', 'resolve_decision'].find(x => t.startsWith(x)) || ''
+}
+const ANSWER_TOOLS = ['cash_outlook', 'check_affordability', 'list_bills', 'evaluate_order', 'receivables_summary', 'find_customer', 'rank_customers']
+function PlannerStep({ n, run, onDecide }: { n: GraphNode; run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void }) {
+  const tool = toolOf(n), d = n.data || {}
+  if (n.status === 'failed') return <NoteNode n={n} />
+  const decision = Object.values(run.decisions).find(x => x.node_id === n.node_id || (d.decision_id && x.decision_id === d.decision_id))
+  if (n.node_id === 'context' && d.question) return <QuestionNode question={d.question} />
+  if (n.type === 'answer') return <AnswerStrip n={n} />
+  if (tool === 'forecast_cash') return <CashNode n={n} ctx={n} />
+  if (tool === 'score_customer' || tool === 'predict_payment') return <CustomerNode n={n} />
+  if (ANSWER_TOOLS.includes(tool) || d.status === 'not_supported') return <AnswerToolNode n={n} />
+  if (tool === 'query_books') {
+    if (d.rows || d.invoices) return <ScoredNode n={n} />
+    if (d.bills) return <BillsNode n={n} />
+    if (d.customers) return <CustomersNode n={n} />
+    if (d.bank_balance != null || n.status === 'running') return <BooksNode n={n} />
+  }
+  if (tool === 'rank_chase') {
+    const levers: Lever[] = d.levers || []
+    if (!levers.length) return <div className={`node ${n.status}`}><h3><span className="ic green">{I.star}</span>{n.title}</h3><div className="fine">{n.status === 'running' ? 'working out what would close the gap…' : d.error || 'No supported levers found.'}</div></div>
+    return <div className="levers" style={{ width: '100%' }}>{levers.map(l => <div key={l.id} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={(d.recommended || ['chase'])[0] === l.id} decision={decision} chosen={decision?.resolved} onChoose={(opt, selected) => decision && onDecide(decision, opt, selected)} /></div>)}</div>
+  }
+  if (tool === 'send_message' || tool === 'defer_bill' || d.status === 'approval_required') return <ApprovalNode n={n} decision={decision} onDecide={onDecide} />
+  if (tool === 'draft_reminder') return <DraftNode n={n} />
+  return <NoteNode n={n} />
 }
 function Detail({ text }: { text: string }) {
   const blocks = text.split(/\n{2,}/).map(b => b.trim()).filter(Boolean)
@@ -375,27 +472,24 @@ function PlannerThread({ run, parent, onDecide, reportFailedFor, retryReportFor 
   const nodes = run.order.map(id => run.nodes[id])
   const ans = nodes.find(n => n.type === 'answer')
   // the planner's "context" node only echoes the question, which the question card already shows
-  const tools = nodes.filter(n => n.type !== 'answer' && !(n.node_id === 'context' && !n.data?.company && !n.data?.customers))
+  const tools = nodes.filter(n => n.type !== 'answer' && (n.type !== 'action' || toolOf(n)) && !(n.node_id === 'context' && !n.data?.company && !n.data?.customers))
   const fcNode = nodes.find(n => n.data?.cash_at_target != null)
-  const leverNode = nodes.find(n => n.data?.levers)
-  // the real owner decision the backend opened on this levers node
-  const decision = leverNode ? Object.values(run.decisions).find(d => d.node_id === leverNode.node_id) : undefined
-  const chosen = decision?.resolved
-  const actions = nodes.filter(n => n.type === 'action')
+  const actions = nodes.filter(n => n.type === 'action' && !toolOf(n))
+  const sc = nodes.find(n => n.rows.length > 0)
   const ctxLike: GraphNode | undefined = fcNode ? { ...fcNode, data: { ...fcNode.data, payroll_due_by_target: fcNode.data.need } } : undefined
   return <section className="thread">
     <BranchHeading run={run} parent={parent} />
     <div className="workspace">
       <aside className="live">
-        {ctxLike && <CashChart ctx={ctxLike} fc={fcNode} W={420} />}
+        {ctxLike && (LIVE ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={ctxLike.data.target_date} revision={`${fcNode?.data.forecast_id}:${fcNode?.data.cash_at_target}`} neverPays={fcNode?.data.excluded_customer_id} willPay={fcNode?.data.assumed_customer_id} /></div> : <CashChart ctx={ctxLike} fc={fcNode} W={420} />)}
+        {LIVE && fcNode && <ForecastHistory company={run.company_id || COMPANY} runId={run.run_id} revision={String(fcNode.data.forecast_id || fcNode.data.cash_at_target)} />}
+        {sc && sc.rows.length > 1 && <RiskPanel sc={sc} fc={fcNode} />}
         <div className={`card report ${run.report_id ? 'ready' : ''}`}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>{run.report_id ? <a className="btn" href={`/report/${run.report_id}?company=${encodeURIComponent(COMPANY)}`}>Open report</a> : ans?.data.awaiting_input ? <div className="fine">Waiting for your answer before continuing.</div> : reportFailedFor?.(run) ? <button className="btn" onClick={() => retryReportFor?.(run)}>Generate report</button> : run.status === 'closed' ? <div className="thinking"><i/><i/><i/> writing</div> : <div className="fine">Builds itself when this run finishes.</div>}</div>
       </aside>
       <div className="steps">
         <div className="vstep"><QuestionNode question={run.question} /></div>
-        {tools.map(n => { const el = <ToolNode n={n} />; if (el === null && !n.data?.levers) return null; return <div key={n.node_id}><div className="vconn" />{n.data?.levers
-          ? <div className="levers">{(n.data.levers as Lever[]).map((l, li) => <div key={l.id} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={li === 0} decision={decision} chosen={chosen} onChoose={(opt, selected) => decision && onDecide(decision, opt, selected)} /></div>)}</div>
-          : <div className="vstep">{el}</div>}</div> })}
-        {ans && <><div className="vconn" /><div className="vstep"><div className={`node ${ans.status}`}><h3><span className={`ic ${ans.status === 'failed' ? 'grey' : 'green'}`}>{I.chat}</span>{ans.data.awaiting_input ? `${BRAND} needs one answer` : ans.status === 'failed' ? `${BRAND} couldn’t finish` : `${BRAND}’s answer`}</h3><div style={{ flex: 1, fontSize: 14, lineHeight: '20px' }}>{plain(ans.data.spoken || ans.title)}</div></div></div></>}
+        {tools.map(n => <div key={n.node_id}><div className="vconn" /><div className="vstep"><PlannerStep n={n} run={run} onDecide={onDecide} /></div></div>)}
+        {ans && !ans.data.awaiting_input && ans.status !== 'failed' ? <><div className="vconn" /><div className="vstep"><AnswerStrip n={ans} /></div></> : ans && <><div className="vconn" /><div className="vstep"><div className={`node ${ans.status}`}><h3><span className={`ic ${ans.status === 'failed' ? 'grey' : 'green'}`}>{I.chat}</span>{ans.data.awaiting_input ? `${BRAND} needs one answer` : ans.status === 'failed' ? `${BRAND} couldn’t finish` : `${BRAND}’s answer`}</h3><div style={{ flex: 1, fontSize: 14, lineHeight: '20px' }}>{plain(ans.data.spoken || ans.title)}</div></div></div></>}
         {actions.length > 0 && <><div className="vconn" /><Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} /></>}
         {ans?.data.detail && <><div className="vconn" /><div className="vstep"><Reasoning detail={ans.data.detail} /></div></>}
         {!ans && <div className="thinking" style={{ marginTop: 14 }}><i/><i/><i/> {BRAND} is thinking</div>}
@@ -448,6 +542,7 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
             : <div className="card chart">Calculating this thread’s cash projection…</div>
           : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} W={420} />)}
         {sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
+        {LIVE && fc && <ForecastHistory company={run.company_id || COMPANY} runId={run.run_id} revision={String(fc.data.forecast_id || fc.data.cash_at_target)} />}
         <div className={`card report ${run.report_id ? 'ready' : ''}`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>
           <div className="fine">{run.report_id ? 'Ready. Share it with your bookkeeper or print it.' : run.status === 'closed' ? 'Putting the page together.' : 'Builds itself when this run finishes.'}</div>
@@ -535,7 +630,9 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
 /* ---------- app ---------- */
 export default function App() {
   const [runs, setRuns] = useState<RunState[]>([])
-  const [chatTitle, setChatTitle] = useState(() => localStorage.getItem('span.chatTitle') || 'General chat')
+  const [rootId, setRootId] = useState<string | undefined>(RUN || undefined)
+  const [chatTitle, setChatTitle] = useState(() => RUN && readChatTitle(COMPANY, RUN) || 'General chat')
+  const liveRef = useRef<ReturnType<typeof connectLive> | null>(null)
   const [editingChatTitle, setEditingChatTitle] = useState(false)
   const [chatTitleDraft, setChatTitleDraft] = useState(chatTitle)
   const cancelChatTitleEdit = useRef(false)
@@ -576,7 +673,13 @@ export default function App() {
   const playing = useRef(false)
   const play = async (s = speed) => { stopRef.current(); setRuns([]); playing.current = true; const stop = await playFixture('/fixture.json', apply, s); stopRef.current = () => { playing.current = false; stop() } }
   useEffect(() => {
-    if (RUN || LIVE) return connectLive(COMPANY, RUN, apply, e => setError(String(e)), STATIC)
+    if (RUN || LIVE) {
+      liveRef.current = connectLive(COMPANY, RUN, apply, e => setError(String(e)), STATIC, FRESH, id => {
+        setRootId(id); setChatTitle(readChatTitle(COMPANY, id) || 'General chat')
+        const url = new URL(location.href); url.searchParams.set('run', id); url.searchParams.delete('new'); history.replaceState(null, '', url)
+      })
+      return liveRef.current
+    }
     if (!playing.current) play(); return () => stopRef.current()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -598,7 +701,7 @@ export default function App() {
   const followUp = async (q: string) => {
     setInput('')
     if (BROWSER_VOICE && 'speechSynthesis' in window) window.speechSynthesis.cancel()
-    if (LIVE && BROWSER_VOICE) {
+    if (LIVE) {
       const latest = runs[runs.length - 1]
       const pending = latest && Object.values(latest.decisions).filter(decision => !decision.resolved).slice(-1)[0]
       const optionId = pending && approvalChoice(q, pending.options)
@@ -613,8 +716,9 @@ export default function App() {
     }
     if (LIVE) {
       try {
-        const parent = BROWSER_VOICE ? runs[runs.length - 1] : runs[0]
-        await startRun(COMPANY, q, BROWSER_VOICE ? 'call' : 'web', parent?.run_id)
+        const parent = runs[runs.length - 1]
+        const created = await startRun(COMPANY, q, BROWSER_VOICE ? 'call' : 'web', parent?.run_id)
+        if (!parent) await liveRef.current?.watch(created.run_id)
         setError('')
       } catch (e) { setError(String(e)) }
       return
@@ -661,7 +765,7 @@ export default function App() {
     }
     const title = chatTitleDraft.trim() || 'General chat'
     setChatTitle(title)
-    localStorage.setItem('span.chatTitle', title)
+    if (rootId) writeChatTitle(COMPANY, rootId, title)
     setEditingChatTitle(false)
   }
   const main = BROWSER_VOICE ? runs[runs.length - 1] : runs[0]
@@ -669,13 +773,14 @@ export default function App() {
     <header className="topbar">
       <div className="brand"><img className="mark" src="/logo.png" alt="" /><div className="name">{BRAND.toLowerCase()}</div></div>
       <div className="company">Palletbay Storage &amp; Warehousing</div>
-      <div className="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><input placeholder="Ask about your money, or search transactions, customers, reports" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && input.trim()) followUp(input.trim()) }} /></div>
+      <div className="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><input autoFocus={FRESH} aria-label="Ask Span" placeholder="Ask about your money, or search transactions, customers, reports" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && input.trim()) followUp(input.trim()) }} /></div>
       <div className="status"><i className="dot" />{BROWSER_VOICE ? 'Browser voice demo' : main?.status === 'open' ? 'On a call' : LIVE ? 'Live' : 'Demo replay'}</div>
     </header>
     <div className="body">
       <nav className="rail">
         <a className="on" href="/">{I.chat}Ask</a><a href="/home">{I.book}Home</a><a href={`/get-paid${COMPANY !== 'company-020' ? `?company=${encodeURIComponent(COMPANY)}` : ''}`}>{I.card}Get paid</a><a href={`/reports${COMPANY !== 'company-020' ? `?company=${encodeURIComponent(COMPANY)}` : ''}`}>{I.trend}Reports</a><a href={`/customers${COMPANY !== 'company-020' ? `?company=${encodeURIComponent(COMPANY)}` : ''}`}>{I.person}Customers</a>
       </nav>
+      {LIVE && <ChatSidebar company={COMPANY} active={rootId} revision={`${runs.length}:${runs.map(r => r.status).join()}:${chatTitle}`} onRename={(id, title) => { if (id === rootId) setChatTitle(title) }} />}
       <main className="main">
         {error && <div role="alert">{error}</div>}
         {main ? <>
@@ -706,7 +811,7 @@ export default function App() {
                   if (e.key === 'Enter' || e.key === 'F2') { setChatTitleDraft(chatTitle); setEditingChatTitle(true) }
                 }}
               >{chatTitle}</h1>}
-        </> : <div className="thinking"><i/><i/><i/> connecting</div>}
+        </> : <div className="empty-chat"><h1 className="q">General chat</h1><p>{FRESH ? "Ask a question about your books to start a new conversation." : "Connecting…"}</p></div>}
         {runs.map(r => <div key={r.run_id} id={`thread-${r.run_id}`} data-run-id={r.run_id}>
           {isPlannerRun(r)
             ? <PlannerThread run={r} parent={runs.find(p => p.run_id === r.parent_run_id)} onDecide={onDecide} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />

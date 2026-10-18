@@ -24,3 +24,12 @@ alter table runs add column if not exists parent_run_id text;
 alter table runs add column if not exists target_date date;
 alter table runs add column if not exists excluded_customer_id text;
 create index if not exists runs_parent on runs(parent_run_id);
+-- Append-only forecast revisions; the dated series stays in the Tiger/Timescale hypertable.
+alter table cash_projection add column if not exists forecast_id bigint;
+create index if not exists cash_projection_forecast on cash_projection(forecast_id, scenario, day);
+create table if not exists forecast_history (
+  forecast_id bigint primary key references events(id) on delete cascade,
+  company_id text not null, run_id text not null, node_id text not null,
+  target date not null, computed_at timestamptz not null default now(), forecast jsonb not null
+);
+create index if not exists forecast_history_company on forecast_history(company_id, computed_at desc);

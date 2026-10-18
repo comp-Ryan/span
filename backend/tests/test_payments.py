@@ -1,6 +1,6 @@
 """Pay-link page: token lifecycle, idempotency, Visa simulated path, Solana verification (mocked RPC).
 
-Runs against the local Postgres (docker compose up -d db; python -m owed.db.load). Rows it creates are removed.
+Run ONLY against an isolated DATABASE_URL cloned from the local Postgres (docker compose up -d db; python -m owed.db.load). Rows it creates are removed.
 """
 from __future__ import annotations
 
@@ -62,8 +62,8 @@ def solana_env(monkeypatch):
     monkeypatch.setattr(settings, "solana_usdc_mint", MINT)
 
 
-def rpc_result(gained_base_units: int, owner: str = RECIPIENT, mint: str = MINT, err=None):
-    return {"slot": 123456, "meta": {
+def rpc_result(gained_base_units: int, owner: str = RECIPIENT, mint: str = MINT, err=None, reference="test-reference"):
+    return {"slot": 123456, "transaction": {"message": {"accountKeys": [reference]}}, "meta": {
         "err": err,
         "preTokenBalances": [{"accountIndex": 2, "mint": mint, "owner": owner,
                               "uiTokenAmount": {"amount": "1000000", "decimals": 6}}],
@@ -94,7 +94,9 @@ def test_create_pay_token_and_get(client, token, invoice, solana_env, simulated)
                                "due_date": invoice["due_date"].isoformat()}
     assert body["status"] == "unpaid"
     assert body["payer_name"] == invoice["customer_name"]
-    assert body["solana"] == {"recipient": RECIPIENT, "mint": MINT, "amount": 123.45}
+    assert body["solana"] == {"recipient": RECIPIENT, "mint": MINT, "amount": 123.45,
+        "reference": solana.reference_for_token(token), "uri": body["solana"]["uri"]}
+    assert f"reference={solana.reference_for_token(token)}" in body["solana"]["uri"]
     assert body["visa"]["sandbox_mode"] == "simulated"
 
 
@@ -104,9 +106,11 @@ def test_unknown_token_404(client):
     assert client.post("/pay/tok_nope", json={"rail": "visa", "card": CARD}).status_code == 404
 
 
-def test_html_page(client, token):
-    r = client.get(f"/pay/{token}/page")
+@pytest.mark.parametrize("prefix", ["", "/api"])
+def test_html_page(client, token, prefix):
+    r = client.get(f"{prefix}/pay/{token}/page")
     assert r.status_code == 200 and "text/html" in r.headers["content-type"]
+    assert "parts[parts.indexOf('pay') + 1]" in r.text
     assert "#ff7a45" in r.text and "prefers-color-scheme" in r.text and "Pay with Phantom" in r.text
     r = client.get(f"/pay/{token}", headers={"Accept": "text/html,application/xhtml+xml"})
     assert "text/html" in r.headers["content-type"]
@@ -189,7 +193,7 @@ def test_paying_twice_returns_same_receipt(client, token, simulated):
 # ---- Solana verification with mocked RPC ---------------------------------------------------------------------
 
 def test_solana_verifies_transfer(client, token, solana_env, monkeypatch):
-    calls = mock_rpc(monkeypatch, rpc_result(123_450_000))  # 123.45 USDC
+    calls = mock_rpc(monkeypatch, rpc_result(123_450_000, reference=solana.reference_for_token(token)))  # 123.45 USDC
     r = client.post(f"/pay/{token}", json={"rail": "solana", "signature": SIG})
     assert r.status_code == 200, r.text
     rc = r.json()["receipt"]
@@ -201,11 +205,11 @@ def test_solana_verifies_transfer(client, token, solana_env, monkeypatch):
 
 def test_solana_accepts_overpayment(monkeypatch):
     mock_rpc(monkeypatch, rpc_result(200_000_000))
-    assert solana.verify_transfer(SIG, RECIPIENT, MINT, 123.45)["received"] == 200.0
+    assert solana.verify_transfer(SIG, RECIPIENT, MINT, 123.45, "test-reference")["received"] == 200.0
 
 
 def test_solana_rejects_short_transfer(client, token, solana_env, monkeypatch):
-    mock_rpc(monkeypatch, rpc_result(123_440_000))
+    mock_rpc(monkeypatch, rpc_result(123_440_000, reference=solana.reference_for_token(token)))
     r = client.post(f"/pay/{token}", json={"rail": "solana", "signature": SIG})
     assert r.status_code == 402 and "too small" in r.json()["error"]["message"]
 
@@ -213,10 +217,10 @@ def test_solana_rejects_short_transfer(client, token, solana_env, monkeypatch):
 def test_solana_rejects_wrong_recipient_or_mint(monkeypatch):
     mock_rpc(monkeypatch, rpc_result(500_000_000, owner="SomebodyElse" + "1" * 32))
     with pytest.raises(solana.SolanaError):
-        solana.verify_transfer(SIG, RECIPIENT, MINT, 1.0)
+        solana.verify_transfer(SIG, RECIPIENT, MINT, 1.0, "test-reference")
     mock_rpc(monkeypatch, rpc_result(500_000_000, mint="OtherMint" + "1" * 35))
     with pytest.raises(solana.SolanaError):
-        solana.verify_transfer(SIG, RECIPIENT, MINT, 1.0)
+        solana.verify_transfer(SIG, RECIPIENT, MINT, 1.0, "test-reference")
 
 
 def test_solana_rejects_missing_or_failed_tx(client, token, solana_env, monkeypatch):
@@ -238,6 +242,30 @@ def test_solana_rpc_down_is_502(client, token, solana_env, monkeypatch):
     assert r.status_code == 502
 
 
-def test_health_reports_rails(client, simulated):
+def test_health_reports_rails(client, simulated, solana_env):
     h = client.get("/health").json()
     assert h["visa"] == "simulated" and h["solana"] == "devnet"
+
+
+def test_solana_rejects_another_links_reference(client, token, solana_env, monkeypatch):
+    mock_rpc(monkeypatch, rpc_result(123_450_000, reference=solana.reference_for_token('tok_other')))
+    r = client.post(f'/pay/{token}', json={'rail': 'solana', 'signature': SIG})
+    assert r.status_code == 402 and 'reference' in r.json()['error']['message']
+    assert client.get(f'/pay/{token}').json()['status'] == 'unpaid'
+
+
+def test_solana_signature_cannot_pay_a_second_invoice(client, token, invoice, solana_env, monkeypatch):
+    with conn() as c:
+        second = c.execute('''select invoice_id from invoice_facts where company_id=%s
+            and invoice_id<>%s and open_balance>=123.45 limit 1''', (COMPANY, invoice['id'])).fetchone()
+        rid = c.execute('select run_id from pay_tokens where pay_token=%s', (token,)).fetchone()['run_id']
+        other = create_pay_token(c, COMPANY, second['invoice_id'], 123.45, run_id=rid)
+    try:
+        mock_rpc(monkeypatch, rpc_result(123_450_000, reference=solana.reference_for_token(token)))
+        assert client.post(f'/pay/{token}', json={'rail': 'solana', 'signature': SIG}).status_code == 200
+        r = client.post(f'/pay/{other}', json={'rail': 'solana', 'signature': SIG})
+        assert r.status_code == 409 and 'already used' in r.json()['error']['message']
+        assert client.get(f'/pay/{other}').json()['status'] == 'unpaid'
+    finally:
+        with conn() as c:
+            c.execute('delete from pay_tokens where pay_token=%s', (other,))

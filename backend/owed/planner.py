@@ -15,6 +15,7 @@ from owed.config import settings
 from owed.db import conn
 from owed.events import emit
 from owed.finance import queries as q
+from owed.finance.model import band
 from owed.runs import finish
 from owed import planner_tools as pt
 from owed.runs.payroll import levers_for, payment_model, snapshot
@@ -89,10 +90,24 @@ TOOL_KINDS = {'forecast_cash': 'forecast', 'predict_payment': 'scoring', 'score_
               'rank_chase': 'levers', 'query_books': 'context', 'cash_outlook': 'context',
               'check_affordability': 'context', 'list_bills': 'context', 'find_customer': 'context',
               'rank_customers': 'scoring', 'receivables_summary': 'context', 'evaluate_order': 'scoring'}
-TOOL_TITLES = {'cash_outlook': 'Projected daily cash', 'check_affordability': 'Tested the cost against cash',
+TOOL_TITLES = {'forecast_cash': 'Forecasting cash', 'predict_payment': 'Scoring one invoice',
+               'score_customer': 'Reading customer history', 'rank_chase': 'What closes the gap',
+               'query_books': 'Reading the books', 'draft_reminder': 'Drafting a reminder',
+               'send_message': 'Asking to send a reminder', 'defer_bill': 'Asking to defer a bill',
+               'resolve_decision': 'Carrying out your decision', 'show_node': 'Explaining',
+               'cash_outlook': 'Projected daily cash', 'check_affordability': 'Tested the cost against cash',
                'list_bills': 'Looked up bills', 'find_customer': 'Found the customer',
                'rank_customers': 'Ranked customers', 'receivables_summary': 'Totalled what you are owed',
                'evaluate_order': 'Evaluated the order'}
+
+
+def score_row(r):
+    """Same shape run_payroll streams per invoice (ScoreRow in the frontend)."""
+    return {'invoice_id': r['invoice_id'], 'customer_id': r['customer_id'], 'customer': r['customer_name'],
+            'amount': q.f(r['open_balance']), 'days_past_due': r['days_past_due'],
+            'p_paid_by_target': r['p_paid_by_target'], 'p_never': r['p_never'],
+            'expected_days_to_pay': r.get('expected_days_to_pay'),
+            'band': band(r['p_paid_by_target'], r['p_never']), 'source': 'owed_model'}
 
 
 class ToolContext:
@@ -114,16 +129,23 @@ class ToolContext:
     async def execute(self, name, args):
         node = 'tool-' + uuid4().hex
         kind = TOOL_KINDS.get(name, 'action')
+        title = TOOL_TITLES.get(name, name.replace('_', ' ').capitalize())
+        if name == 'query_books' and args.get('entity'):
+            title = f"Reading {args['entity']}"
         await asyncio.to_thread(emit, self.run_id, 'node.create', {
-            'node_id': node, 'type': kind, 'title': TOOL_TITLES.get(name, name.replace('_', ' ').capitalize()),
-            'status': 'running', 'parent': self.parent})
+            'node_id': node, 'type': kind, 'title': title,
+            'status': 'running', 'parent': self.parent, 'data': {'tool': name, 'args': dict(args or {})}})
         self.parent = node
         try:
             if name not in {t['name'] for t in TOOLS}:
                 raise ValueError('Unknown tool')
             result = await asyncio.to_thread(self.read_tool, name, args)
             result = jsonable_encoder(result)
-            await asyncio.to_thread(emit, self.run_id, 'node.update', {'node_id': node, 'status': 'done', 'data': result})
+            if name == 'forecast_cash':
+                from owed.finance.history import emit_forecast
+                result = await asyncio.to_thread(emit_forecast, self.run_id, node, self.snap, data=result, status='done')
+            else:
+                await asyncio.to_thread(emit, self.run_id, 'node.update', {'node_id': node, 'status': 'done', 'data': result})
             return result
         except Exception as exc:
             log.exception('Tool %s failed', name)
@@ -168,7 +190,11 @@ class ToolContext:
                 s = snapshot(self.company, self.target,
                              excluded_customer_id=None if args['will_pay'] else customer_id,
                              assumed_customer_id=customer_id if args['will_pay'] else None)
-            return {**s['forecast'], 'bank_balance': s['bank'], 'target_date': self.target.isoformat()}
+            self.snap = s
+            with conn() as c:
+                c.execute('update runs set target_date=%s, excluded_customer_id=%s where run_id=%s',
+                          (self.target, s['forecast'].get('excluded_customer_id'), self.run_id))
+            return {**s['forecast'], **self.books(s)}
         if name in NEW_TOOLS:
             return self.answer_tool(name, args)
         if self.snap is None:
@@ -186,13 +212,14 @@ class ToolContext:
         if name == 'query_books':
             entity = args.get('entity')
             if entity == 'company':
-                return {'company': s['company']}
+                return {'company': s['company'], **self.books(s)}
             if entity == 'invoices':
                 keep = ('invoice_id', 'customer_id', 'customer_name', 'due_date', 'open_balance', 'days_past_due',
                         'p_paid_by_target', 'p_never', 'expected_days_to_pay')
-                return {'invoices': [{k: r.get(k) for k in keep} for r in s['scored']]}
+                return {'invoices': [{k: r.get(k) for k in keep} for r in s['scored']],
+                        'rows': [score_row(r) for r in s['scored']], **self.books(s)}
             if entity == 'bills':
-                return {'bills': s['bills']}
+                return {'bills': s['bills'], **self.books(s)}
             if entity == 'customers':
                 with conn() as c:
                     return {'customers': c.execute('select id,display_name,payment_terms from customers where company_id=%s', (self.company,)).fetchall()}
@@ -202,8 +229,14 @@ class ToolContext:
                 customer = c.execute('select id,display_name from customers where company_id=%s and id=%s', (self.company, args.get('customer_id'))).fetchone()
                 if not customer:
                     raise ValueError('Customer not found in this company')
-                return {'customer': customer, 'history': q.customer_history(c, self.company, customer['id'], q.AS_OF_DEFAULT),
-                        'invoices': [r for r in s['scored'] if r['customer_id'] == customer['id']]}
+                history = q.customer_history(c, self.company, customer['id'], q.AS_OF_DEFAULT)
+            rows = [score_row(r) for r in s['scored'] if r['customer_id'] == customer['id']]
+            paid = [h for h in history if h['status'] == 'paid' and h['days_late'] is not None]
+            return {'customer': customer, 'history': history, 'invoices': [r for r in s['scored'] if r['customer_id'] == customer['id']], 'rows': rows,
+                    'summary': {'n_paid': len(paid), 'late_rate': round(sum(1 for h in paid if h['days_late'] > 0) / len(paid), 2) if paid else None,
+                                'avg_days_late': round(sum(h['days_late'] for h in paid) / len(paid), 1) if paid else None,
+                                'open_total': round(sum(r['amount'] for r in rows), 2),
+                                'n_write_offs': sum(1 for h in history if h['status'] == 'written_off')}}
         if name == 'show_node':
             return {'text': str(args.get('text', ''))[:4000]}
         if name == 'defer_bill':
@@ -224,7 +257,7 @@ class ToolContext:
         if not row:
             raise ValueError('Open invoice not found in this company')
         if name == 'predict_payment':
-            return {'invoice': row}
+            return {'invoice': row, 'rows': [score_row(row)]}
         if name == 'draft_reminder':
             return {'invoice_id': row['invoice_id'], 'body': f"Hi {row['customer_name']}, a reminder that ${q.f(row['open_balance']):,.2f} is outstanding on invoice {row['invoice_id']}. Can you confirm a payment date?", 'tone': 'firm' if row['days_past_due'] > 30 else 'friendly', 'sent': False}
         return self.approval('send_message', {'invoice_id':row['invoice_id']})
@@ -280,6 +313,11 @@ class ToolContext:
                                          self.snapshot_for, projection)
         raise ValueError('Unknown tool')
 
+    def books(self, s):
+        return {'bank_balance': s['bank'], 'payroll_due_by_target': s['payroll']['due_by_target'],
+                'headcount': s['payroll']['headcount'], 'bills_due_by_target': s['forecast']['bills_due_by_target'],
+                'target_date': self.target.isoformat(), 'as_of': q.AS_OF_DEFAULT.isoformat()}
+
     def approval(self, kind, arguments, prompt='Approve this action?', options=None):
         with conn() as c:
             pending = c.execute('select decision_id from decisions where run_id=%s and resolved is null order by created_at limit 1',
@@ -326,7 +364,7 @@ Outside money questions for this business (weather, news, general trivia), say b
 Work one step at a time. If a material fact or assumption is missing, ask exactly one short question and wait for the owner's answer before using tools or continuing. For a payroll forecast involving Evergreen, ask: "Should I assume Evergreen will pay by payday, or treat them as not paying?" Identify the customer from company-scoped books, then call forecast_cash with customer_id and will_pay set to the owner's answer. Use the owner's latest correction when they revise an assumption and redo only that step.
 When asking a clarifying question, say only that one question with no --- and no report, and stop; do not give a forecast or written report until it is answered.
 Only request one owner approval at a time. Wait for its explicit answer before proposing another action; never bundle multiple approvals or actions into one turn.
-Sending and deferrals require owner approval. After an explicit owner yes/approval, use resolve_decision with the returned decision_id and option_id yes. Never resolve without explicit owner approval. Never say they happened from an approval_required result.
+Sending and deferrals require owner approval. rank_chase already shows an approval card; do not also call send_message for those customers. After an explicit owner yes/approval, use resolve_decision with the returned decision_id and option_id yes. Never resolve without explicit owner approval. Never say they happened from an approval_required result.
 Reply in two parts separated by a line containing only ---
 Part 1 is what you say on the phone: one or two plain sentences, no markdown. Verdict first, then the one number that matters, then the next step.
 Part 2 is the written report for the owner's bookkeeper: a fleshed-out explanation in markdown with short headings (Why, Numbers used, What I'd do next), every figure you relied on, and what is uncertain.'''
@@ -339,6 +377,31 @@ def spoken_plain(text: str) -> str:
     t = _re.sub(r'\*\*|__|^#+\s*|^\s*[-*]\s+|^\s*\d+\.\s+', '', t, flags=_re.M)
     t = _re.sub(r'\n+', ' ', t)
     return _re.sub(r'\s+', ' ', t).strip()
+
+
+def verdict_of(text: str) -> dict:
+    """Pull a yes/no and the headline number out of a spoken answer so the canvas can show a verdict strip."""
+    import re as _re
+    head = text.strip().lower()[:40]
+    verdict = None
+    if _re.match(r"^(no\b|nope|not quite|you('| a)re (short|not)|you won't|you will not|you can't|you cannot|you do not|you don't)", head):
+        verdict = 'no'
+    elif _re.match(r'^(barely|just barely|tight|it(\'| i)s close)', head):
+        verdict = 'barely'
+    elif _re.match(r"^(yes|yep|you('| a)re (fine|covered|good|ok)|you will\b|you can\b(?!not)|you'll make|you make)", head):
+        verdict = 'yes'
+    m = _re.search(r'\$\s?([\d,]+(?:\.\d+)?)\s*(k|thousand|million|m)?', text, _re.IGNORECASE)
+    number = None
+    if m:
+        number = float(m.group(1).replace(',', ''))
+        unit = (m.group(2) or '').lower()
+        number *= 1000 if unit in ('k', 'thousand') else 1_000_000 if unit in ('m', 'million') else 1
+    out = {}
+    if verdict:
+        out['verdict'] = verdict
+    if number is not None:
+        out['number'] = round(number, 2)
+    return out
 
 
 def planner_followup_message(question, parent_question=None, parent_speech=None):
@@ -418,7 +481,7 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
                 awaiting_input = is_awaiting_input(text, detail)
                 await asyncio.to_thread(emit, run_id, 'node.create', {'node_id': 'answer', 'type': 'answer',
                     'title': text[:160], 'status': 'done', 'parent': ctx.parent,
-                    'data': {'spoken': text, 'detail': detail, 'awaiting_input': awaiting_input}})
+                    'data': {'spoken': text, 'detail': detail, 'awaiting_input': awaiting_input, **({} if awaiting_input else verdict_of(text))}})
                 await asyncio.to_thread(emit, run_id, 'speech', {'text': text, 'audio_url': None})
                 with conn() as c:
                     c.execute('update runs set answer_title=%s where run_id=%s', (text[:160], run_id))

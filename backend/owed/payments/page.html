@@ -129,8 +129,10 @@
 
 <script>
 (() => {
-  const token = location.pathname.split('/').filter(Boolean)[1];
-  const api = `/pay/${encodeURIComponent(token)}`;
+  // Both /pay/:token[/page] and /api/pay/:token[/page] serve this document.
+  const parts = location.pathname.split('/').filter(Boolean);
+  const token = parts[parts.indexOf('pay') + 1];
+  const api = `${parts[0] === 'api' ? '/api' : ''}/pay/${encodeURIComponent(token)}`;
   const $ = (id) => document.getElementById(id);
   const usd = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   const fmtDate = (s) => s ? new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
