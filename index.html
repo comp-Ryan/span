@@ -86,6 +86,8 @@
   .timeline li.active b{color:var(--green)}
   @keyframes pulse{50%{box-shadow:0 0 0 7px rgba(44,160,28,.08)}}
   .stage{position:relative;min-height:380px;max-height:calc(100vh - 140px);overflow:hidden}
+  .panel[data-panel="8"] .paper{max-width:none;display:flex;justify-content:center;background:transparent;border:0;box-shadow:none}
+  .panel[data-panel="8"] .paper img{width:auto;max-width:100%;max-height:calc(100vh - 170px);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.25)}
   .panel{position:absolute;inset:0;opacity:0;pointer-events:none}
   .panel.on{position:relative;opacity:1;pointer-events:auto}
   .frame-lite{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;background-image:radial-gradient(#d9dbe0 .9px,transparent 1px);background-size:18px 18px;font-size:14px}
