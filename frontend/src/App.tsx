@@ -593,7 +593,7 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
     {open && <div className="dpanel">
       <div className="dhead" onClick={() => setOpen(false)}>
         <span className="ic green">{I.phone}</span>
-        <div style={{ flex: 1 }}><b>{browserVoice ? 'Browser voice demo' : !live ? `Demo replay · ${mm}` : onCall ? `On a call · ${mm}` : 'Call ended'}</b><div className="fine">{browserVoice ? 'Tap the mic to speak one follow-up. Browser speech, not telephony.' : onCall ? 'Listening · tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
+        <div style={{ flex: 1 }}><b>{browserVoice ? 'Browser voice demo' : !live ? `Demo replay · ${mm}` : onCall ? `Working · ${mm}` : 'Transcript'}</b><div className="fine">{browserVoice ? 'Tap the mic to speak one follow-up. Browser speech, not telephony.' : onCall ? 'Listening · tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
         <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
         <span className="fine" style={{ marginLeft: 8 }}>▾</span>
       </div>
@@ -611,6 +611,10 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
             <button className={`mic ${callState.phase === 'listening' ? 'listening' : ''}`} type="button" aria-label={callState.phase === 'listening' ? 'Listening for one follow-up' : 'Speak one follow-up'} aria-pressed={callState.phase === 'listening'} disabled={callState.phase === 'listening' || callState.phase === 'speaking'} onClick={onMic}>{I.mic} Speak follow-up</button></>
           : <button className="btn primary" type="button" onClick={onStartCall}>{I.phone} Call Span</button>}
         <span role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'error' ? voiceMessage : callState.active ? callStatusLabel(callState) : 'Browser call: Span listens, answers aloud and keeps listening until you hang up.'}</span>
+      </div>}
+      {live && !browserVoice && <div className="browser-voice-control" data-testid="call-controls">
+        <a className="btn primary" href={(() => { const u = new URL(location.href); u.searchParams.set('voice', 'browser'); u.searchParams.set('call', '1'); if (!u.searchParams.has('run')) { u.searchParams.set('live', ''); u.searchParams.set('new', '1') } return u.pathname + u.search })()}>{I.phone} Call Span</a>
+        <span className="fine">Talk instead of typing: Span answers aloud and keeps listening until you hang up.</span>
       </div>}
       {!live && <div className="controls" style={{ justifyContent: 'flex-end' }}>demo replay · <button onClick={() => onReplay(1)}>restart</button><button onClick={() => onReplay(3)}>3× speed</button><a href="?live">connect live</a></div>}
     </div>}
