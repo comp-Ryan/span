@@ -3,7 +3,7 @@
 .app{display:flex;flex-direction:column;min-height:100%}
 .topbar{display:flex;align-items:center;height:64px;background:var(--card);border-bottom:1px solid var(--line);padding-right:24px;position:sticky;top:0;z-index:20}
 .brand{display:flex;align-items:center;gap:10px;width:200px;height:64px;padding:0 20px;border-right:1px solid var(--line);flex-shrink:0}
-.brand .mark{width:30px;height:30px;border-radius:15px;background:var(--green);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+.brand .mark{width:32px;height:32px;border-radius:16px;display:block}
 .brand .name{font-size:18px;font-weight:600;letter-spacing:-.01em}
 .company{font-size:15px;font-weight:500;padding:0 20px;white-space:nowrap}
 .search{display:flex;align-items:center;gap:10px;flex:1;height:40px;padding:0 14px;border:1px solid var(--muted2);border-radius:20px;color:var(--muted);background:var(--card)}
@@ -302,3 +302,14 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .vstep .reasoning h3{width:100%}
 .detail{display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:19px;color:var(--text);max-width:720px}
 .detail b{display:block;margin-bottom:2px}
+
+/* follow-up branches live inside the workflow column */
+.thread.followup{margin-top:20px;padding:16px 0 0 0;border-top:1px dashed var(--line);margin-left:464px}
+.thread.followup .steps{max-width:100%}
+.latelist{display:flex;flex-direction:column;gap:4px;width:100%}
+.laterow{display:flex;align-items:center;gap:10px;font-size:13px;height:28px}
+.laterow .av{width:22px;height:22px;border-radius:11px;color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.laterow .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.laterow .am{width:70px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.laterow b.am{color:var(--text)}
+.laterow .pc{width:40px;text-align:right;font-weight:700}

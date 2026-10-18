@@ -352,7 +352,7 @@ function PlannerThread({ run, onAsk, reportFailedFor, retryReportFor }: { run: R
     </div>
   </section>
 }
-function Thread({ run, onDecide, isFollowUp, reportFailedFor, retryReportFor }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
+function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryReportFor }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean; parent?: RunState; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
   const byType = (t: string) => run.order.map(id => run.nodes[id]).find(n => n.type === t)
   const ctx = byType('context'), sc = byType('scoring'), fc = byType('forecast'), ans = byType('answer'), lv = byType('levers')
   const actions = run.order.map(id => run.nodes[id]).filter(n => n.type === 'action')
@@ -362,6 +362,31 @@ function Thread({ run, onDecide, isFollowUp, reportFailedFor, retryReportFor }: 
   const chosen = decision?.resolved
   const verdictRef = useRef<HTMLDivElement | null>(null), contRef = useRef<HTMLDivElement | null>(null)
   const leverRefs = useMemo(() => levers.map(() => ({ current: null as HTMLDivElement | null })), [levers.length])
+  if (isFollowUp) {
+    const pfc = parent ? parent.order.map(id => parent.nodes[id]).find(n => n.type === 'forecast') : undefined
+    const scenario = run.order.map(id => run.nodes[id]).find(n => n.type === 'context' && /what-if|scenario|without/i.test(n.title + ' ' + JSON.stringify(n.data || {})))
+    const lateList = !fc && sc && /overdue|late/i.test(sc.title)
+    const gapNow = fc ? (fc.data.gap > 0 ? -fc.data.gap : (fc.data.need != null && (fc.data.cash_at_target ?? 0) >= fc.data.need ? fc.data.cash_at_target - fc.data.need : (fc.data.cash_at_target ?? 0))) : undefined
+    const gapWas = pfc ? (pfc.data.gap > 0 ? -pfc.data.gap : (pfc.data.need != null && (pfc.data.cash_at_target ?? 0) >= pfc.data.need ? pfc.data.cash_at_target - pfc.data.need : (pfc.data.cash_at_target ?? 0))) : undefined
+    return <section className="thread followup">
+      <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up</div>
+      <h1 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 12 }}>{run.question}</h1>
+      <div className="steps" ref={contRef}>
+        {scenario && <div className="fine" style={{ marginBottom: 10 }}>Scenario: {scenario.title.replace(/^What-if scenario\s*/i, '')}{scenario.data?.excluded_customer ? ` · without ${scenario.data.excluded_customer}` : ''}</div>}
+        {fc && fc.status === 'done' && gapNow != null && <div className="vstep"><div className={`node verdict ${gapNow < 0 ? 'bad' : gapNow < (fc.data.need || 1) * 0.1 ? '' : 'ok'}`}>
+          <Gauge cushion={gapNow} need={fc.data.need || 20000} />
+          <div className="big">{gapNow < 0 ? 'No.' : gapNow < (fc.data.need || 1) * 0.1 ? 'Barely.' : 'Yes.'}</div>
+          <div className="sub">{gapNow < 0 ? `${money(-gapNow)} short` : `${money(gapNow)} to spare`}</div>
+          <div className="fine">{gapWas != null ? `was ${gapWas < 0 ? money(-gapWas) + ' short' : money(gapWas) + ' to spare'} before this scenario` : ''}{fc.data.pessimistic?.gap > 0 ? ` · ${money(fc.data.pessimistic.gap)} short if slow payers slip` : ''}</div>
+        </div></div>}
+        {lateList && <div className="vstep"><div className="node"><h3><span className="ic amber">{I.people}</span>{sc!.title}</h3>
+          <div className="latelist">{sc!.rows.slice().sort((a, b) => b.days_past_due - a.days_past_due).slice(0, 12).map((r, i) => <div className="laterow" key={r.invoice_id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(r.customer)}</span><span className="nm">{r.customer}<span className="fine"> · {r.invoice_id}</span></span><span className="am">{r.days_past_due}d late</span><b className="am">{money(r.amount)}</b><span className={`pc ${r.band}`} style={{ color: r.band === 'green' ? 'var(--green)' : r.band === 'amber' ? 'var(--amber-dk)' : 'var(--red)' }}>{Math.round(r.p_paid_by_target * 100)}%</span></div>)}{sc!.rows.length > 12 && <div className="fine">+ {sc!.rows.length - 12} more</div>}</div></div></div>}
+        {levers.length > 0 && <div className="levers" style={{ marginTop: 12 }}>{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={(opt, selected) => decision && onDecide(decision, opt, selected)} /></div>)}</div>}
+        {actions.length > 0 && <><div className="vconn" style={{ marginTop: 4 }} /><Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} /></>}
+        {!fc && !lateList && !levers.length && !actions.length && (ans ? <div className="vstep"><div className="node"><h3><span className="ic grey">{I.chat}</span>{plain(ans.data.spoken || ans.title)}</h3></div></div> : <div className="thinking"><i/><i/><i/> working</div>)}
+      </div>
+    </section>
+  }
   return <section className="thread">
     {isFollowUp && <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up · branches from this run</div>}
     {isFollowUp && <h1 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 14 }}>{run.question}</h1>}
@@ -550,7 +575,7 @@ export default function App() {
   const main = runs[0]
   return <div className="app">
     <header className="topbar">
-      <div className="brand"><div className="mark">{BRAND[0]}</div><div className="name">{BRAND.toLowerCase()}</div></div>
+      <div className="brand"><img className="mark" src="/logo.png" alt="" /><div className="name">{BRAND.toLowerCase()}</div></div>
       <div className="company">Palletbay Storage &amp; Warehousing</div>
       <div className="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><input placeholder="Ask about your money, or search transactions, customers, reports" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && input.trim()) followUp(input.trim()) }} /></div>
       <div className="status"><i className="dot" />{main?.status === 'open' ? 'On a call' : LIVE ? 'Live' : 'Demo replay'}</div>
@@ -567,7 +592,7 @@ export default function App() {
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
         {runs.map((r, i) => (r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => id === 'n2' || id === 'n3' || id === 'f3')))
           ? <PlannerThread key={r.run_id} run={r} onAsk={followUp} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />
-          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />)}
+          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} parent={runs[0]} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />)}
       </main>
     </div>
     {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} />}

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/favicon.svg" alt="Span logo" width="88" height="88">
+  <img src="docs/brand/logo.png" alt="Span logo" width="96" height="96">
 </p>
 
 <h1 align="center">Span</h1>
@@ -17,6 +17,10 @@
 Span is a phone number a small-business owner calls or texts to ask *"am I going to make payroll these next two weeks?"* It answers in seconds with real numbers from their books — and while it works, a web page draws its reasoning live as a workflow: pulling context, scoring every open invoice against that customer's payment history, forecasting cash on payday, the answer, the levers that close the gap.
 
 Say yes, and Span texts the right customers, reads their replies, negotiates installments with the customer's agent under the owner's rules, and takes payment through a pay link (Visa sandbox or Solana devnet USDC). The gap on screen ticks down as money lands. When it's done it generates a one-page report — JSON for the frontend, PDF for the accountant.
+
+<p align="center">
+  <img src="docs/brand/thumbnail-1500x900.png" alt="Span: from question to verdict" width="900">
+</p>
 
 <p align="center">
   <img src="docs/devin/screenshots/workspace-verdict.png" alt="The Span workspace mid-run: books, invoice scoring, cash forecast, verdict gauge, cash chart and risk panel" width="900">
