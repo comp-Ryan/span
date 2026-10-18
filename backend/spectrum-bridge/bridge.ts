@@ -16,15 +16,17 @@ const TOKEN = process.env.PHOTON_WEBHOOK_TOKEN || "";
 
 const app = await Spectrum({ providers: [imessage.config()] });
 const im = imessage(app);
-const spaces = new Map<string, any>();        // phone → DM space
+const spaces = new Map<string, any>();        // phone digits → DM space (a shared line can only answer inside the thread the phone started)
 const sent = new Map<string, { to: string; text: string; at: number }>();
+const digits = (handle: string) => handle.replace(/\D/g, "");
 
 async function dmFor(to: string) {
-  const known = spaces.get(to);
+  const known = spaces.get(digits(to));
   if (known) return known;
+  // No inbound thread yet: ask Spectrum for the DM. On a shared line this is refused ("Target not allowed") until the phone texts the line.
   const user = await im.user(to);
   const space = await im.space.create(user);
-  spaces.set(to, space);
+  spaces.set(digits(to), space);
   return space;
 }
 
@@ -46,7 +48,9 @@ Bun.serve({
         return Response.json({ message_id: id, space_id: String(space.id ?? to), status: "sent" });
       } catch (e) {
         console.error("send failed", e);
-        return Response.json({ error: String((e as Error).message || e) }, { status: 502 });
+        const msg = String((e as Error).message || e);
+        const hint = /not allowed/i.test(msg) ? " — shared iMessage line: the phone must text this line first; keep that thread, then retry" : "";
+        return Response.json({ error: msg + hint }, { status: 502 });
       }
     }
     return new Response("not found", { status: 404 });
@@ -58,7 +62,8 @@ console.log(`spectrum bridge on http://127.0.0.1:${PORT} (project ${(process.env
 for await (const [space, message] of app.messages) {
   if (message.platform !== "imessage" || message.content.type !== "text") continue;
   const handle = String(message.sender?.id ?? "");
-  spaces.set(handle, space);
+  spaces.set(digits(handle) || handle, space);
+  console.log(`inbound from ${handle} in space ${String(space.id ?? "?")}`);
   const event = { type: "message.received", data: { id: `spectrum:${message.id}`, space: { id: String(space.id ?? handle) },
     sentBy: { kind: "human", handle }, content: { type: "text", text: message.content.text }, platform: "imessage" } };
   console.log(`[${handle}] ${message.content.text}`);
