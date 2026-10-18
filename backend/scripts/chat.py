@@ -52,19 +52,20 @@ def choose_option(text, options):
     return None
 
 
-def render(event):
+def render(event, titles=None):
     """One terminal line per event the owner cares about; None for bookkeeping events."""
     kind, d = event.get('event'), event.get('data') or {}
+    name = (titles or {}).get(d.get('node_id'), d.get('node_id'))
     if kind == 'run.start':
         return f"[{d.get('run_id')}] {d.get('question', '')}"
     if kind == 'node.create' and d.get('status') != 'done':
         return f"  … {d.get('title', d.get('node_id'))}"
     if kind == 'node.update' and d.get('status') == 'done':
         meta = (d.get('data') or {}).get('summary') or (d.get('data') or {}).get('spoken')
-        return f"  ✓ {d.get('node_id')}" + (f" · {meta}" if meta else '')
+        return f"  ✓ {name}" + (f" · {meta}" if meta else '')
     if kind == 'node.update' and d.get('status') == 'failed':
-        return f"  ✗ {d.get('node_id')} · {(d.get('data') or {}).get('error', 'failed')}"
-    if kind == 'speech':
+        return f"  ✗ {name} · {(d.get('data') or {}).get('error', 'failed')}"
+    if kind == 'speech':  # every run speaks its answer once; the answer node's own copy is not repeated
         return f"span> {d.get('text', '')}"
     if kind == 'decision':
         opts = '\n'.join(f"  [{i}] {o['id']} · {o.get('label', '')}" for i, o in enumerate(d.get('options') or [], 1))
@@ -94,17 +95,19 @@ def pending_decision(events):
 
 
 def settled(events):
-    """'closed'/'open' once the run ended, 'decision' while it waits on the owner, else None."""
+    """The run's status once a run.end is among `events`, else None (a pending approval alone is not the end:
+    the planner emits it before its spoken answer)."""
     for e in reversed(events):
         if e.get('event') == 'run.end':
             return e['data'].get('status', 'closed')
-    return 'decision' if pending_decision(events) else None
+    return None
 
 
 class Chat:
     def __init__(self, base, company, source='web', out=sys.stdout):
         self.base, self.company, self.source, self.out = base, company, source, out
         self.parent = None
+        self.titles = {}
 
     def say(self, line):
         if line:
@@ -113,20 +116,28 @@ class Chat:
     def events(self, run_id):
         return call(self.base, f'/runs/{run_id}?company={self.company}')['events']
 
-    def follow(self, run_id, seen, timeout=120, quiet=4.0):
-        """Print new events until the run ends, asks for a decision, or stays quiet for a while after its answer."""
+    def resolve(self, decision_id, option):
+        call(self.base, f"/decisions/{decision_id}?company={self.company}", {'option_id': option})
+
+    def follow(self, run_id, seen, timeout=120, quiet=6.0, need_speech=True):
+        """Print new events until a run.end arrives among them (an earlier run.end, before the owner's decision, does not
+        count) or nothing new has come for `quiet` seconds (after an answer, when `need_speech`)."""
+        since = seen.count
         start = time.time(); last_change = time.time(); events = []
         while time.time() - start < timeout:
             events = self.events(run_id)
             fresh = seen.take(events)
             for e in fresh:
-                self.say(render(e))
+                d = e.get('data') or {}
+                if e.get('event') == 'node.create' and d.get('title'):
+                    self.titles[d.get('node_id')] = d['title']
+                self.say(render(e, self.titles))
             if fresh:
                 last_change = time.time()
-            state = settled(events)
+            state = settled(events[since:])
             if state:
                 return state, events
-            if time.time() - last_change > quiet and any(e.get('event') == 'speech' for e in events):
+            if time.time() - last_change > quiet and (not need_speech or any(e.get('event') == 'speech' for e in events[since:])):
                 return 'quiet', events
             time.sleep(0.8)
         self.say('  (timed out waiting for Span)')
@@ -143,19 +154,23 @@ class Chat:
             return None
         run_id = started['run_id']; self.parent = run_id
         seen = Seen()
+        state, events = self.follow(run_id, seen)
         while True:
-            state, events = self.follow(run_id, seen)
-            if state != 'decision':
-                return state
             d = pending_decision(events)
+            if not d or state == 'timeout':
+                return state
             answer = decide or (ask_owner(d) if ask_owner else None)
             option = choose_option(answer, d['options']) if answer else None
             if not option:
                 self.say('  (left the approval pending; answer it later in the web app)')
                 return 'decision'
             decide = None
-            call(self.base, f"/decisions/{d['decision_id']}?company={self.company}", {'option_id': option})
+            self.resolve(d['decision_id'], option)
             self.say(f'you> {option}')
+            # reminders, replies, negotiation… arrive as they happen; a closed run gets no second run.end
+            state, events = self.follow(run_id, seen, timeout=240, quiet=20.0, need_speech=False)
+            if state == 'quiet':
+                self.say('  (Span keeps working in the background; the web app shows what comes back)')
 
 
 def interactive(chat):

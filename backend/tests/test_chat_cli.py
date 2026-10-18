@@ -67,7 +67,63 @@ def test_pending_decision_is_the_last_unresolved_one():
     assert chat.pending_decision(events[:2]) is None
 
 
-def test_run_is_settled_when_ended_or_waiting_on_the_owner():
+def test_run_is_settled_only_by_run_end_so_the_answer_prints_before_any_prompt():
     assert chat.settled([{'event': 'run.end', 'data': {'status': 'closed'}}]) == 'closed'
-    assert chat.settled([{'event': 'decision', 'data': {'decision_id': 'd1', 'options': OPTIONS}}]) == 'decision'
+    # the planner emits the approval before its spoken answer: a pending decision alone is not the end
+    assert chat.settled([{'event': 'decision', 'data': {'decision_id': 'd1', 'options': OPTIONS}}]) is None
     assert chat.settled([{'event': 'speech', 'data': {'text': 'hi'}}]) is None
+
+
+def test_render_uses_node_titles_when_it_knows_them():
+    titles = {'tool-1': 'Forecasting cash to Oct 24'}
+    done = {'event': 'node.update', 'data': {'node_id': 'tool-1', 'status': 'done', 'data': {'summary': '$385 short'}}}
+    assert chat.render(done, titles) == '  ✓ Forecasting cash to Oct 24 · $385 short'
+    assert chat.render(done) == '  ✓ tool-1 · $385 short'
+
+
+class FakeServer:
+    """Replays a run's events in slices, like polling a backend that is still working."""
+    def __init__(self, slices):
+        self.slices, self.calls, self.resolved = slices, 0, []
+
+    def events(self, run_id):
+        self.calls += 1
+        return self.slices[min(self.calls, len(self.slices)) - 1]
+
+    def resolve(self, decision_id, option):
+        self.resolved.append((decision_id, option))
+
+
+def test_follow_prints_the_answer_before_prompting_and_then_only_watches_new_events(monkeypatch):
+    import io
+    monkeypatch.setattr(chat.time, 'sleep', lambda s: None)
+    decision = {'event': 'decision', 'data': {'decision_id': 'd1', 'prompt': 'Text them?', 'options': OPTIONS}}
+    answer = {'event': 'speech', 'data': {'text': 'Chase three late payers.'}}
+    first_end = {'event': 'run.end', 'data': {'status': 'open'}}
+    after = [{'event': 'node.create', 'data': {'node_id': 'msg-1', 'type': 'message', 'title': 'Texted Hearth Trading', 'status': 'running'}}, {'event': 'run.end', 'data': {'status': 'closed'}}]
+    server = FakeServer([[decision], [decision, answer], [decision, answer, first_end], [decision, answer, first_end] + after])
+    out = io.StringIO()
+    c = chat.Chat('http://x', 'company-020', out=out)
+    monkeypatch.setattr(c, 'events', server.events)
+    monkeypatch.setattr(c, 'resolve', server.resolve)
+    seen = chat.Seen()
+    state, events = c.follow('run-1', seen)
+    assert state == 'open' and server.calls == 3
+    assert out.getvalue().index('Chase three late payers.') > out.getvalue().index('Text them?')
+    state, events = c.follow('run-1', seen)  # after the owner decides: the earlier run.end must not end this wait
+    assert state == 'closed' and server.calls == 4 and 'Texted Hearth Trading' in out.getvalue()
+
+
+def test_after_a_decision_the_wait_ends_when_events_go_quiet_even_without_a_new_run_end(monkeypatch):
+    import io
+    clock = {'t': 0.0}
+    monkeypatch.setattr(chat.time, 'time', lambda: clock['t'])
+    monkeypatch.setattr(chat.time, 'sleep', lambda s: clock.__setitem__('t', clock['t'] + s))
+    first_end = {'event': 'run.end', 'data': {'status': 'closed'}}  # the planner closed the run before the owner answered
+    resolved = {'event': 'decision.resolved', 'data': {'decision_id': 'd1', 'option_id': 'no'}}
+    server = FakeServer([[first_end], [first_end, resolved], [first_end, resolved]])
+    c = chat.Chat('http://x', 'company-020', out=io.StringIO())
+    monkeypatch.setattr(c, 'events', server.events)
+    seen = chat.Seen(); c.follow('run-1', seen)
+    state, _ = c.follow('run-1', seen, timeout=240, quiet=20.0, need_speech=False)
+    assert state == 'quiet' and clock['t'] < 60
