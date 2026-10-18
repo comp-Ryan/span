@@ -593,7 +593,7 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
     {open && <div className="dpanel">
       <div className="dhead" onClick={() => setOpen(false)}>
         <span className="ic green">{I.phone}</span>
-        <div style={{ flex: 1 }}><b>{browserVoice ? 'Browser voice demo' : onCall ? `On a call · ${mm}` : 'Call ended'}</b><div className="fine">{browserVoice ? 'Tap the mic to speak one follow-up. Browser speech, not telephony.' : onCall ? 'Listening · tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
+        <div style={{ flex: 1 }}><b>{browserVoice ? 'Browser voice demo' : !live ? `Demo replay · ${mm}` : onCall ? `On a call · ${mm}` : 'Call ended'}</b><div className="fine">{browserVoice ? 'Tap the mic to speak one follow-up. Browser speech, not telephony.' : onCall ? 'Listening · tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
         <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
         <span className="fine" style={{ marginLeft: 8 }}>▾</span>
       </div>
@@ -618,7 +618,7 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
     {!open && <button className="bubble" onClick={() => setOpen(true)}>
       <span className="ic green">{I.phone}</span>
       <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
-      <b>{onCall ? `On a call · ${mm}` : 'Transcript'}</b>
+      <b>{!live ? 'Demo replay' : onCall ? `On a call · ${mm}` : 'Transcript'}</b>
       {run.turns.length > 0 && <span className="badge">{run.turns.length}</span>}
     </button>}
   </div>
@@ -835,7 +835,7 @@ export default function App() {
       <div className="brand"><img className="mark" src="/logo.png" alt="" /><div className="name">{BRAND.toLowerCase()}</div></div>
       <div className="company">Palletbay Storage &amp; Warehousing</div>
       <div className="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><input autoFocus={FRESH} aria-label="Ask Span" placeholder="Ask about your money, or search transactions, customers, reports" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && input.trim()) followUp(input.trim()) }} /></div>
-      <div className="status"><i className="dot" />{BROWSER_VOICE ? 'Browser voice demo' : main?.status === 'open' ? 'On a call' : LIVE ? 'Live' : 'Demo replay'}</div>
+      <div className="status"><i className="dot" />{BROWSER_VOICE ? 'Browser voice demo' : !LIVE ? 'Demo replay' : main?.status === 'open' ? 'On a call' : 'Live'}</div>
     </header>
     <div className="body">
       <nav className="rail">
