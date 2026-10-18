@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Span demo</title>
+<meta name="description" content="One unedited take of Span answering the payroll question end to end.">
+<link rel="icon" href="img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--green:#2ca01c;--ink:#393a3d;--muted:#6b6c72;--line:#e3e5e8;--bg:#f4f5f8;--card:#fff}
+  @media (prefers-color-scheme:dark){:root{--ink:#e8e9ec;--muted:#a6a8b0;--line:#2f3136;--bg:#141518;--card:#1d1f23}}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:22px 20px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+  header img{width:36px;height:36px}header b{font-size:20px}
+  header nav{margin-left:auto;display:flex;gap:22px;font-size:14px;font-weight:500}header nav a{color:var(--muted);text-decoration:none}header nav a:hover{color:var(--ink)}
+  h1{font-size:clamp(28px,4vw,40px);letter-spacing:-.03em;margin:0 0 6px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 0 26px}
+  video{display:block;width:100%;max-width:1000px;margin:0 auto;border-radius:14px;border:1px solid var(--line);background:#000;aspect-ratio:1500/900}
+  .chapters{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;max-width:1000px;margin:22px auto 0}
+  .chapters button{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+  .chapters button b{display:block;font-size:12px;color:var(--green);margin-bottom:2px}
+  .chapters button:hover{border-color:var(--green)}
+  .fine{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
+  .fine a{color:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit"><img src="img/logo.png" alt=""><b>span</b></a><nav><a href="index.html">Home</a><a href="https://github.com/comp-Ryan/span">GitHub</a></nav></header>
+  <h1>One unedited take</h1>
+  <p class="sub">Real backend, real numbers. Payroll question to signed report, 1:09.</p>
+  <video id="v" controls playsinline preload="metadata" poster="img/03-verdict-approval.png">
+    <source src="demo.mp4" type="video/mp4">
+    <source src="demo.webm" type="video/webm">
+  </video>
+  <div class="chapters">
+    <button data-t="0"><b>0:00</b>Ask about payroll</button>
+    <button data-t="9"><b>0:09</b>Clarifying question, answered</button>
+    <button data-t="21"><b>0:21</b>Verdict, then “Yes, text them”</button>
+    <button data-t="33"><b>0:33</b>Replies and negotiation</button>
+    <button data-t="44"><b>0:44</b>Installments paid, cushion green</button>
+    <button data-t="58"><b>0:58</b>Follow-up and the report</button>
+  </div>
+  <p class="fine">Can’t play it here? <a href="demo.webm" download>Download the file</a>. Customer agents are simulated from real payment history; the card rail is simulated and labeled.</p>
+</div>
+<script>
+  document.querySelectorAll('.chapters button').forEach(function (b) { b.addEventListener('click', function () { var v = document.getElementById('v'); v.currentTime = Number(b.dataset.t); v.play(); }); });
+</script>
+</body>
+</html>
