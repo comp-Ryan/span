@@ -152,3 +152,13 @@ def test_first_caller_question_is_normalized_bounded_and_only_replaces_placehold
     connection.calls.clear()
     assert persist_first_caller_question('run-call', ' \n\t ') is False
     assert connection.calls == []
+
+
+def test_settings_accept_the_eleven_labs_key_alias_and_default_voice(monkeypatch):
+    from owed.config import Settings
+    monkeypatch.delenv('ELEVENLABS_API_KEY', raising=False)
+    monkeypatch.delenv('ELEVENLABS_VOICE_ID', raising=False)
+    monkeypatch.setenv('ELEVEN_LABS_KEY', 'alias-key')
+    s = Settings(_env_file=None)
+    assert s.elevenlabs_api_key == 'alias-key'
+    assert s.elevenlabs_voice_id  # a premade ElevenLabs voice so the bridge speaks without extra config

@@ -67,9 +67,9 @@ def summarize(events):
             'detail': (answer.get('data') or {}).get('detail', '') if answer else ''}
 
 
-def ask(base, company, question, parent=None, timeout=90):
+def ask(base, company, question, parent=None, timeout=90, source='web'):
     start = time.time()
-    body = {'question': question, 'source': 'web'}
+    body = {'question': question, 'source': source}
     if parent:
         body['parent_run_id'] = parent
     try:
@@ -111,6 +111,7 @@ def main():
     p.add_argument('--company', default='company-020')
     p.add_argument('--only', default='', help='comma-separated 1-based question numbers')
     p.add_argument('--question', action='append', default=[], help='ask custom question(s) instead')
+    p.add_argument('--source', default='web', choices=['web', 'call'], help="'call' routes payroll questions to the planner, like browser voice")
     p.add_argument('--verbose', '-v', action='store_true')
     p.add_argument('--json')
     a = p.parse_args()
@@ -119,11 +120,11 @@ def main():
         items = [items[int(i) - 1] for i in a.only.split(',')]
     results = []
     for item in items:
-        r = ask(a.base, a.company, item['q'])
+        r = ask(a.base, a.company, item['q'], source=a.source)
         show(r, a.verbose)
         results.append(r)
         if item.get('followup') and r.get('run_id'):
-            f = ask(a.base, a.company, item['followup'], parent=r['run_id'])
+            f = ask(a.base, a.company, item['followup'], parent=r['run_id'], source=a.source)
             f['parent_run_id'] = r['run_id']
             show(f, a.verbose)
             results.append(f)

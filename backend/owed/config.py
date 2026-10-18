@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,8 +11,9 @@ class Settings(BaseSettings):
     demo_company: str = "company-020"
     public_base_url: str = "http://localhost:8000"
     gemini_live_model: str = "gemini-3.8-live"
-    elevenlabs_api_key: str = ""
-    elevenlabs_voice_id: str = ""
+    # .env spells the key ELEVEN_LABS_KEY; the default voice is ElevenLabs' premade "Sarah".
+    elevenlabs_api_key: str = Field("", validation_alias=AliasChoices("ELEVENLABS_API_KEY", "ELEVEN_LABS_KEY"))
+    elevenlabs_voice_id: str = "EXAVITQu4vr4xnSDxMaL"
     voice_stream_token: str = ""
     twilio_auth_token: str = ""
     gemini_model: str = "gemini-3.8-flash"
