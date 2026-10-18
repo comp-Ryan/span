@@ -145,9 +145,28 @@ async function liveFlow(page: Page) {
   await shot(page, '04-messages-negotiation')
   log(`${reminders.length} simulated reminders, ${agreements.length} agreements`)
 
-  const installments = agreements.map((e: any) => e.data.data.agreement.installments[0])
-  for (const [i, inst] of installments.entries()) await payFirstInstallment(page, inst.pay_token, inst.amount, i === 0)
+  // First installment of every agreement, then further installments only while payroll is still short.
+  // Paid invoices were already partly expected, so each payment closes less than its face value.
+  const queue: any[] = agreements.flatMap((e: any) => e.data.data.agreement.installments)
+  const installments: any[] = []
+  const latestGap = async () => {
+    const r = await replay(branch)
+    const forecasts = r.events.filter((e: any) => e.event === 'node.update' && e.data.data?.cash_at_target != null)
+    return forecasts.length ? Number(forecasts[forecasts.length - 1].data.data.gap) : NaN
+  }
+  for (const inst of agreements.map((e: any) => e.data.data.agreement.installments[0])) {
+    await payFirstInstallment(page, inst.pay_token, inst.amount, installments.length === 0); installments.push(inst)
+  }
   await until(() => replay(branch), r => r.events.filter((e: any) => e.data.data?.kind === 'payment').length >= installments.length, 'payment events', 90000)
+  await sleep(3000)
+  for (const inst of queue.filter(i => !installments.includes(i)).sort((a, b) => b.amount - a.amount)) {
+    const gap = await latestGap()
+    if (!(gap > 0)) break
+    log(`still ${gap.toFixed(2)} short after ${installments.length} payments; paying the next installment ${inst.amount}`)
+    await payFirstInstallment(page, inst.pay_token, inst.amount, false); installments.push(inst)
+    await until(() => replay(branch), r => r.events.filter((e: any) => e.data.data?.kind === 'payment').length >= installments.length, 'payment events', 90000)
+    await sleep(3000)
+  }
 
   await page.goto(`${BASE}/?live&run=${rootRun}&company=${COMPANY}`)
   await page.locator('.receipt').last().waitFor({ timeout: 30000 })
@@ -194,7 +213,7 @@ async function liveFlow(page: Page) {
   const evidence = {
     mode: 'live', company: COMPANY, database: manifest.database, question: QUESTION, clarifying_answer: CLARIFY_ANSWER,
     rootRun, branch, whatIf, verdict: verdict?.spoken, reminders: reminders.length, agreements: agreements.length,
-    paid: installments.map((i: any) => ({ pay_token: i.pay_token, amount: i.amount })), payroll_covered_after_payments: covered,
+    paid: installments.map((i: any) => ({ pay_token: i.pay_token, amount: i.amount })), payroll_covered_after_payments: covered, gap_after_payments: await latestGap(),
     disclosure: 'Real Gemini planner and local uAgents on an isolated copy of the books. Simulated reminders, customer replies and card payments. Typed browser interaction, not a phone call. Local TimescaleDB, no Tiger Cloud claim.',
     runs: await Promise.all(saved.runs.map((r: any) => replay(r.run_id))),
     forecast_history: await json(`/api/cash/history?company=${COMPANY}`),

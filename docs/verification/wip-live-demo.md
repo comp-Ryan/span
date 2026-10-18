@@ -51,7 +51,7 @@ through the normal API.
 ## Known limits
 
 - Gemini prepaid credits ran out at 05:26 (402 RESOURCE_EXHAUSTED). The planner now fails over
-  to OpenRouter; the voice bridge (Gemini Live) does not, so phone/browser-call answers still
-  need Gemini credits.
+  to OpenRouter, so typed questions and the browser call keep working; only the Twilio phone
+  bridge (Gemini Live) still needs Gemini credits.
 - Real phone calls need a Twilio number and a public URL (see `docs/voice-setup.md`).
 - Nothing was deployed; no secrets or `.env` files were changed.
