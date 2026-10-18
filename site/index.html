@@ -518,7 +518,7 @@
   function layout() {
     var r = canvas.getBoundingClientRect(); W = r.width; H = r.height;
     canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var rx = Math.min(W * 0.34, 400), ry = Math.min(H * 0.33, 170), cx = W / 2, cy = H / 2 + 6;
+    var rx = Math.min(W * 0.38, 420), ry = Math.min(H * 0.37, 260), cx = W / 2, cy = H / 2 + 4;
     nodes.forEach(function (n) { var a = n.a * Math.PI / 180; n.x = cx + rx * Math.cos(a); n.y = cy + ry * Math.sin(a); });
     layout.cx = cx; layout.cy = cy;
   }
