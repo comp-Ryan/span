@@ -179,6 +179,15 @@
   .stats div{background:var(--card);padding:10px 12px}.stats span{display:block;font-size:11px;color:var(--muted)}.stats b{font-size:20px;font-variant-numeric:tabular-nums}.stats .red{color:#d93025}.stats .green{color:var(--green)}
   .trend{width:100%;height:auto;display:block}
   .paper{margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;max-width:640px;box-shadow:0 18px 50px rgba(57,58,61,.12)}.paper img{display:block;width:100%;height:auto;background:#fff}
+  .integrations{margin:0 auto 56px;max-width:1040px}
+  .sponsor-summary{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 14px}
+  .spill{padding:4px 12px;border-radius:13px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+  .spill.pass{background:#e6f3e5;color:var(--green)}.spill.warn{background:#fff3d6;color:#9a6b00}.spill.fail{background:#fde8e8;color:#d93025}.spill.off,.spill.info{background:#eceef2;color:var(--muted)}
+  .sponsors{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13px}
+  .sponsors th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .sponsors td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}.sponsors tr:last-child td{border-bottom:0}
+  .sponsors .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  @media (prefers-color-scheme:dark){.spill.pass{background:#1f3a1c;color:#7fd474}.spill.warn{background:#3a3212;color:#e5c25a}.spill.fail{background:#3a1d1d;color:#f28b82}.spill.off,.spill.info{background:#2a2d33;color:var(--muted)}}
   .nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:0 auto 44px;max-width:920px}
   .nums div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}.nums b{display:block;font-size:30px;letter-spacing:-.02em;line-height:1.1;margin-bottom:4px}.nums span{font-size:13px;color:var(--muted)}
   footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:18px;line-height:1.6;max-width:920px;margin:0 auto}
@@ -267,6 +276,12 @@
     </div>
   </section>
 
+  <section class="integrations" id="integrations">
+    <div class="shead"><b>Every integration, called live.</b><span id="int-when">Snapshot from the running backend. In the app it is the Integrations page and re-runs on demand.</span></div>
+    <div class="sponsor-summary" id="int-summary"></div>
+    <table class="sponsors" id="int-table"><thead><tr><th>Integration</th><th>Role</th><th>Status</th><th>What it said</th><th class="num">ms</th></tr></thead><tbody></tbody></table>
+  </section>
+
   <section class="nums">
     <div><b data-count="204">204</b><span>invoices scored per question</span></div>
     <div><b data-count="1.25" data-suffix=" d" data-decimals="2">1.25 d</b><span>held-out error of the days-late model</span></div>
@@ -274,7 +289,7 @@
     <div><b>0</b><span>actions without the owner’s yes</span></div>
   </section>
 
-  <footer>Built solo at LA Hacks AI 2026 by Ryan Lee · Gemini · ElevenLabs · Tiger Data · Fetch.ai uAgents · Photon · Visa · Solana · Sentry · Intuit dataset · <a href="https://github.com/comp-Ryan/span">github.com/comp-Ryan/span</a><br>Labeled honestly: customer agents are simulated from real payment history, the card rail is simulated unless the Visa sandbox is configured, Solana runs on devnet, voice runs in the browser unless the phone line is configured.</footer>
+  <footer>Built solo at LA Hacks AI 2026 by Ryan Lee · Gemini · ElevenLabs · Tiger Data · Fetch.ai uAgents · Photon · Visa · Solana · Sentry · Intuit dataset · <a href="https://github.com/comp-Ryan/span">github.com/comp-Ryan/span</a></footer>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
 <script>
@@ -363,6 +378,23 @@
     });
     anime({ targets: q('.nums div'), opacity: [0, 1], translateY: [10, 0], duration: 450, delay: anime.stagger(90), easing: 'easeOutCubic' });
   });
+})();
+</script>
+<script>
+// Integrations snapshot: the same checks the app's /sponsors page runs, captured from the backend when the site was published.
+(function () {
+  var LABEL = { pass: 'Answering', warn: 'Degraded', fail: 'Not answering', off: 'Fallback', info: 'Build tool' }, ORDER = ['pass', 'warn', 'fail', 'off', 'info'];
+  fetch('sponsors.json').then(function (r) { return r.json(); }).then(function (d) {
+    var tb = document.querySelector('#int-table tbody'), sum = document.getElementById('int-summary'); if (!tb) return;
+    document.getElementById('int-when').textContent = 'Checked ' + new Date(d.generated_at).toLocaleString() + ' on the demo backend. In the app it is the Integrations page and re-runs on demand.';
+    ORDER.forEach(function (st) { if (d.summary[st]) { var sp = document.createElement('span'); sp.className = 'spill ' + st; sp.textContent = d.summary[st] + ' ' + LABEL[st].toLowerCase(); sum.appendChild(sp); } });
+    d.checks.sort(function (a, b) { return ORDER.indexOf(a.status) - ORDER.indexOf(b.status); }).forEach(function (c) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><b></b></td><td class="fine"></td><td><span class="spill ' + c.status + '">' + LABEL[c.status] + '</span></td><td></td><td class="num fine"></td>';
+      tr.children[0].firstChild.textContent = c.name; tr.children[1].textContent = c.track; tr.children[3].textContent = c.detail; tr.children[4].textContent = c.ms.toLocaleString();
+      tb.appendChild(tr);
+    });
+  }).catch(function () {});
 })();
 </script>
 <script>
