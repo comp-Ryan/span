@@ -15,8 +15,8 @@
   .wrap{max-width:1040px;margin:0 auto;padding:22px 20px 60px}
   header{display:flex;align-items:center;gap:12px;margin-bottom:56px}
   header nav{margin-left:auto;display:flex;gap:22px;font-size:14px;font-weight:500}header nav a{color:var(--muted);text-decoration:none}header nav a:hover{color:var(--ink)}
-  .hero{text-align:center;margin-bottom:44px}
-  .voice{max-width:980px;margin:0 auto 18px;height:460px}
+  .hero{text-align:center;position:sticky;top:0;height:100vh;z-index:0;margin:0;display:flex;align-items:center}
+  .voice{max-width:1100px;margin:0 auto;height:min(78vh,620px);width:100%}
   @media (max-width:700px){.voice{height:380px}}
   .voice canvas{width:100%;height:100%;display:block}
   .hero .copy{max-width:760px;margin:0 auto}
@@ -70,9 +70,11 @@
   .cta{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0}
   .btn{display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:22px;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600}
   .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
-  .run{margin:22vh auto 64px;max-width:1040px;height:calc(9 * 72vh);position:relative}
-  .run .sticky{position:sticky;top:72px;opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease}
-  .run .sticky.in{opacity:1;transform:none}
+  .run{position:relative;z-index:2;width:100vw;margin:0 0 0 calc(50% - 50vw);height:calc(10 * 80vh)}
+  .run .sticky{position:sticky;top:0;min-height:100vh;background:var(--bg);border-radius:28px 28px 0 0;box-shadow:0 -24px 70px rgba(0,0,0,.35);padding:56px 24px 24px;transform-origin:50% 0;will-change:transform;box-sizing:border-box}
+  .run .sheet{max-width:1040px;margin:0 auto}
+  .integrations,.nums,footer{position:relative;z-index:2;background:var(--bg)}
+  .integrations{padding-top:24px}
   .run-grid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start}
   @media (max-width:820px){.run-grid{grid-template-columns:1fr}}
   .timeline{list-style:none;margin:0;padding:0 0 0 18px;position:relative}
@@ -218,6 +220,7 @@
   </div>
   <section id="demo" class="run" aria-label="How a run unfolds">
     <div class="sticky">
+    <div class="sheet">
     <div class="run-grid">
       <ol class="timeline" id="timeline">
         <li data-step="0"><span class="dot"></span><span class="lbl">YOU</span><b>Ask about payroll</b></li>
@@ -276,6 +279,7 @@
       </div></div></div>
         <div class="panel" data-panel="8"><figure class="paper"><img src="img/report.png" alt="One-page report generated from the run"></figure></div>
       </div>
+    </div>
     </div>
     </div>
   </section>
@@ -351,15 +355,19 @@
   var stickyEl = runEl ? runEl.querySelector('.sticky') : null;
   function stepFromScroll() {
     if (!runEl) return;
-    var top = runEl.offsetTop, span = runEl.offsetHeight - window.innerHeight;
-    if (stickyEl && !stickyEl.classList.contains('in') && window.scrollY > top - window.innerHeight * 0.55) stickyEl.classList.add('in');  // only after you scroll to it
-    var pr = Math.min(1, Math.max(0, (window.scrollY - top + 40) / Math.max(1, span)));
+    var vh = window.innerHeight, top = runEl.offsetTop, rectTop = runEl.getBoundingClientRect().top;
+    // 1. the sheet rises from the bottom and expands over the hero
+    var grow = Math.min(1, Math.max(0, (vh - rectTop) / (vh * 0.85)));
+    if (stickyEl) { var sc = 0.84 + 0.16 * grow; stickyEl.style.transform = 'scale(' + sc + ')'; stickyEl.style.borderRadius = (28 * (1 - grow)) + 'px ' + (28 * (1 - grow)) + 'px 0 0'; }
+    // 2. once it is up, the steps scrub with the rest of the scroll
+    var start = top, span = runEl.offsetHeight - vh;
+    var pr = Math.min(1, Math.max(0, (window.scrollY - start) / Math.max(1, span)));
     var i = Math.min(steps.length - 1, Math.floor(pr * steps.length));
     if (i !== cur) showStep(i, true);
   }
   steps.forEach(function (li, j) { li.addEventListener('click', function () {
     var top = runEl.offsetTop, span = runEl.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: top - 40 + span * ((j + 0.5) / steps.length), behavior: 'smooth' });
+    window.scrollTo({ top: top + span * ((j + 0.5) / steps.length), behavior: 'smooth' });
   }); });
   if (stage) { panels[0].classList.add('on'); steps[0].classList.add('active'); cur = 0; window.addEventListener('scroll', stepFromScroll, { passive: true }); window.addEventListener('resize', stepFromScroll); stepFromScroll(); }
   // 2. Everything below plays once when it scrolls into view.
