@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     elevenlabs_voice_id: str = ""
     voice_stream_token: str = ""
     twilio_auth_token: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.8-flash"
     gemini_api_key: str = ""
     environment: str = "development"
     release: str = "hackathon"

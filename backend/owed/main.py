@@ -44,7 +44,7 @@ async def lifespan(app):
         await asyncio.gather(task, payments_task, return_exceptions=True)
 
 
-app = FastAPI(title="Owed", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Span", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/hub/static", StaticFiles(directory=HUB_STATIC), name="hub-static")
 app.include_router(hub_router)

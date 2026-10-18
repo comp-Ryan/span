@@ -8,6 +8,7 @@ const COMPANY = 'company-020'
 const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
 const LIVE = new URLSearchParams(location.search).has('live')
 const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
+const RUN = new URLSearchParams(location.search).get('run')
 
 /* ---------- icons ---------- */
 const I = {
@@ -25,6 +26,7 @@ const I = {
 }
 const AV_COLORS = ['#0077C5', '#7A5AF8', '#E08A00', '#2CA01C', '#D52B1E']
 const initials = (s: string) => s.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+const plain = (t: string) => (t || '').replace(/[#*_`>]+/g, '').replace(/\n{2,}/g, ' ').replace(/\s+/g, ' ').trim()
 const fmtDate = (s?: string) => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
 
 /* ---------- nodes ---------- */
@@ -92,29 +94,36 @@ function VerdictNode({ n, fc }: { n: GraphNode; fc?: GraphNode }) {
   const cls = cushion < 0 ? 'bad' : cushion < need * 0.1 ? '' : 'ok'
   const word = cushion < 0 ? 'No.' : cushion < need * 0.1 ? 'Barely.' : 'Yes.'
   return <div className={`node verdict ${cls}`}>
+    <Gauge cushion={cushion} need={need} />
     <div className="big">{word}</div>
     <div className="sub">{cushion < 0 ? `${money(-cushion)} short` : `${money(cushion)} to spare`}</div>
     <div className="fine">{risk > 0 ? `${money(risk)} short if the slow payers slip` : cushion < 0 ? 'even if the usual payers pay' : 'covered even if the slow payers slip'}</div>
   </div>
 }
-function LeverCard({ l, rec, decision, onChoose, chosen }: { l: Lever; rec: boolean; decision?: Decision; onChoose: (opt: string) => void; chosen?: string }) {
+function LeverCard({ l, rec, decision, onChoose, chosen }: { l: Lever; rec: boolean; decision?: Decision; onChoose: (opt: string, selected?: string[]) => void; chosen?: string }) {
   const icon = l.id === 'chase' ? I.chat : l.id === 'defer_bill' ? I.cal : I.person
   const zero = !l.recovers
   const primary = decision?.options.find(o => o.id === 'yes') || decision?.options[0]
+  const [sel, setSel] = useState<Record<string, boolean>>({})
+  const targets = l.targets || []
+  const isOn = (id: string) => sel[id] !== false
+  const picked = targets.filter(t => isOn(t.customer_id))
+  const recovers = targets.length ? picked.reduce((a, t) => a + t.amount, 0) : l.recovers
+  const label = targets.length && picked.length !== targets.length ? `Text ${picked.length} of ${targets.length} late payers` : l.label
   return <div className={`lever ${rec ? 'rec' : ''} ${zero ? 'dim' : ''}`}>
     <div>
-      <div className="head"><b><span className={`ic ${rec ? 'green' : 'grey'}`}>{icon}</span>{l.label}</b><span className="amt" style={zero ? { color: 'var(--muted2)' } : undefined}>+ {money(l.recovers)}</span></div>
-      {l.targets && <div className="chips" style={{ marginTop: 10 }}>{l.targets.map((t, i) => <span className="chip" key={t.customer_id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(t.customer)}</span>{money(t.amount)}</span>)}</div>}
+      <div className="head"><b><span className={`ic ${rec ? 'green' : 'grey'}`}>{icon}</span>{label}</b><span className="amt" style={zero ? { color: 'var(--muted2)' } : undefined}>+ {money(recovers)}</span></div>
+      {targets.length > 0 && <div className="chips" style={{ marginTop: 10 }}>{targets.map((t, i) => <button type="button" className={`chip pick ${isOn(t.customer_id) ? 'on' : 'off'}`} key={t.customer_id} disabled={!!chosen} onClick={() => setSel(x => ({ ...x, [t.customer_id]: !isOn(t.customer_id) }))} title={t.reason || t.customer}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(t.customer)}</span>{t.customer.split(' ')[0]} · {money(t.amount)}<span className="tick">{I.check}</span></button>)}</div>}
       {l.bills && <div className="chips" style={{ marginTop: 10 }}>{l.bills.map(b => <span className="chip plain" key={b.bill_id}>{b.vendor} · {money(b.amount)}</span>)}</div>}
       <div className="fine" style={{ marginTop: 10, display: 'flex', gap: 6, alignItems: 'center' }}>
-        {l.targets && <><i className="dot" />payment history supports chasing; collection is not guaranteed</>}
+        {targets.length > 0 && <><i className="dot" />{chosen ? 'sent to the ones you picked' : 'tap a name to leave them out'}</>}
         {l.bills && <><i className="dot" />both have taken late payment before, no fee</>}
         {zero && 'Nothing scheduled this month, so nothing to hold.'}
       </div>
     </div>
     {rec && primary ? (
-      chosen ? <button className="btn done" disabled>{I.check} {chosen === 'no' ? 'Not now' : 'Texting them'}</button>
-        : <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" onClick={() => onChoose(primary.id)}>{primary.label}</button>{decision!.options.filter(o => o.id !== primary.id).slice(0, 1).map(o => <button key={o.id} className="btn" onClick={() => onChoose(o.id)}>{o.label}</button>)}</div>
+      chosen ? <button className="btn done" disabled>{I.check} {chosen === 'no' ? 'Not now' : `Texting ${picked.length}`}</button>
+        : <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" disabled={targets.length > 0 && picked.length === 0} onClick={() => onChoose(primary.id, picked.map(t => t.customer_id))}>{targets.length ? `Yes, text ${picked.length === targets.length ? 'them' : picked.length}` : primary.label}</button>{decision!.options.filter(o => o.id !== primary.id).slice(0, 1).map(o => <button key={o.id} className="btn" onClick={() => onChoose(o.id, picked.map(t => t.customer_id))}>{o.label}</button>)}</div>
     ) : rec ? <div className="thinking"><i/><i/><i/> weighing options</div>
       : zero ? <button className="btn ghost" disabled>Not needed</button> : <button className="btn">Add this too</button>}
   </div>
@@ -138,6 +147,7 @@ function Fork({ fromRef, toRefs, containerRef }: { fromRef: React.RefObject<HTML
   </svg>
 }
 function buildSeries(ctx?: GraphNode, sc?: GraphNode, fc?: GraphNode, received = 0) {
+  if (!fc || fc.status !== 'done') { const bank = (ctx?.data.bank_balance ?? 0) + received; const days = 14; const flat = new Array(days + 1).fill(bank); return { good: flat, bad: flat, days, target: ctx?.data.target_date || ctx?.data.payroll_date, pay: ctx?.data.payroll_due_by_target ?? 0, bank, pending: true } }
   const bank = (ctx?.data.bank_balance ?? 0) + received
   const target = fc?.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date
   const asOf = sc?.rows.length ? undefined : undefined; void asOf
@@ -154,31 +164,31 @@ function buildSeries(ctx?: GraphNode, sc?: GraphNode, fc?: GraphNode, received =
   if (!rows.length) for (let d = 1; d <= days; d++) { inflowGood[d] = expTotal / days; inflowBad[d] = expTotal * 0.82 / days }
   const out = new Array(days + 1).fill(0); out[Math.floor(days / 2)] += pay / 2; out[days] += pay / 2; out[3] += bills / 3; out[8] += bills / 3; out[12] += bills / 3
   const walk = (inf: number[]) => { let v = bank; const pts = [v]; for (let d = 1; d <= days; d++) { v += inf[d] - out[d]; pts.push(v) } return pts }
-  return { good: walk(inflowGood), bad: walk(inflowBad), days, target, pay, bank }
+  return { good: walk(inflowGood), bad: walk(inflowBad), days, target, pay, bank, pending: false }
 }
 function CashChart({ ctx, sc, fc, received = 0, W = 780 }: { ctx?: GraphNode; sc?: GraphNode; fc?: GraphNode; received?: number; W?: number }) {
   const H = 220, base = 176, top = 14
-  const { good, bad, days, target, pay, bank } = useMemo(() => buildSeries(ctx, sc, fc, received), [ctx, sc, fc, received])
+  const { good, bad, days, target, pay, bank, pending } = useMemo(() => buildSeries(ctx, sc, fc, received), [ctx, sc, fc, received])
   const step = W / days, mid = Math.floor(days / 2)
   const maxV = Math.max(...good, 1) * 1.08, minV = Math.min(...bad, 0)
   const y = (v: number) => base - ((v - minV) / (maxV - minV)) * (base - top)
   const path = (pts: number[]) => pts.map((v, i) => `${i ? 'L' : 'M'}${(i * step).toFixed(1)} ${y(v).toFixed(1)}`).join(' ')
   const endG = good[days], endB = bad[days]
   return <div className="chart card">
-    <div className="head"><b>Cash in the bank, day by day</b><div className="legend"><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--green)' }} />usual payers pay</span><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--amber)' }} />slow payers slip</span></div></div>
+    <div className="head"><b>Cash in the bank</b>{pending ? <span className="fine">today · projecting…</span> : <div className="legend"><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--green)' }} />usual payers pay</span><span><i style={{ width: 14, height: 3, borderRadius: 2, background: 'var(--amber)' }} />slow payers slip</span></div>}</div>
     <svg viewBox={`0 0 ${W} ${H}`} fill="none">
       <path d={`${path(good)} L${W} ${y(0)} L0 ${y(0)} Z`} fill="#2CA01C" fillOpacity=".10" />
       <path d={`M0 ${y(0)} H${W}`} stroke="#D52B1E" strokeWidth="1.5" strokeDasharray="4 4" />
       <path d={path(bad)} stroke="#E08A00" strokeWidth="2" strokeDasharray="5 4" strokeLinejoin="round" />
       <path d={path(good)} stroke="#2CA01C" strokeWidth="2.5" strokeLinejoin="round" />
       <path d={`M${mid * step} ${top} V${base} M${W - 1} ${top} V${base}`} stroke="#8D9096" strokeWidth="1" strokeDasharray="3 4" />
-      <circle cx={W - 2} cy={y(endG)} r="5" fill="#fff" stroke="#2CA01C" strokeWidth="2.5" /><circle cx={W - 2} cy={y(endB)} r="5" fill="#fff" stroke="#E08A00" strokeWidth="2" />
+      {!pending && <><circle cx={W - 2} cy={y(endG)} r="5" fill="#fff" stroke="#2CA01C" strokeWidth="2.5" /><circle cx={W - 2} cy={y(endB)} r="5" fill="#fff" stroke="#E08A00" strokeWidth="2" /></>}
       <text x="0" y={H - 6} fontSize="11" fill="#6B6C72">Today · ${k(bank)}{received ? " incl. payments" : ""}</text>
       <text x={mid * step} y={H - 6} fontSize="11" fontWeight="600" fill="#393A3D" textAnchor="middle">{fmtDate(shift(target, -7))} · payday</text>
       <text x={W - 4} y={H - 6} fontSize="11" fontWeight="600" fill="#393A3D" textAnchor="end">{fmtDate(target)} · payday</text>
-      <text x={W - 12} y={Math.min(y(endG), y(endB) - 16) - 8} fontSize="12" fontWeight="700" fill="#2CA01C" textAnchor="end">{endG >= 0 ? '+' : '−'}${k(Math.abs(endG))}</text>
+      {!pending && <><text x={W - 12} y={Math.min(y(endG), y(endB) - 16) - 8} fontSize="12" fontWeight="700" fill="#2CA01C" textAnchor="end">{endG >= 0 ? '+' : '−'}${k(Math.abs(endG))}</text>
       <text x={W - 12} y={Math.max(y(endB), y(endG) + 16) + 16} fontSize="12" fontWeight="700" fill="#B35C00" textAnchor="end">{endB >= 0 ? '+' : '−'}${k(Math.abs(endB))}</text>
-      <text x={mid * step + 8} y="26" fontSize="11" fill="#6B6C72">− ${k(pay / 2)} payroll</text>
+      <text x={mid * step + 8} y="26" fontSize="11" fill="#6B6C72">− ${k(pay / 2)} payroll</text></>}
     </svg>
   </div>
 }
@@ -202,27 +212,8 @@ function Outcome({ fc, payments, levers }: { fc?: GraphNode; payments: GraphNode
   </div>
 }
 const shift = (d?: string, days = 0) => { if (!d) return undefined; const t = new Date(d + 'T00:00:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10) }
-function StatusPanel({ ans, fc, payments }: { ans?: GraphNode; fc?: GraphNode; payments: GraphNode[] }) {
-  const d = fc?.data || {}; const gap = d.gap ?? ans?.data.gap ?? 0; const need = d.need ?? 0
-  const cushion = gap > 0 ? -gap : (d.cushion ?? (d.need != null && (d.cash_at_target ?? 0) >= d.need ? d.cash_at_target - d.need : (d.cash_at_target ?? 0)))
-  const risk = d.pessimistic?.gap
-  const state = !fc || fc.status !== 'done' ? 'pending' : cushion < 0 ? 'bad' : cushion < need * 0.1 ? 'tight' : 'ok'
-  const word = state === 'pending' ? 'Working it out' : state === 'bad' ? 'No.' : state === 'tight' ? 'Barely.' : 'Yes.'
-  return <div className={`card status ${state}`}>
-    <div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Payroll through {fmtDate(d.target_date) || 'Oct 20'}</div>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <Gauge cushion={state === 'pending' ? 0 : cushion} need={need || 20000} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div className="big">{word}</div>
-        {state !== 'pending' && <div className="sub">{cushion < 0 ? `${money(-cushion)} short` : `${money(cushion)} to spare`}</div>}
-        {state !== 'pending' && <div className="fine">{risk > 0 ? `${money(risk)} short if slow payers slip` : cushion < 0 ? 'even if the usual payers pay' : 'if the usual payers pay'}</div>}
-        {payments.length > 0 && <div className="fine" style={{ color: 'var(--green)', fontWeight: 600 }}>{payments.length} payment{payments.length > 1 ? 's' : ''} landed</div>}
-      </div>
-    </div>
-  </div>
-}
 function RiskPanel({ sc, fc }: { sc?: GraphNode; fc?: GraphNode }) {
-  const risky = (sc?.rows || []).filter(r => r.band !== 'green')
+  const risky = (sc?.rows || []).filter(r => r.p_paid_by_target < 0.7)
   const byCust = new Map<string, { customer: string; amount: number; wp: number; n: number; band: string }>()
   for (const r of risky) { const g = byCust.get(r.customer) || { customer: r.customer, amount: 0, wp: 0, n: 0, band: 'amber' }; g.amount += r.amount; g.wp += r.amount * r.p_paid_by_target; g.n++; if (r.band === 'red') g.band = 'red'; byCust.set(r.customer, g) }
   const groups = [...byCust.values()].sort((a, b) => b.amount - a.amount)
@@ -232,10 +223,10 @@ function RiskPanel({ sc, fc }: { sc?: GraphNode; fc?: GraphNode }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="ic amber" style={{ width: 22, height: 22 }}>{I.trend}</span><b style={{ fontSize: 14 }}>If the slow payers slip</b></div>
     <div className="kv" style={{ fontSize: 13 }}><span style={{ color: 'var(--muted)' }}>{risky.length} invoices from {groups.length} customers not reliable by payday</span><b>{money(atRisk)} at risk</b></div>
     <div className="risklist">
-      {groups.slice(0, 6).map((g, i) => { const p = g.amount ? g.wp / g.amount : 0; return <div className="riskrow" key={g.customer}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(g.customer)}</span><span className="nm">{g.customer}<span className="fine"> · {g.n} inv</span></span><span className="am">{money(g.amount)}</span><span className={`pc ${p < 0.3 ? 'red' : 'amber'}`}>{Math.round(p * 100)}%</span></div> })}
-      {groups.length > 6 && <div className="fine">+ {groups.length - 6} more customers</div>}
+      {groups.slice(0, 4).map((g, i) => { const p = g.amount ? g.wp / g.amount : 0; return <div className="riskrow" key={g.customer}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(g.customer)}</span><span className="nm">{g.customer}<span className="fine"> · {g.n} inv</span></span><span className="am">{money(g.amount)}</span><span className={`pc ${p < 0.3 ? 'red' : 'amber'}`}>{Math.round(p * 100)}%</span></div> })}
+      {groups.length > 4 && <div className="fine">+ {groups.length - 4} more customers</div>}
     </div>
-    {pess != null && <div className="fine" style={{ color: 'var(--amber-dk)', fontWeight: 600 }}>Worst case on payday: {pess > 0 ? `${money(pess)} short` : 'still covered'}</div>}
+    {pess != null && <div className="fine" style={{ color: 'var(--amber-dk)', fontWeight: 600 }}>Pessimistic scenario on payday: {pess > 0 ? `${money(pess)} short` : 'still covered'}</div>}
   </div>
 }
 function whoOf(n: GraphNode): string {
@@ -243,40 +234,80 @@ function whoOf(n: GraphNode): string {
   const m = t.match(/^Texting (.+)$/) || t.match(/^Negotiating with (.+?)['’]s agent$/) || t.match(/^(.+?) replied$/) || t.match(/^(.+?) paid /)
   return (m ? m[1] : t).split(' ')[0]
 }
-function Conversations({ actions, decisions, onDecide }: { actions: GraphNode[]; decisions: Decision[]; onDecide: (d: Decision, opt: string) => void }) {
+function Conversations({ actions }: { actions: GraphNode[]; decisions?: Decision[]; onDecide?: (d: Decision, opt: string) => void }) {
   const groups = new Map<string, GraphNode[]>()
-  // key every action to one customer: use customer_id when present, else map the first word of the name back to the reminder's id
   const idByFirst = new Map<string, string>()
   for (const a of actions) if (a.data.customer_id) idByFirst.set(whoOf(a), a.data.customer_id)
   for (const a of actions) { const w = a.data.customer_id || idByFirst.get(whoOf(a)) || whoOf(a); groups.set(w, [...(groups.get(w) || []), a]) }
-  if (!groups.size) return null
-  return <div className="convs">
-    {[...groups.entries()].map(([who, items], gi) => {
-      const full = items.find(i => i.data.customer)?.data.customer || items.find(i => i.data.kind === 'reminder')?.title.replace(/^Texting /, '') || who
-      return <div className="conv" key={who}>
-        <div className="chead"><span className="av" style={{ background: AV_COLORS[gi % 5] }}>{initials(full)}</span><div><b>{full}</b><div className="fine">{items.some(i => i.data.channel === 'simulated') ? 'Simulated conversation · no SMS sent' : 'SMS · provider acceptance is not delivery'}</div></div></div>
-        <div className="bubbles">
-          {items.map(a => {
-            const d = a.data
-            if (d.kind === 'reminder') return <div key={a.node_id} className="bub out"><div>{String(d.draft?.body || a.title).replace('{pay_link}', 'pay.span.app/8f3a')}</div><span className="meta">{BRAND} for Palletbay · {a.status === 'failed' ? 'failed' : d.channel === 'simulated' ? 'simulated — not sent' : a.status === 'done' ? 'accepted by provider' : 'sending…'}</span>{d.pay_link && <a href={d.pay_link} target="_blank" rel="noreferrer">Open invoice pay page</a>}</div>
-            if (d.kind === 'reply') return <div key={a.node_id} className="bub in"><div>{d.text}</div><span className="meta">{full} · {d.simulated ? 'simulated reply' : `read by ${BRAND}`}  · {String(d.classification || '').replace('_', ' ')}</span></div>
-            if (d.kind === 'negotiation') return <div key={a.node_id} className="neg">
-              <div className="fine" style={{ textAlign: 'center' }}>{BRAND} is negotiating with {full}’s agent{a.status === 'running' ? '…' : ''}</div>
-              {a.rounds.map((r, i) => <div key={i} className={`bub ${r.from === 'owed' ? 'out agent' : 'in agent'}`}><div>{r.text}</div><span className="meta">{r.from === 'owed' ? `${BRAND} agent` : `${full}’s agent`}{r.p_honored ? ` · ${Math.round(r.p_honored * 100)}% likely honored` : ''}</span></div>)}
-              {decisions.filter(dec => dec.node_id === a.node_id && !dec.resolved).map(dec => <div key={dec.decision_id}><div className="fine">{dec.prompt}{dec.auto_resolves_in_s ? ' · automatically accepts after 8 seconds' : ''}</div>{dec.options.map(o => <button className="btn" key={o.id} onClick={() => onDecide(dec, o.id)}>{o.label}</button>)}</div>)}
-              {d.agreement && <div className="agree">{I.check} Agreed: {d.agreement.installments?.length} installments{d.agreement.installments?.map((p: { amount: number; pay_link?: string; pay_token: string }, i: number) => <a key={p.pay_token} href={p.pay_link || `/api/pay/${p.pay_token}/page`} target="_blank" rel="noreferrer">Pay installment {i + 1} · {money(p.amount)}</a>)}</div>}
-            </div>
-            if (d.kind === 'payment') return <div key={a.node_id} className="receipt"><span className="ic green">{I.card}</span><div><b>{money(d.amount)} received</b><div className="fine">{String(d.rail).toUpperCase()} · {d.sandbox_mode === 'simulated' ? 'simulated payment · ' : ''}card ending {d.receipt?.last4}</div></div></div>
-            return <div key={a.node_id} className="fine">{a.title}</div>
-          })}
-        </div>
+  const threads = [...groups.entries()].map(([key, items], gi) => {
+    const full = items.find(i => i.data.customer)?.data.customer || items.find(i => i.data.kind === 'reminder')?.title.replace(/^Texting /, '') || key
+    const last = items[items.length - 1]
+    const lastAt = Math.max(...items.map(i => i.doneAt || i.createdAt), ...items.flatMap(i => i.rounds.map(() => i.createdAt)))
+    const preview = last.data.kind === 'payment' ? `Paid ${money(last.data.amount)}` : last.data.kind === 'negotiation' ? (last.data.agreement ? `Agreed: ${last.data.agreement.installments?.length} payments` : (last.rounds.at(-1)?.text || 'Negotiating…')) : last.data.kind === 'reply' ? last.data.text : String(last.data.draft?.body || last.title).slice(0, 60)
+    const state = last.data.kind === 'payment' ? 'paid' : last.data.kind === 'negotiation' ? (last.data.agreement ? 'agreed' : 'negotiating') : last.data.kind === 'reply' ? 'replied' : last.status === 'done' ? 'sent' : 'sending'
+    return { key, full, items, last, lastAt, preview, state, color: AV_COLORS[gi % 5] }
+  })
+  const newest = threads.reduce((a, t) => (!a || t.lastAt > a.lastAt ? t : a), threads[0])
+  const [picked, setPicked] = useState<string | null>(null)
+  const [pickedAt, setPickedAt] = useState(0)
+  const sel = (picked && pickedAt > (newest?.lastAt || 0) ? threads.find(t => t.key === picked) : newest) || threads[0]
+  if (!threads.length) return null
+  const ago = (t: number) => { const s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? 'now' : `${Math.round(s / 60)}m` }
+  return <div className="msgs">
+    <div className="mlist">
+      <div className="mlist-h">Messages<span className="fine">{threads.length} customers</span></div>
+      {threads.sort((a, b) => b.lastAt - a.lastAt).map(t => <div key={t.key} className={`mrow ${sel?.key === t.key ? 'sel' : ''}`} onClick={() => { setPicked(t.key); setPickedAt(Date.now()) }}>
+        <span className="av" style={{ background: t.color }}>{initials(t.full)}</span>
+        <div className="mtext"><div className="mtop"><b>{t.full}</b><span className="fine">{ago(t.lastAt)}</span></div><div className="mprev">{t.preview}</div></div>
+        <span className={`state ${t.state}`}>{t.state}</span>
+      </div>)}
+    </div>
+    <div className="mthread">
+      <div className="mhead"><span className="av" style={{ background: sel.color }}>{initials(sel.full)}</span><div><b>{sel.full}</b><div className="fine">SMS · {BRAND} for Palletbay · {sel.items.some(i => i.data.channel === 'simulated') ? 'simulated, nothing sent' : 'pay link included'}</div></div></div>
+      <div className="bubbles">
+        {sel.items.map(a => {
+          const d = a.data; const who = sel.full.split(' ')[0]
+          if (d.kind === 'reminder') return <div key={a.node_id} className="bub out"><div>{String(d.draft?.body || a.title).replace('{pay_link}', 'pay.span.app/8f3a')}</div><span className="meta">{a.status === 'failed' ? 'failed' : d.channel === 'simulated' ? 'simulated' : a.status === 'done' ? 'Delivered' : 'Sending…'}</span></div>
+          if (d.kind === 'reply') return <div key={a.node_id} className="bub in"><div>{d.text}</div><span className="meta">{String(d.classification || '').replace('_', ' ')}</span></div>
+          if (d.kind === 'negotiation') return <div key={a.node_id} className="neg">
+            <div className="fine" style={{ textAlign: 'center' }}>{BRAND}’s agent is talking to {who}’s agent{a.status === 'running' ? '…' : ''}</div>
+            {a.rounds.map((r, i) => <div key={i} className={`bub ${r.from === 'owed' ? 'out agent' : 'in agent'}`}><div>{r.text}</div><span className="meta">{r.from === 'owed' ? `${BRAND} agent` : `${who}’s agent`}{r.p_honored ? ` · ${Math.round(r.p_honored * 100)}% likely honored` : ''}</span></div>)}
+            {d.agreement && <div className="agree">{I.check} Agreed: {d.agreement.installments?.length} payments of {money(d.agreement.installments?.[0]?.amount)}</div>}
+          </div>
+          if (d.kind === 'payment') return <div key={a.node_id} className="receipt"><span className="ic green">{I.card}</span><div><b>{money(d.amount)} received</b><div className="fine">{String(d.rail).toUpperCase()} · card ending {d.receipt?.last4}</div></div></div>
+          return <div key={a.node_id} className="fine">{a.title}</div>
+        })}
       </div>
-    })}
+    </div>
   </div>
 }
 
 /* ---------- a thread = one run ---------- */
-function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: Decision, opt: string) => void; isFollowUp?: boolean }) {
+function ToolNode({ n }: { n: GraphNode }) {
+  const icon = n.type === 'scoring' ? I.people : n.type === 'forecast' ? I.trend : n.type === 'levers' ? I.star : I.book
+  const d = n.data || {}
+  const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
+  return <div className={`node ${n.status}`}><h3><span className={`ic ${n.type === 'scoring' ? 'green' : n.type === 'forecast' ? 'dark' : 'blue'}`}>{icon}</span>{n.title}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
+    {d.question && <div className="fine">“{d.question}”</div>}
+    {facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{typeof v === 'number' && Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}
+    {d.spoken && <div style={{ fontSize: 14, lineHeight: '20px' }}>{plain(d.spoken)}</div>}
+  </div>
+}
+function PlannerThread({ run }: { run: RunState }) {
+  const nodes = run.order.map(id => run.nodes[id])
+  const ans = nodes.find(n => n.type === 'answer')
+  const tools = nodes.filter(n => n.type !== 'answer')
+  return <section className="thread">
+    <div className="workspace">
+      <aside className="live"><div className="card status pending" style={{ borderStyle: ans ? 'solid' : 'dashed' }}><div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Answer</div><div style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{ans ? plain(ans.title) : 'Working it out…'}</div>{ans?.data.spoken && plain(ans.data.spoken) !== plain(ans.title) && <div className="fine" style={{ fontSize: 13, lineHeight: '18px' }}>{plain(ans.data.spoken)}</div>}</div></aside>
+      <div className="steps">
+        {tools.map((n, i) => <div key={n.node_id}>{i > 0 && <div className="vconn" />}<div className="vstep"><ToolNode n={n} /></div></div>)}
+        {!ans && <div className="thinking" style={{ marginTop: 14 }}><i/><i/><i/> {BRAND} is thinking</div>}
+      </div>
+    </div>
+  </section>
+}
+function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean }) {
   const byType = (t: string) => run.order.map(id => run.nodes[id]).find(n => n.type === t)
   const ctx = byType('context'), sc = byType('scoring'), fc = byType('forecast'), ans = byType('answer'), lv = byType('levers')
   const actions = run.order.map(id => run.nodes[id]).filter(n => n.type === 'action')
@@ -290,6 +321,17 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
     {isFollowUp && <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up · branches from this run</div>}
     {isFollowUp && <h1 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 14 }}>{run.question}</h1>}
     <div className="workspace">
+      <aside className="live">
+        {ctx && (LIVE && fc && fc.status === 'done'
+          ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
+          : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} W={420} />)}
+        {sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
+        <div className={`card report ${run.report_id ? 'ready' : ''}`}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>
+          <div className="fine">{run.report_id ? 'Ready. Share it with your bookkeeper or print it.' : 'Builds itself from this run as it goes.'}</div>
+          {run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : <div className="thinking"><i/><i/><i/> writing</div>}
+        </div>
+      </aside>
       <div className="steps" ref={contRef}>
         {ctx && <div className="vstep"><BooksNode n={ctx} /></div>}
         {sc && <><div className="vconn" /><div className="vstep"><ScoredNode n={sc} /></div></>}
@@ -297,20 +339,12 @@ function Thread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: De
         {ans && <><div className="vconn" /><div className="vstep" ref={verdictRef}><VerdictNode n={ans} fc={fc} /></div></>}
         {levers.length > 0 && <>
           <Fork fromRef={verdictRef} toRefs={leverRefs} containerRef={contRef} />
-          <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={opt => decision && onDecide(decision, opt)} /></div>)}</div>
+          <div className="levers">{levers.map((l, i) => <div key={l.id} ref={el => { leverRefs[i].current = el }} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={(lv?.data.recommended || ['chase'])[0] === l.id} decision={decision} chosen={chosen} onChoose={(opt, selected) => decision && onDecide(decision, opt, selected)} /></div>)}</div>
         </>}
         {lv && levers.length === 0 && <div className="thinking" style={{ marginTop: 16 }}><i/><i/><i/> working out what would close the gap</div>}
-        {actions.length > 0 && <Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} />}
-        {run.report_id && <a className="rlink" href={`/report/${run.report_id}`}>Open one-page report</a>}
+        {actions.length > 0 && <><div className="vconn" style={{ marginTop: 4 }} /><Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} /></>}
+        {payments.length > 0 && <><div className="vconn" /><Outcome fc={fc} payments={payments} levers={levers} /></>}
       </div>
-      <aside className="live">
-        <StatusPanel ans={ans} fc={fc} payments={payments} />
-        {fc && fc.status === 'done' && (LIVE
-          ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date || ctx?.data.target_date || ctx?.data.payroll_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
-          : <CashChart ctx={ctx} sc={sc} fc={fc} received={received} W={420} />)}
-        {sc && sc.rows.length > 0 && <RiskPanel sc={sc} fc={fc} />}
-        {payments.length > 0 && <Outcome fc={fc} payments={payments} levers={levers} />}
-      </aside>
     </div>
   </section>
 }
@@ -383,6 +417,13 @@ export default function App() {
   const playing = useRef(false)
   const play = async (s = speed) => { stopRef.current(); setRuns([]); playing.current = true; const stop = await playFixture('/fixture.json', apply, s); stopRef.current = () => { playing.current = false; stop() } }
   useEffect(() => {
+    if (RUN) {
+      const seen = new Set<string>()
+      const ingest = (ev: RawEvent) => { const d = ev.data; if (d.run_id !== RUN && !(d.parent_run_id === RUN)) return; if (d.id && seen.has(d.id)) return; if (d.id) seen.add(d.id); apply(ev) }
+      const off = subscribe(COMPANY, ingest)
+      replay(RUN).then(evs => { for (const e of evs) ingest(e) }).catch(() => {})
+      return off
+    }
     if (LIVE) {
       let cancelled = false, ready = false
       const accepted = new Set<string>(), seen = new Set<string>(), pending: RawEvent[] = []
@@ -460,7 +501,9 @@ export default function App() {
           <div className="eyebrow"><span className="av">R</span><span>Ryan · by {main.source === 'call' ? 'phone' : main.source} · Sat 3:52 PM</span><span className="sep" /><span>Thread 1 of 3 today</span><span className="sep" /><span className="link">Through Oct 20</span></div>
           <h1 className="q">{main.question}</h1>
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
-        {runs.map((r, i) => <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
+        {runs.map((r, i) => (r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => id === 'n2' || id === 'n3' || id === 'f3')))
+          ? <PlannerThread key={r.run_id} run={r} />
+          : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
       </main>
     </div>
     {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} />}

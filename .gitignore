@@ -1,21 +1,23 @@
-data/raw/
-data/*.tar.gz
-.env
-.venv/
+
 __pycache__/
-*.pyc
-.pytest_cache/
-backend/models/*.pkl
-
+.env
 .local/
-backend/server.log
-# nested working copies of other sessions (Devin/Astra clones)
-/owed/
-/owed-*/
-backend/uagents_core.log
-frontend/node_modules/
-frontend/dist/
-
-# Compiled Vite product (npm run build)
+.pytest_cache/
+.venv/
+*.pyc
 /backend/owed/static/
+/owed-*/
+/owed/
+# Compiled Vite product (npm run build)
+# nested working copies of other sessions (Devin/Astra clones)
+backend/models/*.pkl
+backend/server.log
+backend/uagents_core.log
+data/*.tar.gz
+data/raw/
+frontend/dist/
+frontend/node_modules/
 frontend/demo-out/
+owed-report-page/
+span-*/
+span/

@@ -68,7 +68,7 @@ def _aft_payload(card: dict, amount: float, reference: str) -> dict:
         "amount": f"{amount:.2f}",
         "businessApplicationId": "AA",
         "cardAcceptor": {"address": {"country": "USA", "state": "CA", "zipCode": "94404"},
-                         "idCode": "ABCD1234ABCD123", "name": "Owed", "terminalId": "ABCD1234"},
+                         "idCode": "ABCD1234ABCD123", "name": "Span", "terminalId": "ABCD1234"},
         "localTransactionDateTime": now.strftime("%Y-%m-%dT%H:%M:%S"),
         "retrievalReferenceNumber": now.strftime("%y%j%H") + reference[-6:].rjust(6, "0"),
         "senderCardExpiryDate": f"{card['exp_year']:04d}-{card['exp_month']:02d}",

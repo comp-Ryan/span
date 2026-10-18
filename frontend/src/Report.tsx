@@ -4,7 +4,7 @@ import type { ReportDoc, ReportNode } from './types'
 import { getReport } from './api'
 import { money } from './events'
 
-const BRAND = (import.meta.env.VITE_BRAND as string) || 'Owed'
+const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
 
 const I = {
   dl: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M8 2.5v7M4.8 6.8 8 10l3.2-3.2M2.5 13.5h11"/></svg>,

@@ -49,8 +49,8 @@ def _workflow(svg: str, max_w: float, max_h: float):
 def render_pdf(report: dict) -> bytes:
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter, leftMargin=MARGIN, rightMargin=MARGIN, topMargin=MARGIN,
-                            bottomMargin=MARGIN, title=f"Owed report \u2014 {report.get('company', '')}",
-                            author="Owed")
+                            bottomMargin=MARGIN, title=f"Span report \u2014 {report.get('company', '')}",
+                            author="Span")
     fw, fh = doc.width, doc.height
     try:
         when = datetime.fromisoformat(report["generated_at"]).astimezone(UTC).strftime("%b %d, %Y %H:%M UTC")

@@ -223,21 +223,31 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .riskrow .pc.amber{color:var(--amber-dk)}.riskrow .pc.red{color:var(--red)}
 
 /* two-column workspace: workflow left, live panels right */
-.workspace{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:24px;align-items:start}
+.workspace{display:grid;grid-template-columns:440px minmax(0,1fr);gap:24px;align-items:start}
 .steps{display:flex;flex-direction:column;min-width:0}
 .vstep{display:flex;width:100%}.vstep>.node{flex:1 1 100%;max-width:100%}
 .vstep .node{width:100%!important;flex-direction:row;align-items:flex-start;gap:18px;flex-wrap:wrap}
 .vstep .node h3{width:200px;flex-shrink:0;padding-top:4px}
 .vstep .node>*:not(h3){flex:1;min-width:220px}
-.vstep .verdict{flex-direction:row;align-items:center;justify-content:flex-start;gap:14px;text-align:left;padding:12px 16px}
-.vstep .verdict .big{font-size:22px;line-height:26px}
+.vstep .verdict{flex-direction:row;align-items:center;justify-content:flex-start;gap:18px;text-align:left;padding:12px 18px;flex-wrap:nowrap}
+.vstep .verdict>*{flex:0 0 auto;min-width:0}
+.vstep .verdict svg{width:120px;height:auto}
+.vstep .verdict .big{font-size:26px;line-height:30px}
+.vstep .verdict .fine{flex:1 1 240px;min-width:0;white-space:normal;text-align:right;max-width:260px}
+.vstep .verdict .sub{white-space:nowrap}
 .vstep .verdict .sub{font-size:14px}
 .vconn{width:1px;height:22px;background:var(--muted2);margin-left:27px;position:relative}
 .vconn::after{content:"";position:absolute;left:-4px;bottom:-1px;border:4px solid transparent;border-top:6px solid var(--muted2)}
 .steps .levers{gap:14px}
 .steps .lever{padding:12px}
-.steps .convs{flex-wrap:wrap}
-.steps .conv{flex:1 1 300px}
+
+.steps .conv{cursor:pointer}
+.conv .chead{position:relative;padding-right:70px}
+.conv .state{position:absolute;right:12px;top:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:9px;background:var(--line2);color:var(--muted)}
+.conv .state.paid,.conv .state.agreed{background:var(--green-bg);color:var(--green)}.conv .state.replied,.conv .state.negotiating{background:var(--amber-bg);color:var(--amber-dk)}
+.conv:not(.open) .bubbles{max-height:120px;overflow:hidden;position:relative}
+.conv:not(.open) .bubbles::after{content:"expand";position:absolute;left:0;right:0;bottom:0;padding:18px 0 6px;text-align:center;font-size:11px;color:var(--blue);font-weight:600;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 55%)}
+.conv .bub{max-width:100%}
 .live{display:flex;flex-direction:column;gap:14px;position:sticky;top:80px}
 .live .chart{margin-top:0}
 .live .card{margin-top:0}
@@ -247,3 +257,34 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .status .sub{font-size:14px;font-weight:600;color:var(--amber-dk)}.status.ok .sub{color:var(--green)}.status.bad .sub{color:var(--red)}
 .status svg{flex-shrink:0;width:120px;height:auto}
 .rlink{display:inline-block;margin-top:16px;color:var(--blue);font-weight:600;font-size:13px}
+
+/* iMessage-style messages panel */
+.msgs{display:grid;grid-template-columns:260px minmax(0,1fr);height:440px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(57,58,61,.06);animation:pop .35s ease-out both}
+.mlist{border-right:1px solid var(--line2);display:flex;flex-direction:column;overflow:auto;background:#FAFBFC}
+.mlist-h{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px;font-size:15px;font-weight:700}
+.mrow{display:flex;gap:10px;align-items:center;padding:10px 12px;cursor:pointer;border-radius:10px;margin:0 6px;position:relative}
+.mrow.sel{background:var(--green);color:#fff}
+.mrow.sel .fine,.mrow.sel .mprev{color:rgba(255,255,255,.85)}
+.mrow .av{width:36px;height:36px;border-radius:18px;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.mtext{flex:1;min-width:0}
+.mtop{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.mtop b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mprev{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .state{position:absolute;right:12px;bottom:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:8px;background:var(--line2);color:var(--muted)}
+.mrow.sel .state{background:rgba(255,255,255,.25);color:#fff}
+.mrow .state.paid,.mrow .state.agreed{background:var(--green-bg);color:var(--green)}.mrow .state.replied,.mrow .state.negotiating{background:var(--amber-bg);color:var(--amber-dk)}
+.mthread{display:flex;flex-direction:column;min-width:0}
+.mhead{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line2)}
+.mhead .av{width:32px;height:32px;border-radius:16px;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.mhead b{font-size:13px}
+.mthread .bubbles{flex:1;overflow:auto;padding:14px 16px}
+.mthread .bub{max-width:78%}
+
+.chip.pick{cursor:pointer;font:12px var(--font);color:var(--text);transition:all .15s;gap:6px}
+.chip.pick .tick{display:inline-flex;width:16px;height:16px;border-radius:8px;background:var(--green);color:#fff;align-items:center;justify-content:center;margin-left:2px}
+.chip.pick.off{opacity:.45;text-decoration:line-through;border-style:dashed}
+.chip.pick.off .tick{background:var(--line);color:transparent}
+.chip.pick:disabled{cursor:default}
+.report{display:flex;flex-direction:column;gap:10px;border-style:dashed}
+.report.ready{border-style:solid;border-color:var(--green)}
+.report .btn{align-self:flex-start;text-decoration:none;height:34px}
