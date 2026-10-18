@@ -17,6 +17,7 @@ data/*.tar.gz
 data/raw/
 frontend/dist/
 frontend/node_modules/
+frontend/demo-out/
 owed-report-page/
 span-*/
 span/
