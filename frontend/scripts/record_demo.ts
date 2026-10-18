@@ -241,5 +241,5 @@ async function main() {
 }
 main().catch(e => { console.error(String(e)); process.exitCode = 1 }).finally(async () => {
   for (const child of children) child.kill('SIGTERM')
-  await Promise.all(children.map(child => child.exitCode !== null ? Promise.resolve() : new Promise(resolve => child.once('exit', resolve))))
+  await Promise.all(children.map(child => (child.exitCode !== null || child.signalCode !== null) ? Promise.resolve() : new Promise(resolve => child.once('exit', resolve))))
 })

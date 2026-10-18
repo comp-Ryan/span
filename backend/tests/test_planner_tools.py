@@ -188,3 +188,24 @@ def test_show_node_unknown_tool_and_parent_chain(ctx):
     assert all(n['node_id'].startswith('tool-') for n in created)
     assert [u['status'] for u in updated] == ['done', 'failed']
     assert ctx.parent == created[-1]['node_id']
+
+
+def test_assumption_asked_is_remembered_across_the_whole_conversation():
+    """Root asked the question; a grandchild reply must not ask it again (one question per conversation)."""
+    from owed.events import emit
+    from owed.planner import assumption_asked_in_chain
+    root = create(COMPANY, 'payroll?', 'call', 'payroll_check')
+    child = create(COMPANY, 'no', 'call', 'followup', parent_run_id=root)
+    grandchild = create(COMPANY, 'what about Friday?', 'call', 'followup', parent_run_id=child)
+    other = create(COMPANY, 'unrelated', 'web', 'free_question')
+    try:
+        emit(root, 'node.create', {'node_id': 'tool-1', 'type': 'forecast', 'title': 'Forecasting cash', 'status': 'running', 'parent': 'context', 'data': {'tool': 'forecast_cash', 'args': {}}})
+        emit(root, 'node.update', {'node_id': 'tool-1', 'status': 'done', 'data': {'gap': 385, 'assumption_needed': {'customer_id': EVERGREEN, 'question': 'Should I assume ...?'}}})
+        assert assumption_asked_in_chain(grandchild) is True
+        assert assumption_asked_in_chain(child) is True
+        assert assumption_asked_in_chain(other) is False
+    finally:
+        with conn() as c:
+            for rid in (grandchild, child, root, other):
+                c.execute('delete from events where run_id=%s', (rid,))
+                c.execute('delete from runs where run_id=%s', (rid,))

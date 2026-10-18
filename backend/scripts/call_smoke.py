@@ -84,40 +84,57 @@ def synthesize(text: str, workdir: Path, name: str) -> bytes:
 
 # ---------- run assessment (pure; unit-tested) ----------
 
+def is_lone_question(text: str) -> bool:
+    """A clarifying question is one question and nothing else; an answer that ends with an offer is not."""
+    t = (text or '').strip()
+    return t.endswith('?') and t.count('?') == 1 and not any(ch in t[:-1] for ch in '.!')
+
+
 def assess(events: list) -> dict:
     """What the bridge's run shows: speech turns in order, tool calls, failure, and the six checks."""
-    turns, tools, failed, ended = [], [], None, None
+    turns, names, status, failed, ended = [], {}, {}, None, None
+    done_so_far = 0
     for e in events:
         d = e.get('data') or {}
+        node = str(d.get('node_id', ''))
         if e.get('event') == 'speech':
             caller = d.get('kind') == 'caller' or d.get('speaker') == 'caller'
             text = (d.get('text') or '').strip()
             if text:
-                turns.append(('caller' if caller else 'assistant', text, len(tools)))
-        elif e.get('event') == 'node.create' and str(d.get('node_id', '')).startswith('tool-'):
-            tools.append((d.get('data') or {}).get('tool') or d.get('title'))
-        elif e.get('event') == 'node.update' and d.get('node_id') == 'context' and d.get('status') == 'failed':
+                turns.append(('caller' if caller else 'assistant', text, done_so_far))
+        elif e.get('event') == 'node.create' and node.startswith('tool-'):
+            names[node] = (d.get('data') or {}).get('tool') or d.get('title')
+        elif e.get('event') == 'node.update' and node in names and d.get('status') in ('done', 'failed'):
+            status[node] = d['status']
+            done_so_far = sum(1 for v in status.values() if v == 'done')
+        elif e.get('event') == 'node.update' and node == 'context' and d.get('status') == 'failed':
             failed = (d.get('data') or {}).get('error', 'failed')
         elif e.get('event') == 'run.end':
             ended = d.get('status')
+    tools = [names[n] for n, v in status.items() if v == 'done']          # only calls that completed count
+    failed_tools = [names[n] for n, v in status.items() if v == 'failed']
     caller_turns = [t for who, t, _ in turns if who == 'caller']
     first_caller = next((i for i, (who, _, _) in enumerate(turns) if who == 'caller'), None)
     greeting = next((t for who, t, _ in turns[:first_caller] if who == 'assistant'), None) if first_caller is not None else None
-    clarifying = [t for i, (who, t, _) in enumerate(turns)
-                  if who == 'assistant' and first_caller is not None and i > first_caller and t.rstrip().endswith('?')
-                  and i + 1 < len(turns) and turns[i + 1][0] == 'caller']
-    spoken_answer = next((t for who, t, n in turns if who == 'assistant' and n > 0), None)
+    clarifying_at = [i for i, (who, t, _) in enumerate(turns)
+                     if who == 'assistant' and first_caller is not None and i > first_caller and is_lone_question(t)
+                     and i + 1 < len(turns) and turns[i + 1][0] == 'caller']
+    clarifying = [turns[i][1] for i in clarifying_at]
+    # The spoken answer comes after the owner answered the question (or, with no question, after a completed tool).
+    answer_from = clarifying_at[0] + 2 if clarifying_at else 0
+    answer_at = next((i for i, (who, t, n) in enumerate(turns) if i >= answer_from and who == 'assistant' and n > 0
+                      and i not in clarifying_at), None)
+    spoken_answer = turns[answer_at][1] if answer_at is not None else None
     last_caller = max((i for i, (who, _, _) in enumerate(turns) if who == 'caller'), default=None)
-    answer_at = next((i for i, (who, t, _) in enumerate(turns) if who == 'assistant' and t == spoken_answer), None)
     followup_answer = None
     if last_caller is not None and answer_at is not None and last_caller > answer_at:
         followup_answer = next((t for who, t, _ in turns[last_caller + 1:] if who == 'assistant'), None)
     checks = {'greeting': greeting is not None, 'transcribed_question': bool(caller_turns), 'tool_calls': bool(tools),
-              'spoken_answer': spoken_answer is not None, 'one_clarifying_question': len(clarifying) == 1,
-              'followup_answered': followup_answer is not None}
-    return {'greeting': greeting, 'caller_turns': caller_turns, 'tool_calls': tools, 'clarifying_questions': clarifying,
-            'spoken_answer': spoken_answer, 'followup_answer': followup_answer, 'failed': failed, 'ended': ended,
-            'turns': [{'who': who, 'text': t} for who, t, _ in turns], 'checks': checks}
+              'no_failed_tools': not failed_tools, 'spoken_answer': spoken_answer is not None,
+              'one_clarifying_question': len(clarifying) == 1, 'followup_answered': followup_answer is not None}
+    return {'greeting': greeting, 'caller_turns': caller_turns, 'tool_calls': tools, 'failed_tools': failed_tools,
+            'clarifying_questions': clarifying, 'spoken_answer': spoken_answer, 'followup_answer': followup_answer,
+            'failed': failed, 'ended': ended, 'turns': [{'who': who, 'text': t} for who, t, _ in turns], 'checks': checks}
 
 
 # ---------- the simulated Twilio call ----------
@@ -218,8 +235,8 @@ class Call:
                 await self.wait_for(lambda ev: bool(self.assistant_turns(ev)), 'greeting', timeout)
                 self.log(f"assistant: {self.assistant_turns(self.events())[-1]['data'].get('text', '').strip()}")
                 reply = await self.say(utterances['question'], 'question', timeout)
-                for _ in range(2):  # at most two clarifying questions before an answer
-                    if not reply.rstrip().endswith('?'):
+                for _ in range(2):  # at most two lone clarifying questions before an answer
+                    if not is_lone_question(reply):
                         break
                     reply = await self.say(utterances['clarify'], 'clarifying answer', timeout)
                 await self.say(utterances['followup'], 'follow-up', timeout)

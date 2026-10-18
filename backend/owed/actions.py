@@ -142,7 +142,8 @@ def refresh_forecasts(company):
                     (run['run_id'],node['node_id'])).fetchone()
             assumptions = previous['data'] if previous else {}
             target = date.fromisoformat(assumptions['target_date']) if assumptions.get('target_date') else run['target_date'] or target_for(run['question'])
-            snap=snapshot(company,target,assumptions.get('excluded_customer_id',run['excluded_customer_id']),assumptions.get('assumed_customer_id'))
+            excluded=assumptions.get('excluded_customer_id') if previous else run['excluded_customer_id']
+            snap=snapshot(company,target,excluded,assumptions.get('assumed_customer_id'))
             from owed.finance.history import emit_forecast
             emit_forecast(run['run_id'],node['node_id'],snap)
 

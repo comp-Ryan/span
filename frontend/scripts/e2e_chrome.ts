@@ -123,7 +123,7 @@ async function chatAndDecisions(browser: Browser) {
     await page.reload(); await page.getByRole('heading', { name: 'E2E payroll check', exact: true }).waitFor()
     await page.locator('.chat-history-item a', { hasText: 'E2E payroll check' }).first().waitFor()
     const key = await page.evaluate(() => Object.keys(localStorage).find(k => k.startsWith('span.chatTitle:')))
-    if (!key || !key.includes(runId) || localStorage === undefined) return `stored under ${key}`
+    if (!key || !key.includes(runId)) throw new Error(`title not stored per run id (found ${key})`)
     return `stored under ${key}`
   })
   await check('typed "yes" in the dock resolves the pending decision (same path as spoken yes)', async () => {
@@ -137,10 +137,12 @@ async function chatAndDecisions(browser: Browser) {
     await page.locator('.dock .dhead').click()
     return 'decision.resolved received'
   })
-  await check('dock "Speak follow-up" mic (browser voice, Chrome fake audio)', async () => {
+  await check('dock call mode: reopening a chat with voice re-arms the microphone after Span speaks (Chrome fake audio)', async () => {
     await page.goto(`${BASE}/?run=${runId}&live&voice=browser&company=${COMPANY}`)
     if (await page.locator('.dock .bubble').count()) await page.locator('.dock .bubble').click()  // browser-voice opens the dock by itself
-    await page.getByRole('button', { name: 'Speak one follow-up' }).click()
+    const mic = page.getByRole('button', { name: /Speak one follow-up|Listening for one follow-up/ })
+    await mic.waitFor()
+    if (await mic.isEnabled()) await mic.click()  // resting: arm it by hand; otherwise the call armed it after speaking
     const status = page.locator('.browser-voice-control [role="status"], .browser-voice-control [role="alert"]')
     await until(async () => (await status.textContent()) || '', t => t.trim().length > 0, 'voice status', 10000)
     const first = (await status.textContent())!.trim()
@@ -255,5 +257,5 @@ async function main() {
 }
 main().catch(e => { console.error(String(e)); process.exitCode = 1 }).finally(async () => {
   for (const child of children) child.kill('SIGTERM')
-  await Promise.all(children.map(child => child.exitCode !== null ? Promise.resolve() : new Promise(resolve => child.once('exit', resolve))))
+  await Promise.all(children.map(child => (child.exitCode !== null || child.signalCode !== null) ? Promise.resolve() : new Promise(resolve => child.once('exit', resolve))))
 })

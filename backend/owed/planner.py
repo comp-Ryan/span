@@ -114,13 +114,18 @@ class ToolContext:
     def __init__(self, run_id, company, target, assumption_asked=False):
         self.run_id, self.company, self.target = run_id, company, target
         self.parent = 'context'
-        self.snap = None
+        self.snap = None            # baseline books for self.target; never a customer scenario
+        self.scenario = None        # the owner's customer assumption, used for levers
+        self.last_forecast_snapshot = None
         self.snaps = {}
         self.assumption_asked = assumption_asked  # one clarifying question per conversation
+        self.pending_question = None
 
     def snapshot_for(self, target):
-        """Snapshot whose payroll schedule and bills cover `target` (cached per run)."""
-        if self.snap is not None and target == self.target:
+        """Baseline snapshot whose payroll schedule and bills cover `target` (cached per run)."""
+        if target == self.target:
+            if self.snap is None:
+                self.snap = snapshot(self.company, self.target)
             return self.snap
         if target not in self.snaps:
             self.snaps[target] = snapshot(self.company, target)
@@ -144,7 +149,7 @@ class ToolContext:
             result = jsonable_encoder(result)
             if name == 'forecast_cash':
                 from owed.finance.history import emit_forecast
-                result = await asyncio.to_thread(emit_forecast, self.run_id, node, self.snap, data=result, status='done')
+                result = await asyncio.to_thread(emit_forecast, self.run_id, node, self.last_forecast_snapshot or self.snap, data=result, status='done')
             else:
                 await asyncio.to_thread(emit, self.run_id, 'node.update', {'node_id': node, 'status': 'done', 'data': result})
             return result
@@ -176,6 +181,7 @@ class ToolContext:
                 if target != self.target:
                     self.target = target
                     self.snap = snapshot(self.company, self.target)
+                    self.scenario = None
             if self.snap is None:
                 self.snap = snapshot(self.company, self.target)
             s = self.snap
@@ -191,18 +197,24 @@ class ToolContext:
                 s = snapshot(self.company, self.target,
                              excluded_customer_id=None if args['will_pay'] else customer_id,
                              assumed_customer_id=customer_id if args['will_pay'] else None)
-            self.snap = s
+                self.scenario = s   # levers follow the owner's assumption; baseline reads do not
+            self.last_forecast_snapshot = s
             with conn() as c:
                 c.execute('update runs set target_date=%s, excluded_customer_id=%s where run_id=%s',
                           (self.target, s['forecast'].get('excluded_customer_id'), self.run_id))
             result = {**s['forecast'], **self.books(s)}
             if not customer_id and s.get('scored') and not self.assumption_asked:
                 # Before any owner assumption: is there one dependable late payer whose timing decides the verdict?
+                # gap is clamped at zero in the books, so use the signed buffer (positive = short).
+                f = s['forecast']
+                buffer = q.f(f.get('need') or 0) - q.f(f.get('cash_at_target') or 0)
                 with conn() as c:
                     stats = {r['id']: r for r in pt._customer_stats(c, self.company)}
-                pivotal = pt.pivotal_customer(s['scored'], self.target, stats, q.f(s['forecast'].get('gap') or 0))
+                pivotal = pt.pivotal_customer(s['scored'], self.target, stats, buffer)
                 if pivotal:
                     result['assumption_needed'] = pivotal
+                    self.assumption_asked = True
+                    self.pending_question = pivotal['question']
             return result
         if name in NEW_TOOLS:
             return self.answer_tool(name, args)
@@ -210,7 +222,7 @@ class ToolContext:
             self.snap = snapshot(self.company, self.target)
         s = self.snap
         if name == 'rank_chase':
-            levers = levers_for(s, self.company)
+            levers = levers_for(self.scenario or s, self.company)
             if not levers:
                 return {'levers': [], **self.books(s)}
             # A real owner decision on this levers node; the action worker texts only approved customers.
@@ -395,14 +407,14 @@ def verdict_of(text: str) -> dict:
     import re as _re
     head = text.strip().lower()[:40]
     verdict = None
-    if _re.match(r"^(no\b|nope|not quite|you('| a)re (short|not)|you won't|you will not|you can't|you cannot|you do not|you don't)", head):
+    if _re.match(r"^(no\b(?! problem)|nope|not quite|you('| a)re (short|not)|you won't|you will not|you can't|you cannot|you do not|you don't)", head):
         verdict = 'no'
     elif _re.match(r'^(barely|just barely|tight|it(\'| i)s close)', head):
         verdict = 'barely'
-    elif _re.match(r"^(yes|yep|you('| a)re (fine|covered|good|ok)|you will\b|you can\b(?!not)|you'll make|you make)", head):
+    elif _re.match(r"^(no problem|yes|yep|you('| a)re (fine|covered|good|ok)|you will\b|you can\b(?!not)|you'll make|you make)", head):
         verdict = 'yes'
     amounts = list(_re.finditer(r'\$\s?([\d,]+(?:\.\d+)?)\s*(k|thousand|million|m)?\b', text, _re.IGNORECASE))
-    after = _re.compile(r'^\W{0,3}[^.;]{0,30}?\b(short(?:fall)?|gap|left|to spare|buffer|remaining|at risk|cushion)\b', _re.IGNORECASE)
+    after = _re.compile(r'^\W{0,3}[^.;$]{0,30}?\b(short(?:fall)?|gap|left|to spare|buffer|remaining|at risk|cushion)\b', _re.IGNORECASE)
     before = _re.compile(r'\b(shortfall|short by|gap of|buffer of|cushion of|low point of|left with|spare)\b[^.;$]{0,40}$', _re.IGNORECASE)
 
     def cued(m):
@@ -421,6 +433,19 @@ def verdict_of(text: str) -> dict:
     if number is not None:
         out['number'] = round(number, 2)
     return out
+
+
+def assumption_asked_in_chain(run_id, limit=12):
+    """True when this run or any ancestor already asked the clarifying question."""
+    with conn() as c:
+        rid, hops = run_id, 0
+        while rid and hops < limit:
+            if c.execute('''select 1 from events where run_id=%s and event='node.update'
+                            and data->'data' ? 'assumption_needed' limit 1''', (rid,)).fetchone():
+                return True
+            row = c.execute('select parent_run_id from runs where run_id=%s', (rid,)).fetchone()
+            rid, hops = (row['parent_run_id'] if row else None), hops + 1
+    return False
 
 
 def pending_assumption(run_id):
@@ -458,12 +483,17 @@ def planner_followup_message(question, parent_question=None, parent_speech=None,
     return '\n'.join(parts)
 
 
-def is_awaiting_input(spoken: str, detail: str = '') -> bool:
+ABBREVIATIONS = re.compile(r'\b(Co|Inc|Ltd|Corp|LLC|Bros|Mr|Mrs|Ms|Dr|St|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.')
+
+
+def is_awaiting_input(spoken: str, detail: str = '', expected: str | None = None) -> bool:
     """Identify a lone clarification question, not a spoken report with a question in it."""
     text = spoken.strip()
+    if expected and text == expected.strip():
+        return True
     if detail.strip() or not text.endswith('?') or text.count('?') != 1:
         return False
-    if re.search(r'[.!](?:\s|$)', text[:-1]):
+    if re.search(r'[.!](?:\s|$)', ABBREVIATIONS.sub(r'\1', text)[:-1]):
         return False
     question = re.match(r'^(?:should|would|could|can|do you|does\b.+|did\b.+|is\b.+|are\b.+|will\b.+)\b',
                         text, re.IGNORECASE)
@@ -509,7 +539,8 @@ FINAL_NUDGE = ('Tool budget reached. Answer the owner now using only the tool re
 
 
 async def run_planner(run_id, company, question, target, client=None, parent_context=None):
-    ctx = ToolContext(run_id, company, target, assumption_asked=bool((parent_context or {}).get('pending_assumption')))
+    pc = parent_context or {}
+    ctx = ToolContext(run_id, company, target, assumption_asked=bool(pc.get('pending_assumption') or pc.get('assumption_asked')))
     await asyncio.to_thread(emit, run_id, 'node.create', {'node_id': 'context', 'type': 'context',
         'title': 'Understanding the question', 'status': 'done', 'parent': None,
         'data': {'question': question, 'as_of': '2026-10-06', 'target_date': target.isoformat()}})
@@ -519,7 +550,7 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
             if not settings.gemini_api_key:
                 raise ValueError('Gemini is not configured. Payroll questions work without keys.')
             client = genai.Client(api_key=settings.gemini_api_key)
-        prompt = planner_followup_message(question, **(parent_context or {}))
+        prompt = planner_followup_message(question, **{k: v for k, v in pc.items() if k != 'assumption_asked'})
         contents = [types.Content(role='user', parts=[types.Part(text=prompt)])]
         config = types.GenerateContentConfig(system_instruction=system_prompt(company, target),
             tools=[types.Tool(function_declarations=TOOLS)],
@@ -544,7 +575,7 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
                 detail = detail.strip()
                 if not text.strip():
                     raise ValueError('Gemini returned an empty answer')
-                awaiting_input = is_awaiting_input(text, detail)
+                awaiting_input = is_awaiting_input(text, detail, expected=ctx.pending_question)
                 await asyncio.to_thread(emit, run_id, 'node.create', {'node_id': 'answer', 'type': 'answer',
                     'title': text[:160], 'status': 'done', 'parent': ctx.parent,
                     'data': {'spoken': text, 'detail': detail, 'awaiting_input': awaiting_input, **({} if awaiting_input else verdict_of(text))}})

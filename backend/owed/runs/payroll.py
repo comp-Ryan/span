@@ -44,6 +44,14 @@ def planner_for_call(source: str, intent: str, gemini_configured: bool) -> bool:
     """Use the conversational planner for configured voice payroll questions only."""
     return source == 'call' and intent == 'payroll_check' and gemini_configured
 
+
+def continues_planner(parent, gemini_configured: bool) -> bool:
+    """A reply under a planner-answered question (any free question, or a voice payroll question) stays with the planner."""
+    if not parent or not gemini_configured:
+        return False
+    intent, source = parent.get('intent'), parent.get('source')
+    return intent not in DETERMINISTIC or planner_for_call(source, intent, gemini_configured)
+
 @sentry_sdk.trace(op="finance.snapshot")
 def snapshot(company: str, target: date, excluded_customer_id=None, assumed_customer_id=None):
     with conn() as c:
@@ -199,7 +207,7 @@ async def run_payroll(run_id: str, company: str, target: date, parent_run_id=Non
 def ask(body: Ask, tasks: BackgroundTasks, company: str = settings.demo_company):
     if not body.question.strip():
         raise HTTPException(422, 'Question must not be blank')
-    from owed.planner import pending_assumption, route_intent, run_planner
+    from owed.planner import assumption_asked_in_chain, pending_assumption, route_intent, run_planner
     from owed.runs.branches import branch_customer, parent_run, show_late
     parent = parent_run(body.parent_run_id, company) if body.parent_run_id else None
     target = (parent.get('target_date') or target_for(parent['question'])) if parent else target_for(body.question)
@@ -208,7 +216,7 @@ def ask(body: Ask, tasks: BackgroundTasks, company: str = settings.demo_company)
         target = target_for(body.question)
     intent = route_intent(body.question)
     customer = None
-    if parent and intent in DETERMINISTIC and parent.get('intent') not in DETERMINISTIC and settings.gemini_api_key:
+    if parent and intent in DETERMINISTIC and continues_planner(parent, bool(settings.gemini_api_key)):
         # A reply to the planner (e.g. answering its clarifying question) continues that conversation.
         intent = 'followup'
     if intent == 'what_if_customer':
@@ -231,6 +239,7 @@ def ask(body: Ask, tasks: BackgroundTasks, company: str = settings.demo_company)
             'parent_question': parent['question'],
             'parent_speech': (prior['data'].get('text') if prior else None),
             'pending_assumption': pending_assumption(body.parent_run_id),
+            'assumption_asked': assumption_asked_in_chain(body.parent_run_id),
         }
     if intent == 'payroll_check' and planner_for_call(body.source, intent, bool(settings.gemini_api_key)):
         tasks.add_task(run_planner, run_id, company, body.question, target, parent_context=parent_context)

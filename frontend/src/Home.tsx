@@ -102,7 +102,7 @@ function ForecastTrend({ company }: { company: string }) {
   const last = series.points.at(-1)
   return <section className="card spark trend" data-testid="forecast-trend">
     <div className="head"><b>Forecast over time</b>
-      {series.latest && <span className="fine">latest: {series.latest.coverage < 0 ? `${money(series.latest.coverage)} short` : `${money(series.latest.coverage)} to spare`} on {fmtDay(series.latest.target)}</span>}
+      {series.latest && <span className="fine">latest: {series.latest.coverage < 0 ? `${money(-series.latest.coverage)} short` : `${money(series.latest.coverage)} to spare`} on {fmtDay(series.latest.target)}</span>}
     </div>
     {state.error ? <div className="fine" role="alert" style={{ color: 'var(--red)' }}>Forecast history unavailable: {state.error}</div>
       : !state.points ? <div className="thinking" style={{ height: 60 }}><i/><i/><i/> loading</div>

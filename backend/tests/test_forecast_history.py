@@ -96,3 +96,18 @@ def test_cash_history_is_a_compact_company_series_for_the_home_chart(run_id):
     assert client.get('/api/cash/history?company=company-404').status_code == 404
     assert client.get('/api/cash/history?company=company-020&limit=0').status_code == 422
     assert client.get('/cash/history?company=company-020').status_code == 200
+
+
+def test_payment_refresh_keeps_a_baseline_forecast_baseline(run_id):
+    """A baseline node must not inherit the run's last customer exclusion when payments refresh forecasts."""
+    ctx = ToolContext(run_id, 'company-020', date(2026, 10, 20))
+    assert 'error' not in asyncio.run(ctx.execute('forecast_cash', {}))                                      # baseline
+    assert 'error' not in asyncio.run(ctx.execute('forecast_cash', {'customer_id': 'cust-customer-37', 'will_pay': True}))
+    assert 'error' not in asyncio.run(ctx.execute('forecast_cash', {'customer_id': 'cust-customer-37', 'will_pay': False}))  # run column now excludes 37
+    refresh_forecasts('company-020')
+    after = history('company-020', run_id, 20)['forecasts']
+    assert len(after) == 6
+    refreshed = after[3:]
+    assert not refreshed[0]['forecast'].get('excluded_customer_id') and not refreshed[0]['forecast'].get('assumed_customer_id')
+    assert refreshed[1]['forecast']['assumed_customer_id'] == 'cust-customer-37'
+    assert refreshed[2]['forecast']['excluded_customer_id'] == 'cust-customer-37'

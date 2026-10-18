@@ -38,34 +38,49 @@ def speech(text, caller=False):
     return {'event': 'speech', 'data': data}
 
 
-def test_assess_reads_the_bridge_run():
-    events = [
+def tool(node_id, name, status='done'):
+    return [{'event': 'node.create', 'data': {'node_id': node_id, 'type': 'forecast', 'title': 'Forecasting cash',
+                                              'data': {'tool': name, 'args': {}}}},
+            {'event': 'node.update', 'data': {'node_id': node_id, 'status': status, 'data': {'gap': 385} if status == 'done' else {'error': 'boom'}}}]
+
+
+def bridge_run(second_tool_status='done'):
+    # Production order: the books are read first, then the one question, then the owner's answer, then the re-forecast.
+    return [
         {'event': 'run.start', 'data': {'run_id': 'r'}},
         {'event': 'node.create', 'data': {'node_id': 'context', 'type': 'context', 'title': 'Live phone call'}},
         speech('Hi, how can I help?'),
         speech('Am I going to make payroll these next two weeks?', caller=True),
+        *tool('tool-1', 'forecast_cash'),
         speech('Should I assume Evergreen will pay by payday?'),
         speech('No.', caller=True),
-        {'event': 'node.create', 'data': {'node_id': 'tool-1', 'type': 'forecast', 'title': 'Forecasting cash',
-                                          'data': {'tool': 'forecast_cash', 'args': {}}}},
-        {'event': 'node.update', 'data': {'node_id': 'tool-1', 'status': 'done', 'data': {'gap': 385}}},
-        speech('No, you are about $385 short.'),
+        *tool('tool-2', 'forecast_cash', second_tool_status),
+        speech('No, you are about $669 short. Would you like me to see who you can chase?'),  # an offer, not a clarification
         speech('What if Evergreen does pay?', caller=True),
-        {'event': 'node.create', 'data': {'node_id': 'tool-2', 'type': 'forecast', 'title': 'Forecasting cash',
-                                          'data': {'tool': 'forecast_cash', 'args': {'will_pay': True}}}},
+        *tool('tool-3', 'forecast_cash'),
         speech('Then you would be covered.'),
         {'event': 'run.end', 'data': {'status': 'closed'}},
     ]
-    a = smoke.assess(events)
+
+
+def test_assess_reads_the_bridge_run():
+    a = smoke.assess(bridge_run())
     assert a['greeting'] == 'Hi, how can I help?'
     assert a['caller_turns'] == ['Am I going to make payroll these next two weeks?', 'No.', 'What if Evergreen does pay?']
-    assert a['tool_calls'] == ['forecast_cash', 'forecast_cash']
+    assert a['tool_calls'] == ['forecast_cash', 'forecast_cash', 'forecast_cash'] and a['failed_tools'] == []
     assert a['clarifying_questions'] == ['Should I assume Evergreen will pay by payday?']
-    assert a['spoken_answer'] == 'No, you are about $385 short.'
+    # the spoken answer is what came back after the owner answered the question, not the question itself
+    assert a['spoken_answer'] == 'No, you are about $669 short. Would you like me to see who you can chase?'
     assert a['followup_answer'] == 'Then you would be covered.'
     assert a['failed'] is None and a['ended'] == 'closed'
-    assert a['checks'] == {'greeting': True, 'transcribed_question': True, 'tool_calls': True, 'spoken_answer': True,
-                           'one_clarifying_question': True, 'followup_answered': True}
+    assert a['checks'] == {'greeting': True, 'transcribed_question': True, 'tool_calls': True, 'no_failed_tools': True,
+                           'spoken_answer': True, 'one_clarifying_question': True, 'followup_answered': True}
+
+
+def test_assess_fails_when_a_tool_failed_even_if_the_bot_kept_talking():
+    a = smoke.assess(bridge_run(second_tool_status='failed'))
+    assert a['failed_tools'] == ['forecast_cash'] and a['checks']['no_failed_tools'] is False
+    assert a['tool_calls'] == ['forecast_cash', 'forecast_cash']  # only completed calls count
 
 
 def test_assess_reports_a_rejected_live_session():
@@ -75,4 +90,10 @@ def test_assess_reports_a_rejected_live_session():
               {'event': 'run.end', 'data': {'status': 'closed'}}]
     a = smoke.assess(events)
     assert a['failed'] == 'Voice session disconnected' and a['greeting'] is None
-    assert not any(a['checks'].values())
+    assert not any(v for k, v in a['checks'].items() if k != 'no_failed_tools')  # nothing ran, so nothing failed
+
+
+def test_lone_question_is_one_question_and_nothing_else():
+    assert smoke.is_lone_question('Should I assume Evergreen will pay by October 20, or treat them as not paying?')
+    assert not smoke.is_lone_question("You'll be $669 short. Would you like me to see who you can chase?")
+    assert not smoke.is_lone_question('No, you are short.')

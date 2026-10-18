@@ -15,6 +15,10 @@ from owed.planner import score_row, verdict_of
      {'verdict': 'no', 'number': 384.94}),
     # several amounts and no cue: a yes/no without a headline number
     ('You can take the order, but their balance would reach $2,538.01 and $668.58 is overdue.', {'verdict': 'yes'}),
+    # the cue window must not jump over another dollar amount
+    ("No, payroll is $13,275 and you'll be $669 short.", {'verdict': 'no', 'number': 669}),
+    ('Yes, you can cover the $9,800 payroll with $600 to spare.', {'verdict': 'yes', 'number': 600}),
+    ("No problem, you're covered with $600 to spare.", {'verdict': 'yes', 'number': 600}),
 ])
 def test_verdict(text, expected):
     assert verdict_of(text) == expected

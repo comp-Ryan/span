@@ -146,7 +146,7 @@ def test_customer_scenario_uses_selected_target_for_subsequent_levers(monkeypatc
 
     assert result['source'] == 'scenario' and result['bank_balance'] == 100 and result['target_date'] == '2026-10-20'
     assert ctx.target == date(2026, 10, 20)
-    assert ctx.snap['forecast']['source'] == 'scenario'
+    assert ctx.snap['forecast']['source'] == 'baseline' and ctx.scenario['forecast']['source'] == 'scenario'
     assert baseline['forecast']['source'] == 'baseline'
     assert calls == [
         ('company-1', date(2026, 10, 20), None, None),
@@ -579,3 +579,77 @@ def test_gemini_billing_and_rate_limit_errors_are_explained_and_retried(monkeypa
     emitted.clear()
     asyncio.run(planner.run_planner('run-2', 'company-1', 'Am I okay?', date(2026, 10, 9), client=NS(aio=NS(models=Busy()))))
     assert len(calls) == 3 and any(d.get('node_id') == 'answer' for e, d in emitted if e == 'node.create')
+
+
+# ---------- review fixes: signed buffer, abbreviations, scenario isolation, asked-once, routing ----------
+
+def covered_snapshot(company, target, excluded_customer_id=None, assumed_customer_id=None):
+    forecast = {'gap': 0, 'cash_at_target': 5000, 'need': 1000, 'source': 'scenario' if (excluded_customer_id or assumed_customer_id) else 'baseline',
+                'excluded_customer_id': excluded_customer_id, 'assumed_customer_id': assumed_customer_id}
+    return {**fake_books(forecast=forecast), 'scored': ROWS}
+
+
+def test_no_clarifying_question_when_payroll_is_comfortably_covered(monkeypatch):
+    """gap is clamped at zero in the books; the question must use the signed buffer (need - cash)."""
+    monkeypatch.setattr(planner, 'conn', lambda: Connection({'id': 'ever'}))
+    monkeypatch.setattr(pt, '_customer_stats', lambda c, company: [{'id': k, **v} for k, v in STATS.items()])
+    monkeypatch.setattr(planner, 'snapshot', covered_snapshot)
+    ctx = planner.ToolContext('run-1', 'company-1', PAYDAY)
+    assert 'assumption_needed' not in ctx.read_tool('forecast_cash', {})
+
+
+@pytest.mark.parametrize('text', [
+    'Should I assume Yeoman Roasters Co. will pay the $800 they owe by October 20, or treat them as not paying?',
+    'Should I assume Grimaldi & Sons Inc. will pay by Friday, or treat them as not paying?',
+])
+def test_question_detection_ignores_company_abbreviations(text):
+    assert planner.is_awaiting_input(text) is True
+
+
+def test_question_detection_accepts_the_exact_pending_question_as_a_fallback():
+    question = 'Should I assume X Co. Ltd. pays by Oct. 20, or not?'
+    assert planner.is_awaiting_input(question, expected=question) is True
+    assert planner.is_awaiting_input('No, you are short. Want me to text them?', expected=question) is False
+
+
+def test_customer_scenario_never_replaces_the_baseline_snapshot(monkeypatch):
+    monkeypatch.setattr(planner, 'conn', lambda: Connection({'id': 'ever'}))
+    monkeypatch.setattr(pt, '_customer_stats', lambda c, company: [{'id': k, **v} for k, v in STATS.items()])
+    calls = []
+
+    def fake_snapshot(company, target, excluded_customer_id=None, assumed_customer_id=None):
+        calls.append((excluded_customer_id, assumed_customer_id))
+        return covered_snapshot(company, target, excluded_customer_id, assumed_customer_id)
+
+    monkeypatch.setattr(planner, 'snapshot', fake_snapshot)
+    ctx = planner.ToolContext('run-1', 'company-1', PAYDAY)
+    scenario = ctx.read_tool('forecast_cash', {'customer_id': 'ever', 'will_pay': False})
+    assert scenario['source'] == 'scenario' and scenario['excluded_customer_id'] == 'ever'
+    assert ctx.snap['forecast']['source'] == 'baseline' and ctx.scenario['forecast']['source'] == 'scenario'
+    assert ctx.snapshot_for(PAYDAY) is ctx.snap  # answer tools project on the baseline, not the scenario
+    baseline = ctx.read_tool('forecast_cash', {})
+    assert baseline['source'] == 'baseline' and not baseline.get('excluded_customer_id')
+    assert ctx.last_forecast_snapshot is ctx.snap
+
+
+def test_the_question_is_asked_once_within_one_context(monkeypatch):
+    monkeypatch.setattr(planner, 'conn', lambda: Connection({'id': 'ever'}))
+    monkeypatch.setattr(pt, '_customer_stats', lambda c, company: [{'id': k, **v} for k, v in STATS.items()])
+    monkeypatch.setattr(planner, 'snapshot', lambda company, target, **kw: {
+        **fake_books(forecast={'gap': 385, 'cash_at_target': 100, 'need': 485}), 'scored': ROWS})
+    ctx = planner.ToolContext('run-1', 'company-1', PAYDAY)
+    first = ctx.read_tool('forecast_cash', {})
+    assert first['assumption_needed'] and ctx.assumption_asked is True and ctx.pending_question == first['assumption_needed']['question']
+    assert 'assumption_needed' not in ctx.read_tool('forecast_cash', {})  # a phone call keeps one context
+
+
+@pytest.mark.parametrize(('parent', 'expected'), [
+    ({'intent': 'payroll_check', 'source': 'call'}, True),    # the planner answered it (browser or phone voice)
+    ({'intent': 'payroll_check', 'source': 'web'}, False),    # deterministic payroll run
+    ({'intent': 'free_question', 'source': 'web'}, True),
+    ({'intent': 'what_if_customer', 'source': 'web'}, False),
+])
+def test_follow_ups_continue_the_planner_when_the_parent_was_a_planner_run(parent, expected):
+    from owed.runs.payroll import continues_planner
+    assert continues_planner(parent, gemini_configured=True) is expected
+    assert continues_planner(parent, gemini_configured=False) is False

@@ -7,9 +7,11 @@ export type HistoryPoint = {
 export type TrendPoint = { forecast_id: string; computed_at: string; target: string; coverage: number; label: string }
 
 export function coverageSeries(points: HistoryPoint[]) {
-  const sorted = points.filter(p => Number.isFinite(p.gap)).sort((a, b) => Date.parse(a.computed_at) - Date.parse(b.computed_at))
+  // The books clamp gap at zero, so coverage is the signed buffer: cash before payroll minus payroll need.
+  const buffer = (p: HistoryPoint) => { const v = Math.round((Number(p.cash_at_target) - Number(p.need)) * 100) / 100; return v === 0 ? 0 : v }
+  const sorted = points.filter(p => Number.isFinite(buffer(p))).sort((a, b) => Date.parse(a.computed_at) - Date.parse(b.computed_at))
   const out: TrendPoint[] = sorted.map(p => ({
-    forecast_id: p.forecast_id, computed_at: p.computed_at, target: p.target, coverage: p.gap === 0 ? 0 : -p.gap,
+    forecast_id: p.forecast_id, computed_at: p.computed_at, target: p.target, coverage: buffer(p),
     label: `payday ${p.target}${p.excluded_customer_id ? ` · without ${p.excluded_customer_id}` : ''}${p.assumed_customer_id ? ` · assuming ${p.assumed_customer_id} pays` : ''}`,
   }))
   const values = out.map(p => p.coverage)
