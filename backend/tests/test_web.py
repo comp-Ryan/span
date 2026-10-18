@@ -9,6 +9,7 @@ def test_production_static_and_deep_report_do_not_shadow_api(tmp_path):
     (tmp_path / 'index.html').write_text('<html>Owed product</html>')
     (tmp_path / 'assets').mkdir()
     (tmp_path / 'assets' / 'app.js').write_text('window.owed = true')
+    (tmp_path / 'favicon.png').write_bytes(b'\x89PNG')
     test_app = FastAPI()
     @test_app.get('/api/health')
     def health():
@@ -21,6 +22,7 @@ def test_production_static_and_deep_report_do_not_shadow_api(tmp_path):
         assert client.get(path, headers={'accept': 'text/html,application/xhtml+xml'}).text == '<html>Owed product</html>'
     assert client.get('/api/health').json() == {'ok': True}
     assert client.get('/assets/app.js').status_code == 200
+    assert client.get('/favicon.ico').status_code == 200  # browsers ask for it unprompted; no console 404
     for path in ('/assets/missing.js', '/api/missing', '/.env', '/owed/config.py'):
         assert client.get(path).status_code == 404
 

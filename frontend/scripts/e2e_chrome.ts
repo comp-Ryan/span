@@ -192,11 +192,15 @@ async function chatAndDecisions(browser: Browser, fakeAudio: string) {
     await page.locator('#visa-btn').click(); await page.locator('#receipt:not(.hidden)').waitFor()
     await page.goto(`${BASE}/get-paid?company=${COMPANY}`)
     await page.locator('[data-testid="payments"] tbody tr').first().waitFor()
-    const paid = await page.locator('[data-testid="pay-links"] tbody tr', { hasText: 'paid' }).count()
+    const paid = await page.locator('[data-testid="pay-links"] tbody td').evaluateAll(cells => cells.filter(c => c.textContent?.trim().toLowerCase() === 'paid').length)
     const collected = await page.getByText('Collected').locator('..').textContent()
     return `payments table has a row; ${paid} link(s) marked paid; ${collected?.replace(/\s+/g, ' ').slice(0, 60)}`
   })
-  await check('report opens, Print calls window.print, PDF downloads', async () => {
+  await check('report: Generate report on the Reports page, then it opens, Print calls window.print, PDF downloads', async () => {
+    // A payroll chat with an open approval loop never closes on its own, so Reports offers "Generate report" for it.
+    await page.goto(`${BASE}/reports?company=${COMPANY}`)
+    const row = page.locator('[data-testid="unreported"] .rep-row', { hasText: 'Will I make payroll in two weeks?' }).first()
+    if (await row.count()) await row.getByRole('button', { name: /Generate/ }).click()
     const runs = await until(() => json(`/api/runs?company=${COMPANY}`), j => j.runs.some((x: any) => x.run_id === runId && x.report_id), 'report id', 120000)
     const reportId = runs.runs.find((x: any) => x.run_id === runId).report_id
     await page.goto(`${BASE}/reports?company=${COMPANY}`); await page.locator(`a[href^="/report/${reportId}"]`).first().waitFor()

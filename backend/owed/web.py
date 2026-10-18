@@ -25,6 +25,14 @@ def install_frontend(app: FastAPI, directory: Path = STATIC):
             response.headers['Vary'] = ', '.join(filter(None, [response.headers.get('Vary'), 'Accept']))
         return response
 
+    @app.get('/favicon.ico', include_in_schema=False)
+    def favicon():
+        # Browsers request this unprompted; answer with the PNG so the console stays free of 404s.
+        for name in ('favicon.ico', 'favicon.png'):
+            if (directory / name).is_file():
+                return FileResponse(directory / name, headers={'Cache-Control': 'public, max-age=86400'})
+        raise HTTPException(404, 'No favicon')
+
     @app.get('/', include_in_schema=False)
     def product():
         if not (directory / 'index.html').is_file():
