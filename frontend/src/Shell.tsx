@@ -6,7 +6,7 @@ import './pages.css'
 
 const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
 
-export type ShellPage = 'ask' | 'home' | 'get-paid' | 'reports' | 'customers'
+export type ShellPage = 'ask' | 'home' | 'get-paid' | 'reports' | 'customers' | 'sponsors'
 
 /** Shared top bar + left rail for the Get paid / Reports / Customers pages. `.main` is the scroll container. */
 export function Shell({ active, company, children, testId }: { active: ShellPage; company: string; children: ReactNode; testId?: string }) {
@@ -27,6 +27,7 @@ export function Shell({ active, company, children, testId }: { active: ShellPage
   const items: [ShellPage, string, ReactNode, string][] = [
     ['ask', '/', ICONS.chat, 'Ask'], ['home', '/home', ICONS.book, 'Home'], ['get-paid', '/get-paid', ICONS.card, 'Get paid'],
     ['reports', '/reports', ICONS.trend, 'Reports'], ['customers', '/customers', ICONS.person, 'Customers'],
+    ['sponsors', '/sponsors', ICONS.link, 'Integrations'],
   ]
   return <div className="app">
     <header className="topbar">

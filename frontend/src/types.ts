@@ -82,3 +82,6 @@ export interface HeatmapCell {
 export interface HeatmapCustomer { id: string; display_name: string; open_balance: number; cells: HeatmapCell[] }
 export interface HeatmapResponse { months: string[]; customers: HeatmapCustomer[] }
 export interface Health { ok: boolean; visa?: string; solana?: string; [k: string]: unknown }
+
+export interface SponsorCheck { name: string; track: string; status: 'pass' | 'warn' | 'fail' | 'off' | 'info'; detail: string; configured: boolean; ms: number }
+export interface SponsorChecks { generated_at: string; checks: SponsorCheck[]; summary: Partial<Record<SponsorCheck['status'], number>> }

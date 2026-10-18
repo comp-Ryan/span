@@ -6,6 +6,7 @@ import Home from './Home.tsx'
 import GetPaid from './GetPaid.tsx'
 import Reports from './Reports.tsx'
 import { CustomerDetailPage, CustomersList } from './Customers.tsx'
+import Sponsors from './Sponsors.tsx'
 
 const path = location.pathname
 const reportId = /^\/report\/([^/?#]+)/.exec(path)?.[1]
@@ -19,5 +20,6 @@ createRoot(document.getElementById('root')!).render(
     : is(/^\/reports\/?$/) ? <Reports />
     : customerId ? <CustomerDetailPage id={decodeURIComponent(customerId)} />
     : is(/^\/customers\/?$/) ? <CustomersList />
+    : is(/^\/sponsors\/?$/) ? <Sponsors />
     : <App />
 )

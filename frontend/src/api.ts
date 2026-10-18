@@ -1,5 +1,5 @@
 import type { HistoryPoint } from './forecastTrend'
-import type { Brief, CashProjection, Company, CustomerDetail, CustomerRow, Health, HeatmapResponse, PaymentsResponse, RawEvent, ReportDoc, ReportsResponse, RunSummary } from './types'
+import type { Brief, CashProjection, Company, CustomerDetail, CustomerRow, Health, HeatmapResponse, PaymentsResponse, RawEvent, ReportDoc, ReportsResponse, RunSummary , SponsorChecks } from './types'
 
 const BASE = '/api'
 
@@ -68,3 +68,5 @@ export async function generateReport(runId: string, company: string): Promise<{ 
   if (!r.ok) return null
   return r.json()
 }
+
+export const getSponsorChecks = () => getJson<SponsorChecks>('/sponsors/checks')

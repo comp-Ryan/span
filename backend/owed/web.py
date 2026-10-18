@@ -13,7 +13,7 @@ def install_frontend(app: FastAPI, directory: Path = STATIC):
     @app.middleware('http')
     async def page_navigation(request, call_next):
         path = request.url.path.rstrip('/')
-        is_page = path in ('/home', '/get-paid', '/reports', '/customers') or bool(re.fullmatch(r'/customers/[^/]+', path))
+        is_page = path in ('/home', '/get-paid', '/reports', '/customers', '/sponsors') or bool(re.fullmatch(r'/customers/[^/]+', path))
         wants_html = request.headers.get('accept', '').split(',')[0].strip().startswith('text/html')
         if request.method in ('GET', 'HEAD') and is_page and wants_html:
             if not (directory / 'index.html').is_file():

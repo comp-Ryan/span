@@ -24,6 +24,7 @@ from owed.finance.cash import router as cash_router
 from owed.finance.history import router as history_router
 from owed.api import router as product_router
 from owed.pages import router as pages_router
+from owed.sponsors import router as sponsors_router
 from owed.config import settings
 from owed.hub import STATIC as HUB_STATIC, router as hub_router
 from owed.payments import router as pay_router
@@ -53,7 +54,7 @@ app.mount("/hub/static", StaticFiles(directory=HUB_STATIC), name="hub-static")
 app.include_router(hub_router)
 for router in (product_router, cash_router, history_router, events_router, runs_router, payroll_router,
                voice_router, photon_router, decisions_router, negotiation_router, reports_router,
-               pay_router, pages_router):
+               pay_router, pages_router, sponsors_router):
     app.include_router(router)
     app.include_router(router, prefix='/api')
 app.include_router(portal_router)

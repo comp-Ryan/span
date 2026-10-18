@@ -399,3 +399,12 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .status { white-space: nowrap; }
 @media (max-width: 1050px) { .chat-sidebar { width: 165px; flex-basis: 165px; } }
 @media (max-width: 760px) { .chat-sidebar { width: 130px; flex-basis: 130px; padding: 12px 6px; } }
+/* Integrations page */
+.sponsor-summary{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 14px}
+.sponsors{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13px}
+.sponsors th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:#fafbf9}
+.sponsors td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.sponsors tr:last-child td{border-bottom:0}
+.sponsors .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.spill.pass{background:var(--green-bg);color:var(--green)}.spill.warn{background:var(--amber-bg);color:var(--amber-dk)}.spill.fail{background:#fde8e8;color:var(--red)}.spill.off,.spill.info{background:var(--line2);color:var(--muted)}
+.spill svg{margin-right:4px}
