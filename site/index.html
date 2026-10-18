@@ -216,6 +216,11 @@
   @media (prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important}}
   footer a{color:inherit}
 </style>
+<script>
+// A reload starts at the top: the hero is pinned and the run sheet scrubs with scroll, so a restored position lands mid-story.
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+(function () { var top = function () { if (!location.hash) window.scrollTo(0, 0); }; window.addEventListener('pageshow', top); window.addEventListener('load', function () { top(); setTimeout(top, 0); }); })();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -318,7 +323,6 @@
 
   <footer>Built solo at LA Hacks AI 2026 by Ryan Lee · Gemini · ElevenLabs · Tiger Data · Fetch.ai uAgents · Photon · Visa · Solana · Sentry · Intuit dataset · <a href="https://github.com/comp-Ryan/span">github.com/comp-Ryan/span</a></footer>
 </div>
-<script>if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; window.addEventListener('pageshow', function () { window.scrollTo(0, 0); });</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
 <script>
 (function () {
