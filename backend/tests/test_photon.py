@@ -64,10 +64,13 @@ def test_simulated_yes_actions_and_installment_payment(monkeypatch):
         reminders = [e['data'] for e in events if e['event']=='node.create' and e['data'].get('data',{}).get('kind')=='reminder']
         assert len(reminders) == 3
         assert all(r['data']['channel']=='simulated' and r['data']['draft']['source']=='template' for r in reminders)
-        assert len([e for e in events if e['data'].get('data',{}).get('kind')=='reply']) == 1
+        replies = [e['data']['data'] for e in events if e['data'].get('data',{}).get('kind')=='reply']
+        assert len(replies) == 3 and len({r['text'] for r in replies}) >= 2  # every reminder gets its own simulated reply
         with conn() as c:
-            neg = c.execute('select * from negotiations where run_id=%s', (rid,)).fetchone()
-            choice = c.execute("select d.*,r.company_id from decisions d join runs r using(run_id) where d.run_id=%s and payload->>'kind'='negotiation'", (rid,)).fetchone()
+            negs = c.execute('select * from negotiations where run_id=%s order by negotiation_id', (rid,)).fetchall()
+            assert len(negs) == 3
+            neg = negs[0]
+            choice = c.execute("select d.*,r.company_id from decisions d join runs r using(run_id) where d.run_id=%s and payload->>'negotiation_id'=%s", (rid, neg['negotiation_id'])).fetchone()
             # Prevent the separate local API worker racing this deterministic test.
             c.execute('update decisions set deadline=null where run_id=%s', (rid,))
         assert len(neg['rounds']) == 4

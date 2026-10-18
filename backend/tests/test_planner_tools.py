@@ -82,7 +82,7 @@ def test_forecast_cash_uses_the_owners_customer_assumption(ctx, snap):
 
 def test_rank_chase_matches_payroll_levers(ctx, snap):
     result = run(ctx, 'rank_chase')
-    assert result['levers'] == jsonable_encoder(levers_for(snap))
+    assert result['levers'] == jsonable_encoder(levers_for(snap, COMPANY))
     assert result['status'] == 'approval_required'
     assert result['decision_id']
     assert result['recommended'] == [lever['id'] for lever in result['levers']]

@@ -210,14 +210,14 @@ class ToolContext:
             self.snap = snapshot(self.company, self.target)
         s = self.snap
         if name == 'rank_chase':
-            levers = levers_for(s)
+            levers = levers_for(s, self.company)
             if not levers:
-                return {'levers': []}
+                return {'levers': [], **self.books(s)}
             # A real owner decision on this levers node; the action worker texts only approved customers.
             approval = self.approval('levers', {}, prompt='Text them?', options=[
                 {'id': 'yes', 'label': 'Yes, text them'}, {'id': 'chase_only', 'label': "Text, don't touch bills"},
                 {'id': 'no', 'label': 'Not now'}])
-            return {'levers': levers, 'recommended': [l['id'] for l in levers], **approval}
+            return {'levers': levers, 'recommended': [l['id'] for l in levers], **approval, **self.books(s)}
         if name == 'query_books':
             entity = args.get('entity')
             if entity == 'company':
@@ -323,8 +323,10 @@ class ToolContext:
         raise ValueError('Unknown tool')
 
     def books(self, s):
+        f = s['forecast']
         return {'bank_balance': s['bank'], 'payroll_due_by_target': s['payroll']['due_by_target'],
-                'headcount': s['payroll']['headcount'], 'bills_due_by_target': s['forecast']['bills_due_by_target'],
+                'headcount': s['payroll']['headcount'], 'bills_due_by_target': f['bills_due_by_target'],
+                'owed_total': f.get('owed_total'), 'expected_by_target': f.get('expected_by_target'), 'gap': f.get('gap'),
                 'target_date': self.target.isoformat(), 'as_of': q.AS_OF_DEFAULT.isoformat()}
 
     def approval(self, kind, arguments, prompt='Approve this action?', options=None):
@@ -367,7 +369,7 @@ Pick the one tool that answers the question, then answer. Usually one or two too
 - What if a customer doesn't pay (or does): identify them (find_customer, or rank_customers by largest_balance for "my biggest customer"), then one forecast_cash call with customer_id and will_pay, then answer.
 - How much am I owed / overdue / aging: receivables_summary.
 - Should I take an order or job: find_customer, then evaluate_order. Needed inputs are the customer, the amount and the payment terms; if the owner gave them, do not ask again. If the customer is new or unnamed, evaluate the cash side with check_affordability for any up-front cost.
-- Who to chase / collect: rank_chase (it opens an owner approval to text them). Also call rank_chase once when a payroll forecast is short (gap > 0) and no assumption_needed is outstanding: it proposes the one supported action and the owner decides. Never call send_message or defer_bill unless the owner asked about reminding or deferring.
+- Who to chase / collect: rank_chase (it opens an owner approval to text them). Its already_reminded list is customers Span texted earlier: mention them in one clause (already texted, waiting on a reply) and do not propose texting them again. Also call rank_chase once when a payroll forecast is short (gap > 0) and no assumption_needed is outstanding: it proposes the one supported action and the owner decides. Never call send_message or defer_bill unless the owner asked about reminding or deferring.
 Order/hiring/purchase questions need an amount; if the amount is missing, ask for it. Assume reasonable timing ("next week", "November") from the calendar above rather than asking.
 Outside money questions for this business (weather, news, general trivia), say briefly that you only help with this business's cash, bills, customers and payroll, and suggest one thing you can check. Do not call tools and give only Part 1 (no --- and no report).
 Work one step at a time. If a material fact or assumption is missing, ask exactly one short question and wait for the owner's answer before using tools or continuing. When forecast_cash returns assumption_needed, ask exactly its question (that one sentence, nothing else) and stop. When the owner answers it, call forecast_cash again with that customer_id, will_pay set to their answer and the same target_date, then continue. Use the owner's latest correction when they revise an assumption and redo only that step.

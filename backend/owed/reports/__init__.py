@@ -259,7 +259,10 @@ def build_report(con, run_id: str, report_id: str | None = None, narrate: bool =
     if not company:
         c = con.execute("select display_name from companies where company_id=%s", (run["company_id"],)).fetchone()
         company = c["display_name"] if c else run["company_id"]
-    gap_then = first_fc.get("gap", answer.get("gap"))
+    # Planner runs that never forecast still read the books (rank_chase / query_books carry them).
+    books = next((n["data"] for n in nodes.values() if n["data"].get("bank_balance") is not None), {})
+    src = first_fc or books
+    gap_then = first_fc.get("gap", answer.get("gap", books.get("gap")))
     gap_now = last_fc.get("gap", gap_then)
     names = _customer_names(nodes)
     report_id = report_id or "rep-" + uuid4().hex[:12]
@@ -269,9 +272,10 @@ def build_report(con, run_id: str, report_id: str | None = None, narrate: bool =
         # Planner (Gemini) answers carry their own spoken verdict; payroll runs carry a yes/no and a gap.
         "answer": (answer["spoken"] if answer.get("spoken") and not answer.get("answer")
                    else _answer(answer.get("answer"), gap_then, gap_now)),
-        "numbers": {"bank_balance": ctx.get("bank_balance", first_fc.get("bank_balance")),
-                    "payroll": ctx.get("payroll_amount", first_fc.get("need")),
-                    "owed": first_fc.get("owed_total"), "expected_by_target": first_fc.get("expected_by_target"),
+        "numbers": {"bank_balance": ctx.get("bank_balance", src.get("bank_balance")),
+                    "payroll": ctx.get("payroll_amount", src.get("need", src.get("payroll_due_by_target"))),
+                    "owed": src.get("owed_total"), "expected_by_target": src.get("expected_by_target"),
+                    "bills_due_by_target": src.get("bills_due_by_target"),
                     "gap_then": gap_then, "gap_now": gap_now},
         "workflow": {"nodes": list(nodes.values()),
                      "edges": [{"from": n["parent"], "to": n["id"]} for n in nodes.values() if n["parent"] in nodes]},

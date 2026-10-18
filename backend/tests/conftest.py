@@ -10,7 +10,7 @@ os.environ['DEMO_COMPANY'] = 'company-020'
 for name in ('GEMINI_API_KEY', 'PHOTON_API_KEY', 'SENTRY_DSN', 'AGENTVERSE_API_KEY', 'ELEVENLABS_API_KEY',
              'BROWSER_USE_API_KEY', 'VISA_USER_ID', 'VISA_PASSWORD'):
     os.environ[name] = ''
-DB_FREE = {'test_voice.py', 'test_planner_conversation.py', 'test_solana_reference.py', 'test_call_smoke.py', 'test_reset_demo.py',
+DB_FREE = {'test_voice.py', 'test_planner_conversation.py', 'test_solana_reference.py', 'test_call_smoke.py', 'test_reset_demo.py', 'test_report_markdown.py',
            'test_planner_workflow.py', 'test_demo_db.py'}
 
 

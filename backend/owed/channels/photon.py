@@ -106,8 +106,20 @@ async def send_reminder(run_id, company, invoice_id, parent='n5', channel='sms',
         raise
 
 
+SIMULATED_REPLIES = ['Can we split this into two payments?',
+                     'Sorry for the delay. Could I pay half now and the rest in two weeks?',
+                     'Cash is tight this month. Is a payment plan possible?',
+                     'We can do two payments if that works for you.']
+
+
+def simulated_reply_text(customer_id):
+    """Stable per customer, so demos repeat but three customers never say the same thing."""
+    import hashlib
+    return SIMULATED_REPLIES[int(hashlib.sha256(str(customer_id).encode()).hexdigest(), 16) % len(SIMULATED_REPLIES)]
+
+
 async def simulated_reply(run_id, company, reminder):
-    """One disclosed synthetic customer replies; actual outbound channels wait for webhooks."""
+    """A disclosed synthetic customer replies to its reminder; actual outbound channels wait for webhooks."""
     if reminder['channel'] != 'simulated':
         return
     from owed.agents.negotiation import negotiate
@@ -118,7 +130,7 @@ async def simulated_reply(run_id, company, reminder):
             emit(run_id, 'node.create', {'node_id': node, 'type': 'action',
                 'title': f"{reminder['customer_name']} replied", 'status': 'done', 'parent': reminder['node_id'],
                 'data': {'kind': 'reply', 'customer_id': reminder['customer_id'], 'customer': reminder['customer_name'],
-                         'channel': 'simulated', 'simulated': True, 'text': 'Can we split this into two payments?',
+                         'channel': 'simulated', 'simulated': True, 'text': simulated_reply_text(reminder['customer_id']),
                          'classification': 'wants_plan'}}, connection=c)
     await negotiate(run_id, company, reminder['invoice_id'], node)
 

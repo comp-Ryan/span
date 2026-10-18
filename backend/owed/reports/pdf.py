@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import re
 from datetime import UTC, datetime
 from xml.sax.saxutils import escape
 
@@ -46,6 +47,35 @@ def _workflow(svg: str, max_w: float, max_h: float):
     return d
 
 
+def markdown_paragraphs(text: str) -> list[dict]:
+    """Planner narratives are light markdown; turn them into reportlab-safe blocks (heading, bullet, text)."""
+    blocks, para = [], []
+
+    def flush():
+        if para:
+            blocks.append({"kind": "text", "text": _inline(" ".join(para))})
+            para.clear()
+
+    def _inline(raw):
+        out = escape(raw.replace("`", ""))
+        return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", out)
+
+    for line in (text or "").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            flush()
+        elif re.match(r"^#{1,6}\s+", stripped):
+            flush()
+            blocks.append({"kind": "heading", "text": _inline(re.sub(r"^#{1,6}\s+", "", stripped))})
+        elif re.match(r"^[-*\u2022]\s+", stripped):
+            flush()
+            blocks.append({"kind": "bullet", "text": _inline(re.sub(r"^[-*\u2022]\s+", "", stripped))})
+        else:
+            para.append(stripped)
+    flush()
+    return blocks
+
+
 def render_pdf(report: dict) -> bytes:
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter, leftMargin=MARGIN, rightMargin=MARGIN, topMargin=MARGIN,
@@ -82,7 +112,13 @@ def render_pdf(report: dict) -> bytes:
     left += [Paragraph(escape(i), ITEM, bulletText="\u2022") for i in report["open_items"]] or \
         [Paragraph("Nothing open.", BODY)]
     left.append(Paragraph("SUMMARY", H))
-    left += [Paragraph(escape(p.strip()), _s("np", spaceAfter=6)) for p in report["narrative"].split("\n\n") if p.strip()]
+    for block in markdown_paragraphs(report["narrative"]):
+        if block["kind"] == "heading":
+            left.append(Paragraph(f"<b>{block['text']}</b>", _s("nh", spaceBefore=4, spaceAfter=2)))
+        elif block["kind"] == "bullet":
+            left.append(Paragraph(block["text"], ITEM, bulletText="\u2022"))
+        else:
+            left.append(Paragraph(block["text"], _s("np", spaceAfter=6)))
 
     right_w = fw - left_w - 18
     body_h = fh - 190

@@ -127,7 +127,9 @@ async function chatAndDecisions(browser: Browser, fakeAudio: string) {
     return `stored under ${key}`
   })
   await check('typed "yes" in the dock resolves the pending decision (same path as spoken yes)', async () => {
-    await page.locator('.dock .bubble').click()
+    await page.getByRole('button', { name: 'Yes, text them', exact: true }).waitFor({ timeout: 60000 })
+    await sleep(1500)  // let the replayed decision event land before answering it
+    if (await page.locator('.dock .bubble').count()) await page.locator('.dock .bubble').click()
     const decided = page.waitForResponse(r => r.url().includes('/api/decisions/') && r.request().method() === 'POST')
     const box = page.locator('.dinput input'); await box.fill('yes'); await box.press('Enter')
     const r = await decided; if (!r.ok()) throw new Error(`decision POST ${r.status()}`)
@@ -137,7 +139,7 @@ async function chatAndDecisions(browser: Browser, fakeAudio: string) {
   })
   await check('dock "Speak follow-up" mic (browser voice, Chrome fake audio)', async () => {
     await page.goto(`${BASE}/?run=${runId}&live&voice=browser&company=${COMPANY}`)
-    await page.locator('.dock .bubble').click()
+    if (await page.locator('.dock .bubble').count()) await page.locator('.dock .bubble').click()  // browser-voice opens the dock by itself
     await page.getByRole('button', { name: 'Speak one follow-up' }).click()
     const status = page.locator('.browser-voice-control [role="status"], .browser-voice-control [role="alert"]')
     await until(async () => (await status.textContent()) || '', t => t.trim().length > 0, 'voice status', 10000)

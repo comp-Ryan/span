@@ -91,12 +91,30 @@ def snapshot(company: str, target: date, excluded_customer_id=None, assumed_cust
     return {'draw':draw_due,'company': company_row, 'bank': bank, 'payroll': payroll, 'bills': bills,
             'scored': scored, 'forecast': forecast}
 
-def levers_for(snap):
+def reminded_invoices(company):
+    """Invoices this company already texted about (runtime reminders), newest first."""
+    with conn() as c:
+        rows = c.execute('''select invoice_id, customer_id, max(sent_at) sent_at from reminders
+                            where company_id=%s and sent_at is not null group by invoice_id, customer_id
+                            order by max(sent_at) desc''', (company,)).fetchall()
+    return {r['invoice_id']: r for r in rows}
+
+
+def levers_for(snap, company=None):
+    """Supported levers. With a company, customers already texted are left out and listed as already_reminded."""
+    reminded = reminded_invoices(company) if company else {}
+    already = {}
     candidates = sorted((r for r in snap['scored'] if r['days_past_due'] > 0 and r['n_paid'] > 0),
                         key=lambda r: q.f(r['open_balance']) * (1-r['p_never']), reverse=True)
     targets, seen = [], set()
     for r in candidates:
         if r['customer_id'] in seen:
+            continue
+        if r['invoice_id'] in reminded:
+            seen.add(r['customer_id'])
+            already.setdefault(r['customer_id'], {'customer_id': r['customer_id'], 'customer': r['customer_name'],
+                                                  'invoice_id': r['invoice_id'], 'amount': q.f(r['open_balance']),
+                                                  'sent_at': reminded[r['invoice_id']]['sent_at'].isoformat()})
             continue
         seen.add(r['customer_id'])
         targets.append({'invoice_id': r['invoice_id'], 'customer_id': r['customer_id'], 'customer': r['customer_name'],
@@ -107,7 +125,8 @@ def levers_for(snap):
     levers = []
     if targets:
         levers.append({'id': 'chase', 'label': f'Text {len(targets)} reliable late payers',
-                       'recovers': round(sum(t['amount'] for t in targets), 2), 'targets': targets})
+                       'recovers': round(sum(t['amount'] for t in targets), 2), 'targets': targets,
+                       'already_reminded': list(already.values())})
     tolerant = [b for b in snap['bills'] if q.f(b['hist_days_vs_due']) >= 7]
     if tolerant:
         bill = max(tolerant, key=lambda b: q.f(b['open_amount']))
@@ -160,7 +179,7 @@ async def run_payroll(run_id: str, company: str, target: date, parent_run_id=Non
         await event('speech', {'text': spoken, 'audio_url': None})
         current = 'n5'
         await event('node.create', {'node_id': 'n5', 'type': 'levers', 'title': 'What closes the gap', 'status': 'running', 'parent': 'n4'})
-        levers = levers_for(snap)
+        levers = levers_for(snap, company)
         ask = 'Want me to text these customers? Collection amounts are potential, not guaranteed.' if levers else 'No supported collection or bill deferral levers were found.'
         await event('node.update', {'node_id': 'n5', 'status': 'done', 'data': {'levers': levers, 'recommended': [l['id'] for l in levers], 'ask_spoken': ask}})
         if levers:

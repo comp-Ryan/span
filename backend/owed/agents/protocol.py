@@ -26,5 +26,9 @@ def counter(proposal, history):
     rate = len(paid) / len(settled) if settled else 0
     wants_split = rate >= .8
     accepted = proposal.installments == (2 if wants_split else 1)
+    import hashlib
+    pick = int(hashlib.sha256(str(proposal.customer_id).encode()).hexdigest(), 16)
+    splits = ['I can pay half now and half in two weeks.', 'Half this week and the balance in two weeks works for us.',
+              'Two payments, please: one now and one in a fortnight.']
     return Counter(installments=2 if wants_split else 1, discount=0, accepted=accepted,
-                   text='I can pay half now and half in two weeks.' if wants_split else 'I need the owner to contact me about payment.')
+                   text=splits[pick % len(splits)] if wants_split else 'I need the owner to contact me about payment.')

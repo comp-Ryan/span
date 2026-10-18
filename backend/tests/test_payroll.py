@@ -78,3 +78,28 @@ def test_forecast_includes_overdue_unpaid_bills():
     snap = snapshot('company-020',date(2026,10,20))
     assert snap['forecast']['bills_due_by_target'] == 10866.86
     assert snap['forecast']['gap'] == 384.94
+
+
+def test_levers_skip_customers_already_texted_and_list_them():
+    """Chase memory: a customer with a sent reminder is not proposed again; the lever says who was already texted."""
+    from datetime import UTC, datetime
+    from owed.db import conn
+    from owed.runs.payroll import levers_for, snapshot
+    snap = snapshot('company-020', date(2026, 10, 20))
+    before = levers_for(snap, 'company-020')
+    chase = next(l for l in before if l['id'] == 'chase')
+    first = chase['targets'][0]
+    with conn() as c:
+        c.execute('''insert into reminders(reminder_id,run_id,company_id,invoice_id,customer_id,channel,body,tone,draft_source,pay_token,sent_at,status)
+                     values ('rem-test-memory','run-test','company-020',%s,%s,'simulated','hi','friendly','template','tok_test_memory',%s,'simulated')''',
+                  (first['invoice_id'], first['customer_id'], datetime.now(UTC)))
+    try:
+        after = levers_for(snap, 'company-020')
+        chase_after = next(l for l in after if l['id'] == 'chase')
+        assert first['customer_id'] not in {t['customer_id'] for t in chase_after['targets']}
+        assert len(chase_after['targets']) == 3
+        assert [r['customer_id'] for r in chase_after['already_reminded']] == [first['customer_id']]
+        assert chase_after['already_reminded'][0]['sent_at']
+    finally:
+        with conn() as c:
+            c.execute("delete from reminders where reminder_id='rem-test-memory'")

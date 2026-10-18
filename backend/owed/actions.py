@@ -47,8 +47,8 @@ async def execute_decision(row):
         elif lever['id']=='hold_draw' and option=='yes':
             await asyncio.to_thread(hold_draw,run_id,company,parent,row['decision_id'])
     await asyncio.to_thread(refresh_forecasts,company)
-    if sent:
-        await simulated_reply(run_id, company, sent[0])
+    for reminder in sent:  # each disclosed simulated customer answers its own reminder
+        await simulated_reply(run_id, company, reminder)
 
 
 def defer_bill(run_id,company,bill_id,parent,operation_id):

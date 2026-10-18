@@ -3,6 +3,7 @@ import type { ReactElement } from 'react'
 import type { ReportDoc, ReportNode } from './types'
 import { getReport } from './api'
 import { money } from './events'
+import { markdownBlocks, type Run } from './markdown'
 
 const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
 
@@ -76,6 +77,8 @@ function DidRow({ n }: { n: ReportNode }) {
   </div>
 }
 
+const Runs = ({ runs }: { runs: Run[] }) => <>{runs.map((r, i) => r.bold ? <b key={i}>{r.text}</b> : <Fragment key={i}>{r.text}</Fragment>)}</>
+
 const COMPANY = new URLSearchParams(location.search).get('company') || 'company-020'
 
 export default function Report({ id }: { id: string }) {
@@ -99,7 +102,7 @@ export default function Report({ id }: { id: string }) {
 
   const st = status(r)
   const fc = r.workflow.nodes.find(n => n.type === 'forecast')?.data || {}
-  const bills = fc.bills_due_by_target
+  const bills = r.numbers.bills_due_by_target ?? fc.bills_due_by_target
   const gapT = r.numbers.gap_then, gapN = r.numbers.gap_now
   const acts = r.workflow.nodes.filter(n => n.type === 'action')
   const stats: { l: string; v?: number; sub?: string; hot?: boolean }[] = [
@@ -157,7 +160,9 @@ export default function Report({ id }: { id: string }) {
       : <div className="fine">Nothing open.</div>}
 
     <h2 className="rsec">Narrative</h2>
-    <div className="nar">{r.narrative.split('\n\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}</div>
+    <div className="nar">{markdownBlocks(r.narrative).map((b, i) => b.kind === 'heading' ? <h3 key={i}>{b.text}</h3>
+      : b.kind === 'list' ? <ul key={i}>{b.items.map((runs, j) => <li key={j}><Runs runs={runs} /></li>)}</ul>
+      : <p key={i}><Runs runs={b.runs} /></p>)}</div>
 
     <footer className="rfoot">{r.disclosures.join(' · ')}</footer>
   </div></div>

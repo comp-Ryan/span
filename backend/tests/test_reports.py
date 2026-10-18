@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 from pathlib import Path
@@ -16,7 +17,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "run_palletbay.json"
 ENVELOPE = ("id", "ts", "company_id", "run_id")
 KEYS = {"report_id", "run_id", "generated_at", "company", "question", "answer", "numbers", "workflow", "actions",
         "open_items", "narrative", "disclosures", "pdf_url"}
-NUMBERS = {"bank_balance", "payroll", "owed", "expected_by_target", "gap_then", "gap_now"}
+NUMBERS = {"bank_balance", "payroll", "owed", "expected_by_target", "gap_then", "gap_now", "bills_due_by_target"}
 
 
 def fixture_events():
@@ -110,3 +111,34 @@ def test_generate_endpoints_and_pdf(run):
     assert ev["data"] == {"report_id": rid, "url": f"/reports/{rid}"}
     assert client.get("/reports/rep-missing").status_code == 404
     assert client.post("/reports/generate?run_id=run-missing").status_code == 404
+
+
+def test_planner_run_report_has_numbers_and_keeps_the_markdown_narrative():
+    """A planner run that never called forecast_cash still reports the books it read (rank_chase carries them)."""
+    from datetime import date
+    from owed.events import emit
+    from owed.planner import ToolContext
+    from owed.runs import create
+    rid = create('company-020', 'Who should I chase today?', 'web', 'chase_today', target_date=date(2026, 10, 9))
+    try:
+        emit(rid, 'node.create', {'node_id': 'context', 'type': 'context', 'title': 'Understanding the question', 'status': 'done', 'parent': None, 'data': {'question': 'Who should I chase today?'}})
+        ctx = ToolContext(rid, 'company-020', date(2026, 10, 9))
+        result = asyncio.run(ctx.execute('rank_chase', {}))
+        assert result['bank_balance'] and result['owed_total'] and 'gap' in result and result['payroll_due_by_target'] is not None
+        emit(rid, 'node.create', {'node_id': 'answer', 'type': 'answer', 'title': 'Three to chase', 'status': 'done', 'parent': ctx.parent,
+                                  'data': {'spoken': 'Three customers to chase.', 'detail': '### Why\nA chase ranking was run.\n\n- **Total**: $1,023.51', 'awaiting_input': False}})
+        with conn() as c:
+            report = build_report(c, rid, narrate=False)
+        n = report['numbers']
+        assert n['bank_balance'] == result['bank_balance'] and n['payroll'] == result['payroll_due_by_target']
+        assert n['owed'] == result['owed_total'] and n['expected_by_target'] == result['expected_by_target']
+        assert n['bills_due_by_target'] == result['bills_due_by_target'] and n['gap_then'] == result['gap']
+        assert report['narrative'].startswith('### Why')
+        from owed.reports.pdf import render_pdf
+        assert render_pdf(report)[:5] == b'%PDF-'
+    finally:
+        with conn() as c:
+            c.execute('delete from action_jobs where decision_id in (select decision_id from decisions where run_id=%s)', (rid,))
+            c.execute('delete from decisions where run_id=%s', (rid,))
+            c.execute('delete from events where run_id=%s', (rid,))
+            c.execute('delete from runs where run_id=%s', (rid,))
