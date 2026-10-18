@@ -67,7 +67,46 @@
   .cta{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0}
   .btn{display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:22px;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600}
   .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
-  .flow{margin:0 auto 64px;max-width:920px}
+  .run{margin:0 auto 64px;max-width:1040px}
+  .run-grid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start}
+  @media (max-width:820px){.run-grid{grid-template-columns:1fr}}
+  .timeline{list-style:none;margin:0;padding:0 0 0 18px;position:relative}
+  .timeline::before{content:"";position:absolute;left:5px;top:10px;bottom:10px;width:2px;background:var(--line);border-radius:1px}
+  .timeline li{position:relative;padding:9px 0 9px 16px;cursor:pointer;opacity:.45;transition:opacity .25s}
+  .timeline li .dot{position:absolute;left:-18px;top:16px;width:12px;height:12px;border-radius:6px;background:var(--bg);border:2px solid var(--line);box-sizing:border-box}
+  .timeline li .lbl{display:block;font-size:10px;letter-spacing:.06em;color:var(--muted);font-weight:700}
+  .timeline li b{font-size:14px;font-weight:600}
+  .timeline li.done{opacity:.8}.timeline li.done .dot{background:var(--green);border-color:var(--green)}
+  .timeline li.active{opacity:1}.timeline li.active .dot{border-color:var(--green);background:var(--card);box-shadow:0 0 0 4px rgba(44,160,28,.18);animation:pulse 1.2s infinite}
+  .timeline li.active b{color:var(--green)}
+  @keyframes pulse{50%{box-shadow:0 0 0 7px rgba(44,160,28,.08)}}
+  .stage{position:relative;min-height:380px}
+  .panel{position:absolute;inset:0;opacity:0;pointer-events:none}
+  .panel.on{position:relative;opacity:1;pointer-events:auto}
+  .frame-lite{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;background-image:radial-gradient(#d9dbe0 .9px,transparent 1px);background-size:18px 18px;font-size:14px}
+  .frame-lite .you{display:flex;gap:10px;align-items:flex-start;font-size:17px;font-weight:500}
+  .frame-lite .av{width:28px;height:28px;border-radius:14px;background:#e9ebef;color:var(--ink);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .frame-lite .av.s{background:var(--green);color:#fff}
+  .frame-lite .tool{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:15px}
+  .frame-lite .tool b{font-weight:600}.frame-lite .tool .t{margin-left:auto;color:var(--muted);font-size:12px}.frame-lite .tool .ck{color:#2d7ff9;font-weight:700}
+  .frame-lite .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .frame-lite .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;padding:4px 10px 4px 4px;font-size:13px;background:var(--card)}
+  .frame-lite .chip .av{width:22px;height:22px;border-radius:11px;font-size:9px;color:#fff}
+  .frame-lite .verdict{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-left:4px solid #d93025;border-radius:12px;padding:14px 16px;font-size:16px}
+  .frame-lite .verdict .pill{margin-left:auto;background:#fde8e8;color:#d93025;font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;white-space:nowrap;align-self:center}
+  .frame-lite .lever{background:var(--card);border:1.5px solid var(--green);border-radius:14px;padding:14px 16px}
+  .frame-lite .lever .h{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+  .frame-lite .lever .h .ic{width:26px;height:26px;border-radius:13px;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center}
+  .frame-lite .lever .amt{margin-left:auto;color:var(--green);font-weight:700}
+  .frame-lite .lever .fine{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:10px}.frame-lite .lever .fine i{width:6px;height:6px;border-radius:3px;background:var(--green);display:inline-block}
+  .frame-lite .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .frame-lite .b{height:34px;padding:0 16px;border-radius:17px;border:1px solid #d4d7dd;background:var(--card);font-size:13px;font-weight:600;display:inline-flex;align-items:center;color:var(--ink);white-space:nowrap}
+  .frame-lite .b.p{background:var(--green);border-color:var(--green);color:#fff}
+  .frame-lite .hint{margin-top:12px;font-size:13px;color:var(--muted)}
+  .frame-lite .trend.small{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px}
+  .two-up{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:700px){.two-up{grid-template-columns:1fr}}
+  @media (prefers-color-scheme:dark){.frame-lite{background-image:radial-gradient(#2c2f35 .9px,transparent 1px)}.frame-lite .av{background:#33363c;color:#e8e9ec}.frame-lite .av.s{background:var(--green);color:#fff}.frame-lite .b{border-color:#3a3d44}.frame-lite .verdict .pill{background:#3a1d1d}}
   .wf{position:relative;display:flex;flex-direction:column;gap:34px;padding:8px 0}
   .wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
   .wires path{fill:none;stroke:#a9aeb8;stroke-width:1.6}
@@ -195,66 +234,52 @@
       </div>
     </div>
   </div>
-  <section id="demo" class="flow" aria-label="How a run unfolds">
-    <div class="shead"><b>One question, end to end.</b><span>Every step is a node on the canvas. This is the real sequence.</span></div>
-    <div class="wf" id="wf">
-      <svg class="wires" id="wires" aria-hidden="true"></svg>
-      <div class="wrow one"><div class="node q" data-n="q"><span class="lbl">YOU</span>Am I going to make payroll these next two weeks?</div></div>
-      <div class="wrow three">
-        <div class="node" data-n="books"><span class="lbl">CONTEXT · <i>running</i></span>Reading the books<small>bank $6.5k · payroll $13.3k · bills $10.9k</small></div>
-        <div class="node" data-n="score"><span class="lbl">SCORING · <i>running</i></span>Scoring 204 invoices<small>payment history per customer</small></div>
-        <div class="node" data-n="fc"><span class="lbl">FORECAST · <i>running</i></span>Forecasting cash to Oct 20<small>cushion −$385</small></div>
-      </div>
-      <div class="wrow one"><div class="node verdict" data-n="verdict"><span class="lbl">ANSWER · <i>running</i></span>No. $385 short; $2,753 short if the slow payers slip.</div></div>
-      <div class="wrow one"><div class="node ask" data-n="ask"><span class="lbl">LEVERS · <i>running</i></span>Text 3 reliable late payers · + $845<small><b class="yes">Yes, text them</b> nothing is sent until you say so</small></div></div>
-      <div class="wrow three lanes">
-        <div class="lane"><div class="node mini" data-n="h1"><span class="lbl">TEXT</span>Hearth Trading</div><div class="node mini" data-n="h2"><span class="lbl">REPLY</span>“Can we split this?”</div><div class="node mini ok" data-n="h3"><span class="lbl">AGREED</span>2 payments · $282</div></div>
-        <div class="lane"><div class="node mini" data-n="m1"><span class="lbl">TEXT</span>Marchetti Textiles</div><div class="node mini" data-n="m2"><span class="lbl">REPLY</span>“Half now, half in two weeks”</div><div class="node mini ok" data-n="m3"><span class="lbl">AGREED</span>2 payments · $282</div></div>
-        <div class="lane"><div class="node mini" data-n="i1"><span class="lbl">TEXT</span>Ironbridge Goods</div><div class="node mini" data-n="i2"><span class="lbl">REPLY</span>“Two payments works”</div><div class="node mini ok" data-n="i3"><span class="lbl">AGREED</span>2 payments · $282</div></div>
-      </div>
-      <div class="wrow two">
-        <div class="node paid" data-n="paid"><span class="lbl">PAYMENT · <i>running</i></span>$1,691 received<small>cushion −$385 → <b>+$43</b> · payroll covered</small></div>
-        <div class="node" data-n="report"><span class="lbl">REPORT · <i>running</i></span>One-page report<small>numbers used · what it did · what is open</small></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="show">
-    <div class="shead"><b>Say yes. Customers answer.</b><span>Three texts, three agreements, 33 seconds.</span></div>
-    <div class="msgs">
+  <section id="demo" class="run" aria-label="How a run unfolds">
+    <div class="shead"><b>One question, end to end.</b><span>Left: every step of a real run. Right: what you see at that moment.</span></div>
+    <div class="run-grid">
+      <ol class="timeline" id="timeline">
+        <li data-step="0"><span class="dot"></span><span class="lbl">YOU</span><b>Ask about payroll</b></li>
+        <li data-step="1"><span class="dot"></span><span class="lbl">CONTEXT</span><b>Reading the books</b></li>
+        <li data-step="2"><span class="dot"></span><span class="lbl">SCORING</span><b>Scoring 204 invoices</b></li>
+        <li data-step="3"><span class="dot"></span><span class="lbl">FORECAST</span><b>Forecasting cash to Oct 20</b></li>
+        <li data-step="4"><span class="dot"></span><span class="lbl">ANSWER</span><b>No. $385 short.</b></li>
+        <li data-step="5"><span class="dot"></span><span class="lbl">LEVERS</span><b>“Yes, text them”</b></li>
+        <li data-step="6"><span class="dot"></span><span class="lbl">CUSTOMERS</span><b>Texts, replies, negotiation</b></li>
+        <li data-step="7"><span class="dot"></span><span class="lbl">PAYMENT</span><b>Installments paid</b></li>
+        <li data-step="8"><span class="dot"></span><span class="lbl">REPORT</span><b>One-page report</b></li>
+      </ol>
+      <div class="stage" id="stage">
+        <div class="panel" data-panel="0"><div class="frame-lite"><div class="you big"><span class="av">R</span><span>Am I going to make payroll these next two weeks?</span></div><div class="hint">Typed, spoken in the browser, or on the phone line.</div></div></div>
+        <div class="panel" data-panel="1"><div class="frame-lite"><div class="tool big"><span class="ck">&#10003;</span><b>read books</b><span>· bank $6.5k, payroll $13.3k, bills $10.9k</span><span class="t">0.4 s</span></div><div class="hint">Bank, payroll, bills due by the target date. Every number dated.</div></div></div>
+        <div class="panel" data-panel="2"><div class="frame-lite"><div class="tool big"><span class="ck">&#10003;</span><b>score invoices</b><span>· 204 scored</span><span class="t">11.4 s</span></div><div class="chips big"><span class="chip"><span class="av" style="background:#2d7ff9">HT</span>Hearth · 18 days late · amber</span><span class="chip"><span class="av" style="background:#7c5cff">MT</span>Marchetti · 15 days late · amber</span><span class="chip"><span class="av" style="background:#e08a1e">IG</span>Ironbridge · 22 days late · amber</span></div><div class="hint">Each open invoice gets a days-late estimate from that customer’s own history.</div></div></div>
+        <div class="panel" data-panel="3"><div class="frame-lite"><div class="tool big"><span class="ck">&#10003;</span><b>forecast cash</b><span>· cushion −$385 on Oct 20</span><span class="t">0.4 s</span></div><svg viewBox="0 0 320 80" class="trend small" aria-hidden="true"><line x1="0" y1="50" x2="320" y2="50" stroke="#d93025" stroke-dasharray="4 4"/><polyline fill="none" stroke="#2ca01c" stroke-width="2.5" points="10,18 70,30 130,40 190,52 250,58 310,62"/><circle cx="310" cy="62" r="4" fill="#d93025"/></svg><div class="hint">Expected collections minus bills and payroll, day by day.</div></div></div>
+        <div class="panel" data-panel="4"><div class="frame-lite"><div class="verdict big"><span class="av s">S</span><span>No. $385 short; $2,753 short if the slow payers slip. This estimate uses payment history and bills due by Oct 20.</span><span class="pill">SHORT</span></div></div></div>
+        <div class="panel" data-panel="5"><div class="frame-lite"><div class="lever big"><div class="h"><span class="ic">&#9993;</span>Text 3 reliable late payers<span class="amt">+ $845</span></div><div class="chips"><span class="chip"><span class="av" style="background:#2d7ff9">HT</span>Hearth · $282</span><span class="chip"><span class="av" style="background:#7c5cff">MT</span>Marchetti · $282</span><span class="chip"><span class="av" style="background:#e08a1e">IG</span>Ironbridge · $282</span></div><div class="fine"><i></i>nothing is sent until you say so</div><div class="acts"><span class="b p">Yes, text them</span><span class="b">Text, don’t touch bills</span><span class="b">Not now</span></div></div></div></div>
+        <div class="panel" data-panel="6"><div class="msgs">
       <div class="mlist">
         <div class="mh">Messages<span>3 customers</span></div>
-        <div class="mrow sel" data-anim="msgs"><span class="av" style="background:#2d7ff9">BL</span><div><b>Brightwater Lantern…</b><div>Agreed: 2 payments</div></div><em>AGREED</em></div>
-        <div class="mrow" data-anim="msgs"><span class="av" style="background:#7c5cff">EC</span><div><b>Eastgate Cyclery &amp; Co.</b><div>Agreed: 2 payments</div></div><em>AGREED</em></div>
-        <div class="mrow" data-anim="msgs"><span class="av" style="background:#e08a1e">EJ</span><div><b>Evergreen Juniper Fl…</b><div>Agreed: 2 payments</div></div><em>AGREED</em></div>
+        <div class="mrow sel"><span class="av" style="background:#2d7ff9">BL</span><div><b>Brightwater Lantern…</b><div>Agreed: 2 payments</div></div><em>AGREED</em></div>
+        <div class="mrow"><span class="av" style="background:#7c5cff">EC</span><div><b>Eastgate Cyclery &amp; Co.</b><div>Agreed: 2 payments</div></div><em>AGREED</em></div>
+        <div class="mrow"><span class="av" style="background:#e08a1e">EJ</span><div><b>Evergreen Juniper Fl…</b><div>Agreed: 2 payments</div></div><em>AGREED</em></div>
       </div>
       <div class="mthread">
         <div class="mhead"><span class="av" style="background:#2d7ff9">BL</span><div><b>Brightwater Lantern Toyworks &amp; Co.</b><div>SMS · Span for Palletbay · text sent to the owner’s phone · customer reply simulated</div></div></div>
-        <div class="bub out" data-anim="chat">Hi Brightwater Lantern Toyworks &amp; Co., could you confirm a payment date for your outstanding invoice? Invoice inv-03282: $366.21. Pay here: pay.span/8f3a<small>delivered</small></div>
-        <div class="bub in" data-anim="chat">We can do two payments if that works for you.<small>wants plan</small></div>
-        <div class="agentline" data-anim="chat">Span’s agent is talking to Brightwater’s agent</div>
-        <div class="bub out agent" data-anim="chat">Propose 1 payment(s), 0% discount.<small>Span agent · 100% likely honored</small></div>
-        <div class="bub in agent" data-anim="chat">I can pay half now and half in two weeks.<small>Brightwater’s agent · 100% likely honored</small></div>
-        <div class="bub out agent" data-anim="chat">Propose 2 payment(s), 0% discount.<small>Span agent</small></div>
-        <div class="agree" data-anim="chat">&#10003; Agreed: 2 payments of $183</div>
+        <div class="bub out">Hi Brightwater Lantern Toyworks &amp; Co., could you confirm a payment date for your outstanding invoice? Invoice inv-03282: $366.21. Pay here: pay.span/8f3a<small>delivered</small></div>
+        <div class="bub in">We can do two payments if that works for you.<small>wants plan</small></div>
+        <div class="agentline">Span’s agent is talking to Brightwater’s agent</div>
+        <div class="bub out agent">Propose 1 payment(s), 0% discount.<small>Span agent · 100% likely honored</small></div>
+        <div class="bub in agent">I can pay half now and half in two weeks.<small>Brightwater’s agent · 100% likely honored</small></div>
+        <div class="bub out agent">Propose 2 payment(s), 0% discount.<small>Span agent</small></div>
+        <div class="agree">&#10003; Agreed: 2 payments of $183</div>
       </div>
-    </div>
-  </section>
-
-  <section class="show two">
-    <div>
-      <div class="shead"><b>They pay the link.</b><span>Visa sandbox or Solana devnet.</span></div>
-      <div class="pay">
+    </div></div>
+        <div class="panel" data-panel="7"><div class="two-up"><div class="pay">
         <div class="ph"><span class="av" style="background:#2d7ff9">BL</span><div><b>Brightwater Lantern Toyworks &amp; Co.</b><div>Installment 1 of 2 · inv-03282</div></div><b class="amt">$183.11</b></div>
         <div class="rails"><span class="on">Card · Visa sandbox</span><span>USDC · Solana devnet</span></div>
         <div class="field">4111 1111 1111 1111<span>12/28 · 123</span></div>
-        <div class="paybtn" data-anim="pay">Pay $183.11</div>
-        <div class="receipt" data-anim="pay">&#10003; $183.11 received · card ending 1111 · forecast refreshed</div>
-      </div>
-    </div>
-    <div>
-      <div class="shead"><b>The gap closes.</b><span>Four installments. Payroll covered.</span></div>
-      <div class="outcome">
+        <div class="paybtn">Pay $183.11</div>
+        <div class="receipt">&#10003; $183.11 received · card ending 1111 · forecast refreshed</div>
+      </div><div class="outcome">
         <div class="stats">
           <div><span>Cushion when asked</span><b class="red" data-count="-385" data-prefix="$">−$385</b></div>
           <div><span>Cushion now</span><b class="green" data-count="43" data-from="-385" data-prefix="$">+$43</b></div>
@@ -266,13 +291,10 @@
           <circle cx="10" cy="72" r="4" fill="#d93025"/><circle id="trenddot" cx="310" cy="22" r="4" fill="#2ca01c"/>
           <text x="14" y="86" font-size="10" fill="#6b6c72">asked</text><text x="228" y="14" font-size="10" fill="#2ca01c">payroll covered</text>
         </svg>
+      </div></div></div>
+        <div class="panel" data-panel="8"><figure class="paper"><img src="img/report.png" alt="One-page report generated from the run"></figure></div>
       </div>
     </div>
-  </section>
-
-  <section class="show">
-    <div class="shead"><b>Then the one-pager.</b><span>Numbers used, what it did, what is open.</span></div>
-    <figure class="paper" data-anim="paper"><img src="img/report.png" alt="One-page report generated from the run"></figure>
   </section>
 
   <section class="nums">
@@ -315,58 +337,44 @@
     tl.finished.then(function () { setTimeout(function () { hide(hero); playHero(); }, 11000); });
   }
   playHero();
-  // 3. The workflow: nodes land in run order, wires draw between them, "running" turns into "done". Loops.
-  var wf = document.getElementById('wf'), wires = document.getElementById('wires');
-  var N = function (k) { return wf.querySelector('[data-n="' + k + '"]'); };
-  var order = ['q', 'books', 'score', 'fc', 'verdict', 'ask', ['h1', 'm1', 'i1'], ['h2', 'm2', 'i2'], ['h3', 'm3', 'i3'], 'paid', 'report'];
-  var links = [['q', 'books'], ['books', 'score'], ['score', 'fc'], ['fc', 'verdict'], ['verdict', 'ask'], ['ask', 'h1'], ['ask', 'm1'], ['ask', 'i1'], ['h1', 'h2'], ['h2', 'h3'], ['m1', 'm2'], ['m2', 'm3'], ['i1', 'i2'], ['i2', 'i3'], ['h3', 'paid'], ['m3', 'paid'], ['i3', 'paid'], ['paid', 'report']];
-  function wire() {
-    if (!wf || !wires) return;
-    var box = wf.getBoundingClientRect(); wires.innerHTML = '<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0 0.5 L8 4 L0 7.5 z"/></marker></defs>';
-    wires.setAttribute('viewBox', '0 0 ' + box.width + ' ' + box.height);
-    links.forEach(function (l) {
-      var a = N(l[0]).getBoundingClientRect(), b = N(l[1]).getBoundingClientRect();
-      var ax = a.left - box.left + a.width / 2, ay = a.bottom - box.top, bx = b.left - box.left + b.width / 2, by = b.top - box.top - 2;
-      var sameRow = Math.abs(a.top - b.top) < 4;
-      var d = sameRow ? 'M' + (a.right - box.left) + ' ' + (a.top - box.top + a.height / 2) + ' L' + (b.left - box.left) + ' ' + (b.top - box.top + b.height / 2)
-        : 'M' + ax + ' ' + ay + ' C' + ax + ' ' + (ay + (by - ay) / 2) + ' ' + bx + ' ' + (ay + (by - ay) / 2) + ' ' + bx + ' ' + by;
-      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', d); path.setAttribute('marker-end', 'url(#arrow)'); path.dataset.from = l[0]; path.dataset.to = l[1]; wires.appendChild(path);
-    });
+  // 3. The run: the timeline on the left advances, the stage on the right shows that moment. Click a step to jump.
+  var steps = q('#timeline li'), panels = q('#stage .panel'), stage = document.getElementById('stage');
+  var dwell = [1800, 1700, 2200, 2200, 2600, 2600, 5200, 3600, 3200], cur = -1, timer = null, playing = false;
+  function showStep(i, manual) {
+    clearTimeout(timer); cur = i;
+    steps.forEach(function (li, j) { li.classList.toggle('done', j < i); li.classList.toggle('active', j === i); });
+    panels.forEach(function (pn, j) { pn.classList.toggle('on', j === i); if (j !== i) { anime.remove(pn); pn.style.opacity = 0; pn.style.transform = 'none'; } });
+    var pn = panels[i];
+    anime({ targets: pn, opacity: [0, 1], translateY: [14, 0], duration: 420, easing: 'easeOutCubic' });
+    if (i === 6) { var bubs = q('.bub, .agentline, .agree', pn); anime({ targets: bubs, opacity: [0, 1], translateY: [8, 0], duration: 320, delay: anime.stagger(380, { start: 250 }), easing: 'easeOutCubic' }); }
+    if (i === 7) {
+      q('[data-count]', pn).forEach(function (el) { var from = Number(el.dataset.from || 0), to = Number(el.dataset.count), o = { v: from }; anime({ targets: o, v: to, duration: 1400, easing: 'easeOutExpo', delay: 400, update: function () { el.textContent = fmt(Math.round(o.v), el); } }); });
+      var ln = document.getElementById('trendline'), dt = document.getElementById('trenddot');
+      if (ln) { ln.setAttribute('stroke-dasharray', anime.setDashoffset(ln)); anime({ targets: ln, strokeDashoffset: [anime.setDashoffset, 0], duration: 1400, easing: 'easeInOutSine', delay: 500 }); }
+      if (dt) anime({ targets: dt, opacity: [0, 1], scale: [0, 1], duration: 300, delay: 1800, easing: 'easeOutBack' });
+      var rc = pn.querySelector('.receipt'); if (rc) anime({ targets: rc, opacity: [0, 1], duration: 400, delay: 1200 });
+    }
+    if (playing && !manual) timer = setTimeout(function () { showStep((i + 1) % steps.length, false); }, dwell[i]);
+    if (manual) { playing = false; }
   }
-  var allNodes = q('.node', wf);
-  function resetFlow() { allNodes.forEach(function (n) { n.style.opacity = 0; n.classList.remove('done', 'busy'); }); q('path', wires).forEach(function (p) { p.style.opacity = 0; }); }
-  function playFlow() {
-    wire(); resetFlow();
-    var tl = anime.timeline({ easing: 'easeOutCubic' });
-    order.forEach(function (step) {
-      var keys = Array.isArray(step) ? step : [step]; var els = keys.map(N);
-      var into = q('path', wires).filter(function (p) { return keys.indexOf(p.dataset.to) >= 0; });
-      if (into.length) tl.add({ targets: into, opacity: [0, 1], strokeDashoffset: [anime.setDashoffset, 0], duration: 380, easing: 'easeInOutSine' });
-      tl.add({ targets: els, opacity: [0, 1], translateY: [10, 0], scale: [0.96, 1], duration: 340, delay: anime.stagger(90), begin: function () { els.forEach(function (e) { e.classList.add('busy'); }); } }, into.length ? '-=120' : '+=0');
-      tl.add({ targets: els, duration: 420, complete: function () { els.forEach(function (e) { e.classList.remove('busy'); e.classList.add('done'); }); } });
-    });
-    tl.finished.then(function () { setTimeout(playFlow, 5000); });
-  }
-  if (wf && wires) { resetFlow(); once(wf, function () { setTimeout(playFlow, 200); }); window.addEventListener('resize', wire); }
+  steps.forEach(function (li, j) { li.addEventListener('click', function () { showStep(j, true); }); });
+  if (stage) { panels[0].classList.add('on'); steps[0].classList.add('active'); once(document.getElementById('demo'), function () { playing = true; showStep(0, false); }); }
   // 2. Everything below plays once when it scrolls into view.
-  var msgs = q('[data-anim="msgs"]'), chat = q('[data-anim="chat"]'); hide(msgs); hide(chat);
-  once(document.querySelector('.msgs'), function () {
+  var msgs = [], chat = [];
+  once(null, function () {
     anime.timeline({ easing: 'easeOutCubic' })
       .add({ targets: msgs, opacity: [0, 1], translateX: [-10, 0], duration: 350, delay: anime.stagger(120) })
       .add({ targets: chat, opacity: [0, 1], translateY: [10, 0], duration: 380, delay: anime.stagger(420) }, '-=100')
       .add({ targets: q('.mrow em'), scale: [0.6, 1], opacity: [0, 1], duration: 300, delay: anime.stagger(80), easing: 'easeOutBack' }, '-=200');
   });
-  var pay = q('[data-anim="pay"]'); hide([pay[1]]);
-  once(document.querySelector('.pay'), function () {
+  var pay = [];
+  once(null, function () {
     anime.timeline({ easing: 'easeOutCubic' })
       .add({ targets: pay[0], scale: [1, 0.97, 1], duration: 500, delay: 600 })
       .add({ targets: pay[1], opacity: [0, 1], translateY: [6, 0], duration: 400 });
   });
-  var outcome = document.querySelector('.outcome');
-  var line = document.getElementById('trendline'), dot = document.getElementById('trenddot');
-  if (line) { line.setAttribute('stroke-dasharray', anime.setDashoffset(line)); line.setAttribute('stroke-dashoffset', anime.setDashoffset(line)); }
-  if (dot) dot.style.opacity = 0;
-  once(outcome, function () {
+  var outcome = null;
+  once(null, function () {
     q('[data-count]', outcome).forEach(function (el) {
       var from = Number(el.dataset.from || 0), to = Number(el.dataset.count), o = { v: from };
       anime({ targets: o, v: to, duration: 1400, easing: 'easeOutExpo', update: function () { el.textContent = fmt(Math.round(o.v), el); } });
@@ -374,8 +382,8 @@
     anime({ targets: line, strokeDashoffset: [anime.setDashoffset, 0], duration: 1400, easing: 'easeInOutSine', delay: 200 });
     anime({ targets: dot, opacity: [0, 1], scale: [0, 1], duration: 300, delay: 1500, easing: 'easeOutBack' });
   });
-  var paper = document.querySelector('[data-anim="paper"]'); if (paper) paper.style.opacity = 0;
-  once(paper, function () { anime({ targets: paper, opacity: [0, 1], translateY: [18, 0], duration: 600, easing: 'easeOutCubic' }); });
+  var paper = null;
+  once(null, function () { anime({ targets: paper, opacity: [0, 1], translateY: [18, 0], duration: 600, easing: 'easeOutCubic' }); });
   var nums = document.querySelector('.nums');
   once(nums, function () {
     q('[data-count]', nums).forEach(function (el) {
