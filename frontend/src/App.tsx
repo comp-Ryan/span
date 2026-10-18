@@ -582,7 +582,9 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
 /* ---------- bottom-right dock: call transcript + chat ---------- */
 function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoice, callState, onStartCall, onHangup, onMic, onMute, voiceStatus, voiceMessage }: { run: RunState; elapsed: number; input: string; setInput: (s: string) => void; onAsk: (q: string) => void; live: boolean; onReplay: (speed: number) => void; browserVoice: boolean; callState: CallState; onStartCall: () => void; onHangup: () => void; onMic: () => void; onMute: () => void; voiceStatus: VoiceStatus; voiceMessage: string }) {
   const [open, setOpen] = useState(browserVoice)
-  const onCall = run.status === 'open'
+  const onCall = run.status === 'open'  // the run waits for the owner (an approval), not a phone line
+  const talking = browserVoice && callState.active
+  const callHref = (() => { const u = new URL(location.href); u.searchParams.set('voice', 'browser'); u.searchParams.set('call', '1'); if (!u.searchParams.has('run')) { u.searchParams.set('live', ''); u.searchParams.set('new', '1') } return u.pathname + u.search })()
   const lastOwed = [...run.turns].reverse().find(t => t.kind === 'owed')
   const [preview, setPreview] = useState<string | null>(null)
   useEffect(() => {
@@ -598,15 +600,17 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
     {open && <div className="dpanel">
       <div className="dhead" onClick={() => setOpen(false)}>
         <span className="ic green">{I.phone}</span>
-        <div style={{ flex: 1 }}><b>{browserVoice ? 'Browser voice demo' : !live ? `Demo replay · ${mm}` : onCall ? `Working · ${mm}` : 'Transcript'}</b><div className="fine">{browserVoice ? 'Tap the mic to speak one follow-up. Browser speech, not telephony.' : onCall ? 'Listening · tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
-        <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
+        <div style={{ flex: 1 }}><b>{browserVoice ? 'Browser voice demo' : !live ? `Demo replay · ${mm}` : onCall ? 'Waiting for your decision' : 'Conversation'}</b><div className="fine">{browserVoice ? 'Tap the mic to speak one follow-up. Browser speech, not telephony.' : onCall ? 'Tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
+        {live && !browserVoice
+          ? <a className="btn call" href={callHref} onClick={e => e.stopPropagation()} title={`Call ${BRAND}: talk instead of typing`}>{I.phone} Call</a>
+          : <div className={`wave ${talking || (!live && onCall) ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>}
         <span className="fine" style={{ marginLeft: 8 }}>▾</span>
       </div>
       <div className="turns" ref={scroller}>
         {run.turns.map((t, i) => t.kind === 'tool'
           ? <div className="tool" key={i}><span style={{ color: 'var(--blue)' }}>{I.check}</span><span><b>{t.text}</b>{t.meta ? ` · ${t.meta}` : ''}</span><span className="s">{t.secs != null ? `${t.secs.toFixed(1)} s` : ''}</span></div>
           : <div className={`turn ${t.kind}`} key={i}><span className="av">{t.kind === 'you' ? 'R' : BRAND[0]}</span><span style={{ paddingTop: 3 }}>{t.text}</span></div>)}
-        {onCall && <div className="thinking" style={{ paddingLeft: 34 }}><i/><i/><i/> waiting for you</div>}
+        {onCall && <div className="thinking" style={{ paddingLeft: 34 }}><i/><i/><i/> {browserVoice ? 'waiting for you' : 'waiting for your decision'}</div>}
       </div>
       <div className="sugg">{['What if Evergreen doesn’t pay?', 'Show me who’s late', 'Can I afford a hire in January?'].map(q => <button key={q} onClick={() => onAsk(q)}>{q}</button>)}</div>
       <div className="dinput"><input placeholder={`Ask ${BRAND} a follow-up, or just say it…`} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }} /><button className="btn primary" style={{ height: 32, padding: '0 14px' }} onClick={send}>Ask</button></div>
@@ -618,17 +622,13 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
         <button className={`btn ${callState.muted ? 'muted' : ''}`} type="button" aria-pressed={callState.muted} onClick={onMute}>{callState.muted ? 'Unmute' : 'Mute'}</button>
         <span role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'error' ? voiceMessage : callState.active ? callStatusLabel(callState) : callState.muted ? 'Browser call, muted: Span answers in text and keeps listening until you hang up.' : 'Browser call: Span listens, answers aloud and keeps listening until you hang up.'}</span>
       </div>}
-      {live && !browserVoice && <div className="browser-voice-control" data-testid="call-controls">
-        <a className="btn primary" href={(() => { const u = new URL(location.href); u.searchParams.set('voice', 'browser'); u.searchParams.set('call', '1'); if (!u.searchParams.has('run')) { u.searchParams.set('live', ''); u.searchParams.set('new', '1') } return u.pathname + u.search })()}>{I.phone} Call Span</a>
-        <span className="fine">Talk instead of typing: Span answers aloud and keeps listening until you hang up.</span>
-      </div>}
       {!live && <div className="controls" style={{ justifyContent: 'flex-end' }}>demo replay · <button onClick={() => onReplay(1)}>restart</button><button onClick={() => onReplay(3)}>3× speed</button><a href="?live">connect live</a></div>}
     </div>}
     {!open && preview && <div className="preview" onClick={() => setOpen(true)}><span className="av">{BRAND[0]}</span><span style={{ flex: 1 }}>{preview}</span><button className="x" aria-label="close" onClick={e => { e.stopPropagation(); setPreview(null) }}>×</button></div>}
     {!open && <button className="bubble" onClick={() => setOpen(true)}>
       <span className="ic green">{I.phone}</span>
-      <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
-      <b>{!live ? 'Demo replay' : onCall ? `On a call · ${mm}` : 'Transcript'}</b>
+      <div className={`wave ${talking || (!live && onCall) ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
+      <b>{!live ? 'Demo replay' : talking ? `On a call · ${mm}` : onCall ? 'Waiting for you' : 'Transcript'}</b>
       {run.turns.length > 0 && <span className="badge">{run.turns.length}</span>}
     </button>}
   </div>
@@ -874,7 +874,7 @@ export default function App() {
       <div className="brand"><img className="mark" src="/logo.png" alt="" /><div className="name">{BRAND.toLowerCase()}</div></div>
       <div className="company">Palletbay Storage &amp; Warehousing</div>
       <div className="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><input autoFocus={FRESH} aria-label="Ask Span" placeholder="Ask about your money, or search transactions, customers, reports" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && input.trim()) followUp(input.trim()) }} /></div>
-      <div className="status"><i className="dot" />{BROWSER_VOICE ? 'Browser voice demo' : !LIVE ? 'Demo replay' : main?.status === 'open' ? 'On a call' : 'Live'}</div>
+      <div className="status"><i className="dot" />{BROWSER_VOICE ? 'Browser voice demo' : !LIVE ? 'Demo replay' : main?.status === 'open' ? 'Waiting for you' : 'Live'}</div>
     </header>
     <div className="body">
       <nav className="rail">

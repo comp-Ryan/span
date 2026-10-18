@@ -65,7 +65,7 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:11px}
 .chip .av{width:20px;height:20px;border-radius:10px;color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
 .chip.plain{padding:4px 8px;background:var(--line2);border:0}
-.btn{height:36px;border-radius:18px;border:1px solid var(--muted2);background:var(--card);color:var(--text);font:600 13px var(--font);cursor:pointer;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn{text-decoration:none;height:36px;border-radius:18px;border:1px solid var(--muted2);background:var(--card);color:var(--text);font:600 13px var(--font);cursor:pointer;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
 .btn.danger{background:var(--red);border-color:var(--red);color:#fff}
 .btn.ghost{border-color:var(--line);color:var(--muted2)}
@@ -284,7 +284,10 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .mrow .state{position:absolute;right:12px;bottom:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:8px;background:var(--line2);color:var(--muted)}
 .mrow.sel .state{background:rgba(255,255,255,.25);color:#fff}
 .mrow .state.paid,.mrow .state.agreed{background:var(--green-bg);color:var(--green)}.mrow .state.replied,.mrow .state.negotiating{background:var(--amber-bg);color:var(--amber-dk)}
-.mthread{display:flex;flex-direction:column;min-width:0}
+.mthread{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.mlist{min-height:0}
+.dhead .btn.call{height:28px;padding:0 12px;font-size:12px;gap:6px;background:var(--green);color:#fff;border-color:var(--green);flex-shrink:0}
+.dhead .btn.call:hover{filter:brightness(.95)}
 .mhead{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line2)}
 .mhead .av{width:32px;height:32px;border-radius:16px;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
 .mhead b{font-size:13px}
