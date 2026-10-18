@@ -9,6 +9,7 @@ from owed.channels.photon import send_reminder, simulated_reply
 from owed.db import conn
 from owed.events import emit
 from owed.finance import queries as q
+from owed.runs import finish
 from owed.runs.payroll import snapshot, target_for
 
 
@@ -27,6 +28,8 @@ async def execute_decision(row):
     if option in ('no','decline','call'):
         await asyncio.to_thread(emit,run_id,'node.create',{'node_id':'action-'+row['decision_id'],'type':'action',
             'title':'Owner follow-up requested' if option=='call' else 'No actions taken','status':'done','parent':parent})
+        if not payload.get('kind'):
+            await asyncio.to_thread(close_run,run_id)
         return
     if payload.get('kind')=='send_message':
         await send_reminder(run_id,company,payload['invoice_id'],parent,operation_id=row['decision_id'])
@@ -47,8 +50,18 @@ async def execute_decision(row):
         elif lever['id']=='hold_draw' and option=='yes':
             await asyncio.to_thread(hold_draw,run_id,company,parent,row['decision_id'])
     await asyncio.to_thread(refresh_forecasts,company)
+    # The owner has decided: the question is answered and its report can be written. Replies, negotiations
+    # and payments keep landing on the same run afterwards (the report is rebuilt from events on every open).
+    await asyncio.to_thread(close_run,run_id)
     for reminder in sent:  # each disclosed simulated customer answers its own reminder
         await simulated_reply(run_id, company, reminder)
+
+
+def close_run(run_id):
+    with conn() as c:
+        status=c.execute('select status from runs where run_id=%s',(run_id,)).fetchone()
+    if status and status['status']=='open':
+        finish(run_id,'closed')
 
 
 def defer_bill(run_id,company,bill_id,parent,operation_id):

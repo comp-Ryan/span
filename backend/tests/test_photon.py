@@ -63,6 +63,10 @@ def test_simulated_yes_actions_and_installment_payment(monkeypatch):
         events = replay_run(rid)['events']
         reminders = [e['data'] for e in events if e['event']=='node.create' and e['data'].get('data',{}).get('kind')=='reminder']
         assert len(reminders) == 3
+        # The owner's decision ends the question: the run closes so its one-page report can be generated.
+        assert [e for e in events if e['event']=='run.end'][-1]['data']['status'] == 'closed'
+        with conn() as c:
+            assert c.execute('select status from runs where run_id=%s', (rid,)).fetchone()['status'] == 'closed'
         assert all(r['data']['channel']=='simulated' and r['data']['draft']['source']=='template' for r in reminders)
         replies = [e['data']['data'] for e in events if e['data'].get('data',{}).get('kind')=='reply']
         assert len(replies) == 3 and len({r['text'] for r in replies}) >= 2  # every reminder gets its own simulated reply
