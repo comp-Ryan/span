@@ -556,7 +556,8 @@ def test_gemini_billing_and_rate_limit_errors_are_explained_and_retried(monkeypa
     monkeypatch.setattr(planner, 'finish', lambda run_id, status: None)
     monkeypatch.setattr(planner, 'conn', lambda: Connection(None))
     monkeypatch.setattr(planner.types, 'Content', lambda role, parts: NS(role=role, parts=parts))
-    monkeypatch.setattr(planner.asyncio, 'sleep', lambda s: asyncio.sleep(0))
+    real_sleep = asyncio.sleep
+    monkeypatch.setattr(planner.asyncio, 'sleep', lambda s: real_sleep(0))  # no backoff wait in the test
 
     class Depleted:
         async def generate_content(self, model, contents, config):
