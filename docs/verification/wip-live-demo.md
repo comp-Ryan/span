@@ -86,3 +86,13 @@ through the normal API.
 | A ranking-only report ("Show me who's late") showed six dashes under Numbers used and "Nothing yet." | `build_report` fills `overdue`, `open_balance`, `customers_ranked`, `customers_considered` from the scoring node when no cash numbers exist (`test_reports.py::test_ranking_only_run_reports_what_it_ranked_instead_of_dashes`); the page derives the same from the stored workflow for reports generated earlier; tiles without a value are hidden; "No actions were needed for this question." when the run had no approval |
 | Narrative pipe tables rendered as one line of pipes | `markdownBlocks` (page) and `markdown_paragraphs` (PDF) parse GitHub-style tables; the page renders `<table class="ntable">`, the PDF a reportlab grid (`markdown.test.ts`, `test_report_markdown.py`). Checked on the owner's report rep-aa5c4e6ca916: 4 tiles, 10-row table |
 | Suites | frontend vitest 70 passed, build + lint clean; backend DB-free 27 report/version/CLI/backup tests, `test_reports.py` 6 passed on an isolated clone |
+
+## 2026-10-18 16:30–17:30 UTC — Photon Spectrum, Integrations page, project site
+
+| What | Evidence |
+|---|---|
+| The owner's Photon project is Spectrum (stable: UUID project id + project secret), not the v2 Beta API the backend spoke | `backend/spectrum-bridge/bridge.ts` (spectrum-ts, Bun) exposes `POST /send`; backend `SPECTRUM_BRIDGE_URL` mode (`test_photon_platform.py`, `test_photon.py`). Real iMessages landed on the owner's phone (six reminders + two tests, screenshot in chat) |
+| Shared-line rule | The line refused the first send ("Target not allowed") until the phone had texted it; the bridge reuses the thread. A refused send falls back to a labeled simulated reminder so a run never fails |
+| Inbound replies | Never reached the SDK stream (bridge `inbound: 0` after the phone texted twice); outbound only. In bridge mode the disclosed simulated customer still answers, and the thread header says "text sent to the owner's phone · customer reply simulated" |
+| `/sponsors` Integrations page | `GET /sponsors/checks` calls each integration live; 6 answering, 3 degraded, 0 failing on the demo stack (`test_sponsors.py`) |
+| Project site youare.cooking | GitHub Pages from `gh-pages` (built from `site/`), DNS at Porkbun (A records + www CNAME); animated workflow diagram and product frame with anime.js; demo video on `demo.html` as MP4 (ffmpeg) + WebM |
