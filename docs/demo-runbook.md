@@ -11,7 +11,8 @@ cd backend && nohup .venv/bin/uvicorn owed.main:app --host 127.0.0.1 --port 8000
 cd frontend && npm run dev                                                           # http://127.0.0.1:5173
 ```
 
-Open http://127.0.0.1:5173/home in Chrome. If Gemini credits are out, the planner answers
+Open http://127.0.0.1:5173/home in Chrome. **Ask** opens an empty live chat; Span never starts a question on its
+own. The old recorded replay is only at `/?replay` and is labeled "Demo replay". If Gemini credits are out, the planner answers
 through OpenRouter automatically (`/api/health` → `planner_backup: "openrouter"`).
 
 ## The two-minute story

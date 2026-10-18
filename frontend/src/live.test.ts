@@ -35,3 +35,13 @@ it('buffers SSE while a newly started root replays, so a node cannot arrive befo
   expect(received.map(e => e.data.id)).toEqual(['1', '2'])
   stop()
 })
+
+it('never starts a question on its own: opening the Ask page without a run just listens', async () => {
+  const received: RawEvent[] = []
+  mocks.subscribe.mockReturnValue(mocks.off)
+  const stop = connectLive('company-020', null, e => received.push(e), e => { throw e })  // not marked fresh, no saved run
+  await new Promise(r => setTimeout(r, 0))
+  expect(mocks.startRun).not.toHaveBeenCalled()
+  expect(mocks.replay).not.toHaveBeenCalled()
+  stop()
+})

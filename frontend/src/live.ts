@@ -1,5 +1,5 @@
 import type { RawEvent } from './types'
-import { replay, startRun, subscribe } from './api'
+import { replay, subscribe } from './api'
 import { descendants, runIngestor } from './branches'
 
 /** Subscribe before replaying so the handoff cannot lose a newly created branch. */
@@ -10,8 +10,9 @@ export function connectLive(company: string, savedRun: string | null, onEvent: (
   const off = staticOnly ? () => {} : subscribe(company, event => ready ? accept.ingest(event) : pending.push(event))
   ;(async () => {
     try {
-      if (fresh && !savedRun) { ready = true; return }
-      const root = savedRun ? { run_id: savedRun } : await startRun(company, 'Am I going to make payroll these next two weeks?')
+      // No saved run: just listen. The owner asks the first question; Span never starts one by itself.
+      if (!savedRun) { void fresh; ready = true; return }
+      const root = { run_id: savedRun }
       accept.add(root.run_id)
       onRoot?.(root.run_id)
       const history = await replay(root.run_id, company)

@@ -14,10 +14,12 @@ import { approvalChoice, assistantSpeechText, claimSpeechEvent, listenOnce, type
 const PARAMS = new URLSearchParams(location.search)
 const COMPANY = PARAMS.get('company') || 'company-020'
 const BRAND = (import.meta.env.VITE_BRAND as string) || 'Span'
-const LIVE = new URLSearchParams(location.search).has('live') || new URLSearchParams(location.search).has('run')
+// Live is the default. The recorded fixture replay is an explicit, labeled fallback: /?replay
+const REPLAY = PARAMS.has('replay') && !PARAMS.has('run')
+const LIVE = !REPLAY
 const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
 const RUN = new URLSearchParams(location.search).get('run')
-const FRESH = PARAMS.has('new')
+const FRESH = !RUN && !REPLAY
 const STATIC = new URLSearchParams(location.search).has('static')
 const BROWSER_VOICE = PARAMS.get('voice') === 'browser'
 const CALL_REQUESTED = PARAMS.has('call')
