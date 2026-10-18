@@ -408,10 +408,9 @@ function AnswerStrip({ n }: { n: GraphNode }) {
   if (!v && num == null) return <div className={`node ${n.status}`}><h3><span className="ic green">{I.check}</span>Answer</h3><div style={{ fontSize: 15, lineHeight: '22px', fontWeight: 600 }}>{plain(d.spoken || n.title)}</div></div>
   const cls = v === 'no' ? 'bad' : v === 'yes' ? 'ok' : ''
   const word = v === 'yes' ? 'Yes.' : v === 'no' ? 'No.' : v === 'barely' ? 'Barely.' : money(num)
-  return <div className={`node verdict ${cls}`}>
-    <div className="big">{word}</div>
-    {v && num != null && <div className="sub">{money(num)}</div>}
-    <div className="fine" style={{ flex: 1 }}>{plain(d.spoken || n.title)}</div>
+  return <div className={`node verdict answer-strip ${cls}`} data-testid="answer-strip">
+    <div className="vhead"><div className="big">{word}</div>{v && num != null && <div className="sub">{money(num)}</div>}</div>
+    <div className="vtext">{plain(d.spoken || n.title)}</div>
   </div>
 }
 function toolOf(n: GraphNode): string {

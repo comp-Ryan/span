@@ -8,6 +8,13 @@ from owed.planner import score_row, verdict_of
     ('You cannot afford $2,000.', {'verdict': 'no', 'number': 2000}),
     ('Barely, with $42 left.', {'verdict': 'barely', 'number': 42}),
     ('Should Evergreen pay by payday?', {}),
+    # several amounts: take the one next to a shortfall/buffer cue, never the first number mentioned
+    ('No, you cannot afford the $3,000 forklift because cash is already projected to dip to -$6,892.08 and this '
+     'purchase would deepen that shortfall to -$9,892.08.', {'verdict': 'no', 'number': 9892.08}),
+    ('No, you are facing a projected shortfall of $384.94 for payroll on October 20. You will need at least $385.',
+     {'verdict': 'no', 'number': 384.94}),
+    # several amounts and no cue: a yes/no without a headline number
+    ('You can take the order, but their balance would reach $2,538.01 and $668.58 is overdue.', {'verdict': 'yes'}),
 ])
 def test_verdict(text, expected):
     assert verdict_of(text) == expected

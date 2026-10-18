@@ -294,6 +294,45 @@ def rank_customers(c, company, by, scored, limit=5):
             'customers': sorted(pool, key=key)[:max(1, min(int(limit or 5), 10))]}
 
 
+# ---------- the one clarifying question ----------
+
+def pivotal_customer(scored, target, stats, gap):
+    """The one customer whose payment by `target` could flip the payroll verdict, or None.
+
+    stats maps customer_id -> {display_name, avg_days_late, paid_invoices, written_off}. gap > 0 means the
+    payroll is short by gap; gap <= 0 means it is covered with a buffer of -gap. Only dependable payers
+    (5+ paid invoices, no write-offs) qualify: their timing is what the owner may know better than the model."""
+    per = {}
+    for r in scored:
+        due = r.get('due_date')
+        due = due if isinstance(due, date) else (date.fromisoformat(str(due)) if due else None)
+        if due is None or due > target:
+            continue
+        c = per.setdefault(r['customer_id'], {'owed': 0.0, 'counted': 0.0})
+        amount = q.f(r['open_balance'])
+        c['owed'] += amount
+        c['counted'] += amount * float(r.get('p_paid_by_target') or 0)
+    candidates = []
+    for cid, c in per.items():
+        st = stats.get(cid) or {}
+        if (st.get('paid_invoices') or 0) < 5 or q.f(st.get('written_off') or 0) > 0:
+            continue
+        swing = c['owed'] - c['counted']
+        if gap > 0 and swing >= gap:                                  # short: paying in full would close it
+            candidates.append((swing, cid, c))
+        elif gap <= 0 and 0 < c['counted'] and c['counted'] >= -gap:  # covered: not paying would open a hole
+            candidates.append((c['counted'], cid, c))
+    if not candidates:
+        return None
+    _, cid, c = max(candidates, key=lambda t: t[0])
+    name = stats[cid].get('display_name') or cid
+    payday = f'{target.strftime("%B")} {target.day}'
+    return {'customer_id': cid, 'customer_name': name, 'owed_by_target': round(c['owed'], 2),
+            'counted_on': round(c['counted'], 2), 'avg_days_late': stats[cid].get('avg_days_late'),
+            'target_date': target.isoformat(),
+            'question': f'Should I assume {name} will pay the ${c["owed"]:,.0f} they owe by {payday}, or treat them as not paying?'}
+
+
 # ---------- receivables ----------
 
 def receivables_summary(scored, expected_in_30_days):

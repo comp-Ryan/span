@@ -442,3 +442,64 @@ def test_run_rate_converts_monthly_cost_to_weekly_and_weeks_of_cash():
     assert rr['weeks_of_cash_now'] == 6.0 and rr['weeks_of_cash_with_spend'] == 2.7
     assert pt.run_rate({'net_per_week': 500.0}, 6000, 100, 'once')['weeks_of_cash_now'] is None
     assert pt.run_rate(None, 6000, 100, 'once') is None
+
+
+# ---------- the one clarifying question: which customer's payment could flip the payroll verdict ----------
+
+def inv(customer_id, name, amount, p, due):
+    return {'customer_id': customer_id, 'customer_name': name, 'open_balance': amount, 'p_paid_by_target': p,
+            'due_date': due, 'invoice_id': f'{customer_id}-{amount}', 'days_past_due': 1, 'p_never': 0.01}
+
+
+PAYDAY = date(2026, 10, 20)
+ROWS = [inv('ever', 'Evergreen Juniper Flats Removals', 1000, 0.1, date(2026, 9, 20)),
+        inv('ever', 'Evergreen Juniper Flats Removals', 250, 0.8, date(2026, 10, 1)),   # swing 1250 - 300 = 950
+        inv('yeo', 'Yeoman Roasters Co.', 800, 0.5, date(2026, 10, 1)),                 # swing 400, counted on 400
+        inv('new', 'Newbie LLC', 5000, 0.2, date(2026, 10, 1)),                          # too little history
+        inv('wo', 'Lost Cause Inc', 3000, 0.1, date(2026, 10, 1)),                       # write-offs
+        inv('later', 'Later Co', 2000, 0.0, date(2026, 11, 15))]                         # not due by payday
+STATS = {'ever': {'display_name': 'Evergreen Juniper Flats Removals', 'avg_days_late': 23.0, 'paid_invoices': 70, 'written_off': 0},
+         'yeo': {'display_name': 'Yeoman Roasters Co.', 'avg_days_late': 21.0, 'paid_invoices': 54, 'written_off': 0},
+         'new': {'display_name': 'Newbie LLC', 'avg_days_late': 40.0, 'paid_invoices': 2, 'written_off': 0},
+         'wo': {'display_name': 'Lost Cause Inc', 'avg_days_late': 5.0, 'paid_invoices': 30, 'written_off': 900},
+         'later': {'display_name': 'Later Co', 'avg_days_late': 9.0, 'paid_invoices': 20, 'written_off': 0}}
+
+
+def test_pivotal_customer_when_short_is_the_dependable_payer_who_could_close_the_gap():
+    out = pt.pivotal_customer(ROWS, PAYDAY, STATS, gap=385)
+    assert out['customer_id'] == 'ever' and out['owed_by_target'] == 1250 and out['counted_on'] == 300
+    assert out['question'] == 'Should I assume Evergreen Juniper Flats Removals will pay the $1,250 they owe by October 20, or treat them as not paying?'
+    assert planner.is_awaiting_input(out['question'])
+    assert pt.pivotal_customer(ROWS, PAYDAY, STATS, gap=2000) is None  # nobody closes that alone
+
+
+def test_pivotal_customer_when_covered_is_the_payer_whose_silence_would_flip_it():
+    out = pt.pivotal_customer(ROWS, PAYDAY, STATS, gap=-250)  # covered with a $250 buffer
+    assert out['customer_id'] == 'yeo' and out['counted_on'] == 400
+    assert pt.pivotal_customer(ROWS, PAYDAY, STATS, gap=-5000) is None  # comfortable either way
+    assert pt.pivotal_customer([], PAYDAY, STATS, gap=385) is None
+
+
+def test_forecast_cash_asks_about_the_pivotal_customer_only_before_an_assumption(monkeypatch):
+    rows = ROWS
+    monkeypatch.setattr(planner, 'conn', lambda: Connection({'id': 'ever'}))
+    monkeypatch.setattr(pt, '_customer_stats', lambda c, company: [{'id': k, **v} for k, v in STATS.items()])
+
+    def fake_snapshot(company, target, excluded_customer_id=None, assumed_customer_id=None):
+        gap = 385 if not excluded_customer_id and not assumed_customer_id else 669
+        return {**fake_books(forecast={'gap': gap, 'cash_at_target': 100, 'need': 100 + gap}), 'scored': rows}
+
+    monkeypatch.setattr(planner, 'snapshot', fake_snapshot)
+    ctx = planner.ToolContext('run-1', 'company-1', PAYDAY)
+    first = ctx.read_tool('forecast_cash', {'target_date': '2026-10-20'})
+    assert first['assumption_needed']['customer_id'] == 'ever'
+    assert first['assumption_needed']['question'].startswith('Should I assume Evergreen')
+    settled = ctx.read_tool('forecast_cash', {'customer_id': 'ever', 'will_pay': False})
+    assert 'assumption_needed' not in settled and settled['gap'] == 669
+
+
+def test_followup_message_carries_the_pending_assumption():
+    text = planner.planner_followup_message('No', 'Will I make payroll?', 'Should I assume Evergreen will pay?',
+                                            {'customer_id': 'cust-37', 'customer_name': 'Evergreen', 'target_date': '2026-10-20'})
+    assert 'customer_id cust-37' in text and 'target_date 2026-10-20' in text and text.endswith('follow-up: No')
+    assert planner.planner_followup_message('No') == 'No'

@@ -49,9 +49,10 @@ or redoes an answer, the latest correction replaces the earlier assumption; redo
 When the caller gives an explicit forecast horizon (such as "the next two weeks"), calculate
 the end date from the dataset clock in your instructions and pass that exact ISO date as
 forecast_cash.target_date. Do not silently replace an explicit horizon with next Friday.
-When an Evergreen payday assumption is relevant, ask whether to assume Evergreen will pay by
-payday or treat them as not paying, then wait for the answer. Handle only one owner approval or
-action at a time and wait for the owner's explicit answer before proposing another.
+When forecast_cash returns assumption_needed, ask exactly its question and wait for the answer;
+then call forecast_cash again with that customer_id and will_pay set to the answer. Handle only
+one owner approval or action at a time and wait for the owner's explicit answer before proposing
+another.
 Begin by asking how you can help."""
 
 

@@ -180,7 +180,7 @@ async def run_payroll(run_id: str, company: str, target: date, parent_run_id=Non
 def ask(body: Ask, tasks: BackgroundTasks, company: str = settings.demo_company):
     if not body.question.strip():
         raise HTTPException(422, 'Question must not be blank')
-    from owed.planner import route_intent, run_planner
+    from owed.planner import pending_assumption, route_intent, run_planner
     from owed.runs.branches import branch_customer, parent_run, show_late
     parent = parent_run(body.parent_run_id, company) if body.parent_run_id else None
     target = (parent.get('target_date') or target_for(parent['question'])) if parent else target_for(body.question)
@@ -211,6 +211,7 @@ def ask(body: Ask, tasks: BackgroundTasks, company: str = settings.demo_company)
         parent_context = {
             'parent_question': parent['question'],
             'parent_speech': (prior['data'].get('text') if prior else None),
+            'pending_assumption': pending_assumption(body.parent_run_id),
         }
     if intent == 'payroll_check' and planner_for_call(body.source, intent, bool(settings.gemini_api_key)):
         tasks.add_task(run_planner, run_id, company, body.question, target, parent_context=parent_context)

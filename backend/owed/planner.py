@@ -194,7 +194,15 @@ class ToolContext:
             with conn() as c:
                 c.execute('update runs set target_date=%s, excluded_customer_id=%s where run_id=%s',
                           (self.target, s['forecast'].get('excluded_customer_id'), self.run_id))
-            return {**s['forecast'], **self.books(s)}
+            result = {**s['forecast'], **self.books(s)}
+            if not customer_id and s.get('scored'):
+                # Before any owner assumption: is there one dependable late payer whose timing decides the verdict?
+                with conn() as c:
+                    stats = {r['id']: r for r in pt._customer_stats(c, self.company)}
+                pivotal = pt.pivotal_customer(s['scored'], self.target, stats, q.f(s['forecast'].get('gap') or 0))
+                if pivotal:
+                    result['assumption_needed'] = pivotal
+            return result
         if name in NEW_TOOLS:
             return self.answer_tool(name, args)
         if self.snap is None:
@@ -358,10 +366,10 @@ Pick the one tool that answers the question, then answer. Usually one or two too
 - What if a customer doesn't pay (or does): identify them (find_customer, or rank_customers by largest_balance for "my biggest customer"), then one forecast_cash call with customer_id and will_pay, then answer.
 - How much am I owed / overdue / aging: receivables_summary.
 - Should I take an order or job: find_customer, then evaluate_order. Needed inputs are the customer, the amount and the payment terms; if the owner gave them, do not ask again. If the customer is new or unnamed, evaluate the cash side with check_affordability for any up-front cost.
-- Who to chase / collect: rank_chase (it opens an owner approval to text them). Do not call rank_chase, send_message or defer_bill unless the owner asked about collecting, chasing, reminding or deferring.
+- Who to chase / collect: rank_chase (it opens an owner approval to text them). Also call rank_chase once when a payroll forecast is short (gap > 0) and no assumption_needed is outstanding: it proposes the one supported action and the owner decides. Never call send_message or defer_bill unless the owner asked about reminding or deferring.
 Order/hiring/purchase questions need an amount; if the amount is missing, ask for it. Assume reasonable timing ("next week", "November") from the calendar above rather than asking.
 Outside money questions for this business (weather, news, general trivia), say briefly that you only help with this business's cash, bills, customers and payroll, and suggest one thing you can check. Do not call tools and give only Part 1 (no --- and no report).
-Work one step at a time. If a material fact or assumption is missing, ask exactly one short question and wait for the owner's answer before using tools or continuing. For a payroll forecast involving Evergreen, ask: "Should I assume Evergreen will pay by payday, or treat them as not paying?" Identify the customer from company-scoped books, then call forecast_cash with customer_id and will_pay set to the owner's answer. Use the owner's latest correction when they revise an assumption and redo only that step.
+Work one step at a time. If a material fact or assumption is missing, ask exactly one short question and wait for the owner's answer before using tools or continuing. When forecast_cash returns assumption_needed, ask exactly its question (that one sentence, nothing else) and stop. When the owner answers it, call forecast_cash again with that customer_id, will_pay set to their answer and the same target_date, then continue. Use the owner's latest correction when they revise an assumption and redo only that step.
 When asking a clarifying question, say only that one question with no --- and no report, and stop; do not give a forecast or written report until it is answered.
 Only request one owner approval at a time. Wait for its explicit answer before proposing another action; never bundle multiple approvals or actions into one turn.
 Sending and deferrals require owner approval. rank_chase already shows an approval card; do not also call send_message for those customers. After an explicit owner yes/approval, use resolve_decision with the returned decision_id and option_id yes. Never resolve without explicit owner approval. Never say they happened from an approval_required result.
@@ -390,11 +398,19 @@ def verdict_of(text: str) -> dict:
         verdict = 'barely'
     elif _re.match(r"^(yes|yep|you('| a)re (fine|covered|good|ok)|you will\b|you can\b(?!not)|you'll make|you make)", head):
         verdict = 'yes'
-    m = _re.search(r'\$\s?([\d,]+(?:\.\d+)?)\s*(k|thousand|million|m)?', text, _re.IGNORECASE)
+    amounts = list(_re.finditer(r'\$\s?([\d,]+(?:\.\d+)?)\s*(k|thousand|million|m)?\b', text, _re.IGNORECASE))
+    after = _re.compile(r'^\W{0,3}[^.;]{0,30}?\b(short(?:fall)?|gap|left|to spare|buffer|remaining|at risk|cushion)\b', _re.IGNORECASE)
+    before = _re.compile(r'\b(shortfall|short by|gap of|buffer of|cushion of|low point of|left with|spare)\b[^.;$]{0,40}$', _re.IGNORECASE)
+
+    def cued(m):
+        return bool(after.match(text[m.end():m.end() + 40])) or bool(before.search(text[max(0, m.start() - 48):m.start()]))
+
+    # The headline number is the one tied to a verdict cue (short, gap, buffer...), never just the first dollar figure.
+    pick = next((m for m in amounts if cued(m)), amounts[0] if len(amounts) == 1 else None)
     number = None
-    if m:
-        number = float(m.group(1).replace(',', ''))
-        unit = (m.group(2) or '').lower()
+    if pick:
+        number = float(pick.group(1).replace(',', ''))
+        unit = (pick.group(2) or '').lower()
         number *= 1000 if unit in ('k', 'thousand') else 1_000_000 if unit in ('m', 'million') else 1
     out = {}
     if verdict:
@@ -404,7 +420,20 @@ def verdict_of(text: str) -> dict:
     return out
 
 
-def planner_followup_message(question, parent_question=None, parent_speech=None):
+def pending_assumption(run_id):
+    """The customer assumption a run's clarifying question is waiting on, or None."""
+    with conn() as c:
+        answer = c.execute('''select data from events where run_id=%s and event='node.create'
+                              and data->>'node_id'='answer' order by id desc limit 1''', (run_id,)).fetchone()
+        if not answer or not ((answer['data'].get('data') or {}).get('awaiting_input')):
+            return None
+        row = c.execute('''select data->'data'->'assumption_needed' assumption from events where run_id=%s
+                           and event='node.update' and data->'data' ? 'assumption_needed'
+                           order by id desc limit 1''', (run_id,)).fetchone()
+    return row['assumption'] if row else None
+
+
+def planner_followup_message(question, parent_question=None, parent_speech=None, pending_assumption=None):
     """Carry only the immediate parent turn needed to interpret a short follow-up answer."""
     if not parent_question and not parent_speech:
         return question
@@ -415,6 +444,11 @@ def planner_followup_message(question, parent_question=None, parent_speech=None)
         parts.append(f"Owner’s original question: {str(parent_question)[:2000]}")
     if parent_speech:
         parts.append(f"Span’s most recent spoken response: {str(parent_speech)[:2000]}")
+    if pending_assumption:
+        parts.append(f"That response asked whether to assume customer_id {pending_assumption.get('customer_id')} "
+                     f"({pending_assumption.get('customer_name')}) pays by {pending_assumption.get('target_date')}. "
+                     f"If the owner's reply answers it, call forecast_cash with target_date {pending_assumption.get('target_date')}, "
+                     f"that customer_id and will_pay set to their answer before anything else, and do not ask it again.")
     parts.append(f"Owner’s current reply or follow-up: {question[:4000]}")
     return '\n'.join(parts)
 

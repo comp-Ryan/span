@@ -111,11 +111,12 @@ def main():
     p.add_argument('--company', default='company-020')
     p.add_argument('--only', default='', help='comma-separated 1-based question numbers')
     p.add_argument('--question', action='append', default=[], help='ask custom question(s) instead')
+    p.add_argument('--followup', help='with --question: send this reply as a follow-up (parent_run_id) to each question')
     p.add_argument('--source', default='web', choices=['web', 'call'], help="'call' routes payroll questions to the planner, like browser voice")
     p.add_argument('--verbose', '-v', action='store_true')
     p.add_argument('--json')
     a = p.parse_args()
-    items = [{'q': q} for q in a.question] or QUESTIONS
+    items = [{'q': q, 'followup': a.followup} for q in a.question] or QUESTIONS
     if a.only:
         items = [items[int(i) - 1] for i in a.only.split(',')]
     results = []
