@@ -147,3 +147,36 @@ def test_refused_live_send_falls_back_to_a_simulated_reminder(monkeypatch):
             for sql in ('delete from negotiations where run_id=%s', 'delete from reminders where run_id=%s', 'delete from pay_tokens where run_id=%s', 'delete from events where run_id=%s', 'delete from runs where run_id=%s'):
                 try: c.execute(sql, (rid,))
                 except Exception: pass
+
+
+def test_in_bridge_mode_the_simulated_customer_still_answers_a_real_text(monkeypatch):
+    from datetime import date
+    from owed.channels import photon
+    from owed.db import conn
+    from owed.runs import create
+    from owed.agents import negotiation
+    monkeypatch.setattr(settings, 'spectrum_bridge_url', 'http://127.0.0.1:1')
+    monkeypatch.setattr(settings, 'photon_demo_recipient', '+19495550000')
+
+    async def delivered(self, recipient, body, channel, key):
+        return {'provider_message_id': 'spc-msg-1', 'space_id': 'any;-;+19495550000', 'provider_status': 'sent'}
+
+    async def no_negotiation(*args, **kwargs):
+        return None
+    monkeypatch.setattr(photon.Photon, 'send', delivered)
+    monkeypatch.setattr(negotiation, 'negotiate', no_negotiation)
+    rid = create('company-020', 'Who should I chase today?', 'web', 'chase_today', target_date=date(2026, 10, 9))
+    with conn() as c:
+        invoice = c.execute("select invoice_id from invoice_facts where company_id='company-020' and open_balance>0 order by due_date limit 1").fetchone()['invoice_id']
+    try:
+        result = asyncio.run(photon.send_reminder(rid, 'company-020', invoice, operation_id='bridge-live-test'))
+        assert result['channel'] == 'sms' and result['provider_message_id'] == 'spc-msg-1'
+        asyncio.run(photon.simulated_reply(rid, 'company-020', result))
+        with conn() as c:
+            node = c.execute("select data from events where run_id=%s and event='node.create' and data->>'node_id'=%s", (rid, 'reply-' + result['reminder_id'])).fetchone()
+        assert node and node['data']['data']['simulated'] is True
+    finally:
+        with conn() as c:
+            for sql in ('delete from negotiations where run_id=%s', 'delete from reminders where run_id=%s', 'delete from pay_tokens where run_id=%s', 'delete from events where run_id=%s', 'delete from runs where run_id=%s'):
+                try: c.execute(sql, (rid,))
+                except Exception: pass

@@ -143,8 +143,10 @@ def simulated_reply_text(customer_id):
 
 
 async def simulated_reply(run_id, company, reminder):
-    """A disclosed synthetic customer replies to its reminder; actual outbound channels wait for webhooks."""
-    if reminder['channel'] != 'simulated':
+    """A disclosed synthetic customer replies to its reminder. Real outbound channels wait for the webhook, except in
+    Spectrum bridge mode: the text really lands on the owner's phone, and the customer side is the disclosed simulated
+    agent either way, so it answers here too (a real reply through the bridge adds its own node)."""
+    if reminder['channel'] != 'simulated' and not settings.spectrum_bridge_url:
         return
     from owed.agents.negotiation import negotiate
     node = 'reply-' + reminder['reminder_id']

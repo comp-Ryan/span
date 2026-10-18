@@ -283,7 +283,7 @@ function Conversations({ actions }: { actions: GraphNode[]; decisions?: Decision
       </div>)}
     </div>
     <div className="mthread">
-      <div className="mhead"><span className="av" style={{ background: sel.color }}>{initials(sel.full)}</span><div><b>{sel.full}</b><div className="fine">SMS · {BRAND} for Palletbay · {sel.items.some(i => i.data.channel === 'simulated') ? 'simulated, nothing sent' : 'pay link included'}</div></div></div>
+      <div className="mhead"><span className="av" style={{ background: sel.color }}>{initials(sel.full)}</span><div><b>{sel.full}</b><div className="fine">SMS · {BRAND} for Palletbay · {sel.items.some(i => i.data.kind === 'reminder' && i.data.channel === 'simulated') ? 'simulated, nothing sent' : sel.items.some(i => i.data.simulated) ? 'text sent to the owner’s phone · customer reply simulated' : 'pay link included'}</div></div></div>
       <div className="bubbles">
         {sel.items.map(a => {
           const d = a.data; const who = sel.full.split(' ')[0]
