@@ -11,7 +11,51 @@
   *{box-sizing:border-box}
   body{margin:0;font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
   .wrap{max-width:980px;margin:0 auto;padding:40px 20px 60px}
-  header{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+  .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:36px;align-items:center;margin-bottom:48px}
+  @media (max-width:900px){.hero{grid-template-columns:1fr}}
+  /* A faithful miniature of the product: top bar, rail, canvas with the question, the tool rows, the verdict and the ask. */
+  .frame{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(57,58,61,.14),0 2px 6px rgba(57,58,61,.06);overflow:hidden;font-size:12.5px;line-height:1.4}
+  .frame .top{display:flex;align-items:center;gap:12px;height:46px;padding:0 14px;border-bottom:1px solid var(--line)}
+  .frame .top img{width:22px;height:22px}
+  .frame .top .nm{font-weight:700;font-size:14px}
+  .frame .top .co{color:var(--muted);font-size:12px;border-left:1px solid var(--line);padding-left:12px}
+  .frame .top .srch{flex:1;height:28px;border:1px solid #d4d7dd;border-radius:14px;color:#9a9ca3;font-size:11.5px;display:flex;align-items:center;padding:0 10px;gap:6px;min-width:0;white-space:nowrap;overflow:hidden}
+  .frame .top .live{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .frame .top .live i{width:8px;height:8px;border-radius:4px;background:var(--green);display:inline-block}
+  .frame .body{display:grid;grid-template-columns:62px 1fr;min-height:360px}
+  .frame .rail{border-right:1px solid var(--line);padding:10px 6px;display:flex;flex-direction:column;gap:4px;background:#fafbf9}
+  .frame .rail span{display:block;text-align:center;font-size:10px;color:var(--muted);padding:7px 0 6px;border-radius:8px}
+  .frame .rail span.on{background:#e6f3e5;color:var(--green);font-weight:600}
+  .frame .rail svg{display:block;margin:0 auto 3px;width:14px;height:14px}
+  .frame .canvas{padding:14px 16px 16px;background-color:var(--bg);background-image:radial-gradient(#d9dbe0 .9px,transparent 1px);background-size:18px 18px}
+  .frame .you{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;font-size:13px}
+  .frame .av{width:22px;height:22px;border-radius:11px;background:#e9ebef;color:var(--ink);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .frame .av.s{background:var(--green);color:#fff}
+  .frame .tool{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 10px;margin:5px 0;font-size:12px}
+  .frame .tool b{font-weight:600}
+  .frame .tool .t{margin-left:auto;color:var(--muted);font-size:11px}
+  .frame .tool .ck{color:#2d7ff9;font-weight:700}
+  .frame .verdict{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-left:4px solid #d93025;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13px}
+  .frame .verdict .pill{margin-left:auto;background:#fde8e8;color:#d93025;font-size:10px;font-weight:700;padding:3px 8px;border-radius:9px;white-space:nowrap;align-self:center}
+  .frame .lever{background:#fff;border:1.5px solid var(--green);border-radius:12px;padding:10px 12px}
+  .frame .lever .h{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px}
+  .frame .lever .h .ic{width:22px;height:22px;border-radius:11px;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center}
+  .frame .lever .amt{margin-left:auto;color:var(--green);font-weight:700}
+  .frame .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .frame .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:12px;padding:3px 8px 3px 3px;font-size:11.5px;background:#fff}
+  .frame .chip .av{width:18px;height:18px;border-radius:9px;font-size:8px;color:#fff}
+  .frame .lever .fine{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .frame .lever .fine i{width:6px;height:6px;border-radius:3px;background:var(--green);display:inline-block}
+  .frame .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .frame .b{height:30px;padding:0 14px;border-radius:15px;border:1px solid #d4d7dd;background:#fff;font-size:12px;font-weight:600;display:inline-flex;align-items:center;color:var(--ink);white-space:nowrap}
+  .frame .b.p{background:var(--green);border-color:var(--green);color:#fff}
+  .frame .dock{position:relative;margin:12px -4px -4px auto;width:max-content;background:#fff;border:1px solid var(--line);border-radius:22px;padding:6px 12px 6px 6px;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px rgba(57,58,61,.12);font-size:12px;font-weight:700}
+  .frame .dock .ic{width:28px;height:28px;border-radius:14px;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center}
+  .frame .dock .badge{background:var(--green);color:#fff;border-radius:9px;padding:1px 7px;font-size:10px}
+  .frame .wave{display:flex;gap:2px;align-items:center}
+  .frame .wave i{display:block;width:3px;border-radius:2px;background:#cfd2d8;height:6px}
+  @media (prefers-color-scheme:dark){.frame{box-shadow:0 18px 50px rgba(0,0,0,.5)}.frame .rail{background:#1a1c20}.frame .rail span.on{background:#1f3a1c}.frame .top .srch{border-color:#3a3d44;color:#6f727a}.frame .tool,.frame .verdict,.frame .lever,.frame .chip,.frame .b,.frame .dock{background:#23262b;color:var(--ink)}.frame .canvas{background-image:radial-gradient(#2c2f35 .9px,transparent 1px)}.frame .verdict .pill{background:#3a1d1d}.frame .av{background:#33363c;color:#e8e9ec}}
   header img{width:36px;height:36px}
   header b{font-size:20px;letter-spacing:-.01em}
   h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:0 0 14px;letter-spacing:-.02em}
@@ -39,13 +83,47 @@
 <body>
 <div class="wrap">
   <header><img src="img/logo.png" alt=""><b>span</b></header>
-  <h1>Call Span. Ask if you’ll make payroll.<br>Watch the answer get made.</h1>
-  <p class="lead">A phone number for small business owners. Ask “am I making payroll in two weeks?” and Span reads the books, scores every open invoice by that customer’s payment history, forecasts cash on payday, and asks before it acts. Say yes and it texts the right customers, negotiates installments, takes the payment through a pay link, and the gap on screen ticks down.</p>
-  <p class="cta">
-    <a class="btn primary" href="#demo">Watch the demo</a>
-    <a class="btn" href="https://github.com/comp-Ryan/span">Source on GitHub</a>
-    <a class="btn" href="https://github.com/comp-Ryan/span/blob/main/docs/demo-runbook.md">How the demo runs</a>
-  </p>
+  <div class="hero">
+    <div>
+      <h1>Call Span. Ask if you’ll make payroll. Watch the answer get made.</h1>
+      <p class="lead">A phone number for small business owners. Ask “am I making payroll in two weeks?” and Span reads the books, scores every open invoice by that customer’s payment history, forecasts cash on payday, and asks before it acts. Say yes and it texts the right customers, negotiates installments, takes the payment through a pay link, and the gap on screen ticks down.</p>
+      <p class="cta">
+        <a class="btn primary" href="#demo">Watch the demo</a>
+        <a class="btn" href="https://github.com/comp-Ryan/span">Source on GitHub</a>
+        <a class="btn" href="https://github.com/comp-Ryan/span/blob/wip/live-demo/docs/demo-runbook.md">How the demo runs</a>
+      </p>
+    </div>
+    <div class="frame" aria-label="Span, as it looks while answering" role="img">
+      <div class="top"><img src="img/logo.png" alt=""><span class="nm">span</span><span class="co">Palletbay Storage &amp; Warehousing</span><span class="srch">&#9906; Ask about your money, or search transactions, customers, reports</span><span class="live"><i></i>Live</span></div>
+      <div class="body">
+        <div class="rail">
+          <span class="on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3.5h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7l-3 2.5V11.5H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1z"/></svg>Ask</span>
+          <span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4" width="11" height="8.5" rx="1"/><path d="M2.5 7h11"/></svg>Home</span>
+          <span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M2 7h12"/></svg>Get paid</span>
+          <span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 12.5 6 8l3 2.5 4.5-6"/></svg>Reports</span>
+          <span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 14c.8-3 2.6-4 5-4s4.2 1 5 4"/></svg>Customers</span>
+        </div>
+        <div class="canvas">
+          <div class="you"><span class="av">R</span><span>Am I going to make payroll these next two weeks?</span></div>
+          <div class="tool"><span class="ck">&#10003;</span><b>read books</b><span>· bank $6.5k, payroll $13.3k, bills $10.9k</span><span class="t">0.4 s</span></div>
+          <div class="tool"><span class="ck">&#10003;</span><b>score invoices</b><span>· 204 scored</span><span class="t">11.4 s</span></div>
+          <div class="tool"><span class="ck">&#10003;</span><b>forecast cash</b><span>· cushion −$385</span><span class="t">0.4 s</span></div>
+          <div class="verdict"><span class="av s">S</span><span>No. $385 short; $2,753 short if the slow payers slip. This estimate uses payment history and bills due by Oct 20.</span><span class="pill">SHORT</span></div>
+          <div class="lever">
+            <div class="h"><span class="ic">&#9993;</span>Text 3 reliable late payers<span class="amt">+ $845</span></div>
+            <div class="chips">
+              <span class="chip"><span class="av" style="background:#2d7ff9">HT</span>Hearth · $282</span>
+              <span class="chip"><span class="av" style="background:#7c5cff">MT</span>Marchetti · $282</span>
+              <span class="chip"><span class="av" style="background:#e08a1e">IG</span>Ironbridge · $282</span>
+            </div>
+            <div class="fine"><i></i>tap a name to leave them out · nothing is sent until you say so</div>
+            <div class="acts"><span class="b p">Yes, text them</span><span class="b">Text, don’t touch bills</span><span class="b">Not now</span></div>
+          </div>
+          <div class="dock"><span class="ic">&#9742;</span><span class="wave"><i></i><i style="height:10px"></i><i style="height:13px"></i><i style="height:8px"></i><i></i></span>Conversation<span class="badge">5</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <section id="demo" class="demo">
     <video controls playsinline preload="metadata" poster="img/03-verdict-approval.png" src="demo.webm"></video>
     <p class="fine">Recorded live against the real backend: the payroll question, the clarifying question, the approval, three reminders with replies and negotiation, four installments paid, the follow-up, and the report. Nothing scripted.</p>
