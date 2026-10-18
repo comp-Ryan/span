@@ -359,6 +359,11 @@
     panels.forEach(function (pn, j) { pn.classList.toggle('on', j === i); if (j !== i) { anime.remove(pn); pn.style.opacity = 0; pn.style.transform = 'none'; } });
     var pn = panels[i];
     anime({ targets: pn, opacity: [0, 1], translateY: [14, 0], duration: 420, easing: 'easeOutCubic' });
+    var parts = q('.you, .tool, .frame-lite .chip, .verdict, .hint, .lever .h, .lever .chips .chip, .lever .fine, .acts .b, .trend.small, .mhead, .ph, .rails, .field, .paybtn, .stats > div, .trend, .paper', pn);
+    if (parts.length) { anime.remove(parts); anime({ targets: parts, opacity: [0, 1], translateY: [12, 0], scale: [0.98, 1], duration: 380, delay: anime.stagger(70, { start: 60 }), easing: 'easeOutCubic' }); }
+    var pl = pn.querySelector('.trend.small polyline'); if (pl) { pl.setAttribute('stroke-dasharray', anime.setDashoffset(pl)); anime({ targets: pl, strokeDashoffset: [anime.setDashoffset, 0], duration: 1100, delay: 300, easing: 'easeInOutSine' }); }
+    var pill = pn.querySelector('.verdict .pill'); if (pill) anime({ targets: pill, scale: [0.6, 1], opacity: [0, 1], duration: 420, delay: 500, easing: 'easeOutBack' });
+    var yes = pn.querySelector('.acts .b.p'); if (yes) anime({ targets: yes, scale: [1, 1.06, 1], duration: 700, delay: 900, easing: 'easeInOutSine' });
     if (i === 6) { var bubs = q('.bub, .agentline, .agree', pn); anime({ targets: bubs, opacity: [0, 1], translateY: [8, 0], duration: 320, delay: anime.stagger(380, { start: 250 }), easing: 'easeOutCubic' }); }
     if (i === 7) {
       q('[data-count]', pn).forEach(function (el) { var from = Number(el.dataset.from || 0), to = Number(el.dataset.count), o = { v: from }; anime({ targets: o, v: to, duration: 1400, easing: 'easeOutExpo', delay: 400, update: function () { el.textContent = fmt(Math.round(o.v), el); } }); });
@@ -498,6 +503,7 @@
     var w = 24; bb.lines.forEach(function (l) { w = Math.max(w, ctx.measureText(l).width + 30); }); w = Math.max(w, ctx.measureText(bb.title).width + 30); w = Math.min(w, 300);
     var h = 16 + 18 + bb.lines.length * 17;
     var lift = (bb.dy || 0) - 10 * grow;
+    x = Math.min(Math.max(x, w / 2 + 10), W - w / 2 - 10); y = Math.max(y, h / 2 + 10);  // never clipped by the card edge
     ctx.save(); ctx.globalAlpha = Math.min(1, grow * 1.3); ctx.translate(x, y + lift); ctx.scale(0.25 + 0.75 * grow, 0.25 + 0.75 * grow);
     ctx.shadowColor = 'rgba(0,0,0,' + (dark ? 0.55 : 0.18) + ')'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
     ctx.fillStyle = C.card; roundRect(-w / 2, -h / 2, w, h, 12); ctx.fill(); ctx.shadowColor = 'transparent';
@@ -512,7 +518,7 @@
   function layout() {
     var r = canvas.getBoundingClientRect(); W = r.width; H = r.height;
     canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var rx = Math.min(W * 0.40, 420), ry = Math.min(H * 0.36, 170), cx = W / 2, cy = H / 2 + 6;
+    var rx = Math.min(W * 0.34, 400), ry = Math.min(H * 0.33, 170), cx = W / 2, cy = H / 2 + 6;
     nodes.forEach(function (n) { var a = n.a * Math.PI / 180; n.x = cx + rx * Math.cos(a); n.y = cy + ry * Math.sin(a); });
     layout.cx = cx; layout.cy = cy;
   }
