@@ -46,9 +46,12 @@ through the normal API.
 | Live recorder (`npm run record`) | full take `frontend/demo-out/live-20261018050748376/` (11 stills, demo.webm, thumbnail, report.pdf, evidence.json); 1 of 3 reminders negotiated at that commit, $183.10 paid, outcome honestly not green |
 | Chrome e2e (`npm run e2e`, runs 5 and 6) | rail pages, customer detail, new chat / past chat / rename / reload, typed "yes" resolves the decision, three simulated reminders → negotiation → pay link, pay page updates Get paid, Generate report → report opens, Print observed, PDF downloads, no console errors: PASS (16 checks). Home mic recognized the fake-microphone WAV in two of four runs (informational); the dock mic check lost a click race with the call's own auto-listen (script, fixed); the browser-call check needs a planner answer and so needs Gemini credits |
 
+| OpenRouter backup (`OPEN_ROUTER` key, 2026-10-18 06:40 UTC) | with Gemini at 402, battery questions 3 and 11 and the payroll flow (clarifying question → "go with your estimate" → $384.94 short → one action) all failed over to `google/gemini-3.8-flash` via OpenRouter and answered with the same numbers; runs carry `planner: openrouter` |
+
 ## Known limits
 
-- Gemini prepaid credits ran out at 05:26 (402 RESOURCE_EXHAUSTED); the second recorder
-  take (three negotiations, expected green outcome) and further live checks need a top-up.
+- Gemini prepaid credits ran out at 05:26 (402 RESOURCE_EXHAUSTED). The planner now fails over
+  to OpenRouter; the voice bridge (Gemini Live) does not, so phone/browser-call answers still
+  need Gemini credits.
 - Real phone calls need a Twilio number and a public URL (see `docs/voice-setup.md`).
 - Nothing was deployed; no secrets or `.env` files were changed.
