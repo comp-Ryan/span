@@ -70,7 +70,8 @@
   .cta{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0}
   .btn{display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:22px;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600}
   .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
-  .run{margin:0 auto 64px;max-width:1040px}
+  .run{margin:0 auto 64px;max-width:1040px;height:calc(9 * 72vh);position:relative}
+  .run .sticky{position:sticky;top:72px}
   .run-grid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start}
   @media (max-width:820px){.run-grid{grid-template-columns:1fr}}
   .timeline{list-style:none;margin:0;padding:0 0 0 18px;position:relative}
@@ -83,7 +84,7 @@
   .timeline li.active{opacity:1}.timeline li.active .dot{border-color:var(--green);background:var(--card);box-shadow:0 0 0 4px rgba(44,160,28,.18);animation:pulse 1.2s infinite}
   .timeline li.active b{color:var(--green)}
   @keyframes pulse{50%{box-shadow:0 0 0 7px rgba(44,160,28,.08)}}
-  .stage{position:relative;min-height:380px}
+  .stage{position:relative;min-height:380px;max-height:calc(100vh - 140px);overflow:hidden}
   .panel{position:absolute;inset:0;opacity:0;pointer-events:none}
   .panel.on{position:relative;opacity:1;pointer-events:auto}
   .frame-lite{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;background-image:radial-gradient(#d9dbe0 .9px,transparent 1px);background-size:18px 18px;font-size:14px}
@@ -211,10 +212,9 @@
   <header><img src="img/logo.png" alt=""><b>span</b><nav><a href="#demo">How it works</a><a href="demo.html">Demo video</a><a href="https://github.com/comp-Ryan/span">GitHub</a></nav></header>
   <div class="hero">
     <div class="voice" id="voice"><canvas id="voicegraph" aria-label="A voice at the center connecting books, invoices, forecast, customers, pay links and the report" role="img"></canvas></div>
-    <p class="cta"><a class="btn primary" href="demo.html">Watch the demo</a><a class="btn" href="https://github.com/comp-Ryan/span">Source</a></p>
   </div>
   <section id="demo" class="run" aria-label="How a run unfolds">
-    
+    <div class="sticky">
     <div class="run-grid">
       <ol class="timeline" id="timeline">
         <li data-step="0"><span class="dot"></span><span class="lbl">YOU</span><b>Ask about payroll</b></li>
@@ -273,6 +273,7 @@
       </div></div></div>
         <div class="panel" data-panel="8"><figure class="paper"><img src="img/report.png" alt="One-page report generated from the run"></figure></div>
       </div>
+    </div>
     </div>
   </section>
 
@@ -343,8 +344,19 @@
     if (playing && !manual) timer = setTimeout(function () { showStep((i + 1) % steps.length, false); }, dwell[i]);
     if (manual) { playing = false; }
   }
-  steps.forEach(function (li, j) { li.addEventListener('click', function () { showStep(j, true); }); });
-  if (stage) { panels[0].classList.add('on'); steps[0].classList.add('active'); once(document.getElementById('demo'), function () { playing = true; showStep(0, false); }); }
+  var runEl = document.getElementById('demo');
+  function stepFromScroll() {
+    if (!runEl) return;
+    var top = runEl.offsetTop, span = runEl.offsetHeight - window.innerHeight;
+    var pr = Math.min(1, Math.max(0, (window.scrollY - top + 40) / Math.max(1, span)));
+    var i = Math.min(steps.length - 1, Math.floor(pr * steps.length));
+    if (i !== cur) showStep(i, true);
+  }
+  steps.forEach(function (li, j) { li.addEventListener('click', function () {
+    var top = runEl.offsetTop, span = runEl.offsetHeight - window.innerHeight;
+    window.scrollTo({ top: top - 40 + span * ((j + 0.5) / steps.length), behavior: 'smooth' });
+  }); });
+  if (stage) { panels[0].classList.add('on'); steps[0].classList.add('active'); cur = 0; window.addEventListener('scroll', stepFromScroll, { passive: true }); window.addEventListener('resize', stepFromScroll); stepFromScroll(); }
   // 2. Everything below plays once when it scrolls into view.
   var msgs = [], chat = [];
   once(null, function () {
