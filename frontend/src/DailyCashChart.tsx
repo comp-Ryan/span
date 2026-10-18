@@ -6,8 +6,10 @@ type Cash = { start: string; target: string; opening_balance: number; days: Day[
 
 /** Live mode draws API numbers only; failed requests never substitute a synthetic line. */
 export default function DailyCashChart({ company, target, revision, neverPays }: { company: string; target: string; revision: number | string; neverPays?: string }) {
-  const [cash, setCash] = useState<Cash | null>(null)
-  const [error, setError] = useState('')
+  const key = JSON.stringify([company, target, revision, neverPays])
+  const [result, setResult] = useState<{ key: string; cash?: Cash; error?: string }>()
+  const cash = result?.key === key ? result.cash : undefined
+  const error = result?.key === key ? result.error : undefined
   useEffect(() => {
     const abort = new AbortController()
     const query = new URLSearchParams({ company, target })
@@ -15,9 +17,9 @@ export default function DailyCashChart({ company, target, revision, neverPays }:
     fetch(`/api/cash?${query}`, { signal: abort.signal }).then(async r => {
       if (!r.ok) throw new Error('Cash projection unavailable')
       return r.json() as Promise<Cash>
-    }).then(value => { setCash(value); setError('') }).catch(e => { if (e.name !== 'AbortError') setError(e.message) })
+    }).then(value => { setResult({ key, cash: value }) }).catch(e => { if (e.name !== 'AbortError') setResult({ key, error: e.message }) })
     return () => abort.abort()
-  }, [company, target, revision, neverPays])
+  }, [company, target, revision, neverPays, key])
   if (error) return <div className="chart" role="alert">{error}</div>
   if (!cash) return <div className="chart">Loading dated cash projection…</div>
   const W = 420, H = 200, bottom = 165, top = 22
@@ -26,7 +28,7 @@ export default function DailyCashChart({ company, target, revision, neverPays }:
   const y = (v: number) => bottom - (v - lo) / (hi - lo) * (bottom - top)
   const x = (i: number) => 8 + i / Math.max(1, cash.days.length - 1) * (W - 16)
   const path = (days: Day[]) => days.map((d, i) => `${i ? 'L' : 'M'}${x(i)} ${y(d.balance)}`).join(' ')
-  return <div className="chart" data-testid="daily-cash-chart">
+  return <div className="chart" data-testid="daily-cash-chart" data-excluded-customer={neverPays || ''}>
     <div className="head" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}><b>Cash in the bank, day by day</b><div className="legend"><span>Green: expected receipts</span><span>Orange: payers below 70% slip</span></div></div>
     <svg viewBox={`0 0 ${W} ${H}`} fill="none" role="img" aria-label="Server-projected expected and pessimistic cash balances">
       <path d={`M0 ${y(0)} H${W}`} stroke="#D52B1E" strokeDasharray="4 4" />

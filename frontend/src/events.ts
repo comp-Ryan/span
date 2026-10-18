@@ -15,7 +15,7 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
       return { ...emptyRun(), run_id: d.run_id || ev.run_id || '', parent_run_id: d.parent_run_id, question: d.question || '', source: d.source || 'web', company_id: d.company_id || '', status: 'open', startedAt: now,
         turns: [{ kind: 'you', text: d.question || '', at: now }] }
     case 'node.create': {
-      const n: GraphNode = { node_id: d.node_id, type: d.type, title: d.title, status: d.status || 'running', parent: d.parent ?? null, data: d.data || {}, rows: [], rounds: [], createdAt: now, doneAt: d.status === 'done' ? now : undefined }
+      const n: GraphNode = { node_id: d.node_id, type: d.type, title: d.title, status: d.status || 'running', parent: d.parent ?? null, parent_run_id: d.parent_run_id, data: d.data || {}, rows: [], rounds: [], createdAt: now, doneAt: d.status === 'done' ? now : undefined }
       const turns = run.turns.slice()
       if (n.type !== 'answer' && n.type !== 'action') turns.push({ kind: 'tool', text: TOOL_LABEL[n.type] || n.type, meta: n.title, at: now })
       if (n.type === 'action') turns.push({ kind: 'tool', text: n.title, meta: d.data?.kind, at: now })
@@ -42,7 +42,7 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
       return { ...run, decisions: { ...run.decisions, [d.decision_id]: { ...dec, resolved: d.option_id || d.resolved } } }
     }
     case 'speech':
-      return { ...run, turns: [...run.turns, { kind: 'owed', text: d.text, at: now }] }
+      return { ...run, turns: [...run.turns, { kind: 'owed', text: plain(String(d.text || '')).split(/(?<=[.!?])\s/).slice(0, 3).join(' '), at: now }] }
     case 'report.ready':
       return { ...run, report_id: d.report_id }
     case 'run.end':
@@ -62,5 +62,6 @@ function summarize(n: GraphNode): string {
     default: return n.title
   }
 }
+export const plain = (t: string) => (t || '').replace(/[#*_`>]+/g, '').replace(/\n{2,}/g, ' ').replace(/\s+/g, ' ').trim()
 export const k = (v?: number) => v == null ? '—' : (Math.abs(v) >= 1000 ? (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : Math.round(v).toString())
 export const money = (v?: number) => v == null ? '—' : '$' + Math.round(v).toLocaleString()

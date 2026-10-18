@@ -48,6 +48,16 @@ def test_follow_up_inherits_target_excludes_customer_and_branches():
             persisted = c.execute('select target_date,excluded_customer_id from runs where run_id=%s', (reply['run_id'],)).fetchone()
         assert persisted['target_date'] == date(2026, 10, 20)
         assert persisted['excluded_customer_id'] == forecast['excluded_customer_id']
+        # The frontend's left-column chart uses the same customer and target.
+        from owed.finance.cash import cash
+        baseline_chart = cash('company-020', date(2026, 10, 20))
+        scenario_chart = cash('company-020', date(2026, 10, 20), forecast['excluded_customer_id'])
+        assert scenario_chart['assumptions']['never_pays'] == forecast['excluded_customer_id']
+        assert scenario_chart['opening_balance'] == baseline_chart['opening_balance']
+        assert scenario_chart['days'][-1]['balance'] < baseline_chart['days'][-1]['balance']
+        for series in ('days', 'pessimistic_days'):
+            assert all(a['balance'] <= b['balance'] and a['outflow'] == b['outflow']
+                       for a, b in zip(scenario_chart[series], baseline_chart[series]))
         levers = next(e['data']['data']['levers'] for e in events if 'levers' in e['data'].get('data', {}))
         assert all(t['customer_id'] != forecast['excluded_customer_id'] for l in levers for t in l.get('targets', []))
         tasks = BackgroundTasks()
