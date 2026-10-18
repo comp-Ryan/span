@@ -16,6 +16,9 @@
   header{display:flex;align-items:center;gap:12px;margin-bottom:56px}
   header nav{margin-left:auto;display:flex;gap:22px;font-size:14px;font-weight:500}header nav a{color:var(--muted);text-decoration:none}header nav a:hover{color:var(--ink)}
   .hero{text-align:center;margin-bottom:44px}
+  .voice{max-width:980px;margin:0 auto 18px;height:460px}
+  @media (max-width:700px){.voice{height:380px}}
+  .voice canvas{width:100%;height:100%;display:block}
   .hero .copy{max-width:760px;margin:0 auto}
   .hero .frame{text-align:left;max-width:920px;margin:0 auto 56px;font-size:13.5px}
   /* A faithful miniature of the product: top bar, rail, canvas with the question, the tool rows, the verdict and the ask. */
@@ -198,11 +201,8 @@
 <div class="wrap">
   <header><img src="img/logo.png" alt=""><b>span</b><nav><a href="#demo">How it works</a><a href="demo.html">Demo video</a><a href="https://github.com/comp-Ryan/span">GitHub</a></nav></header>
   <div class="hero">
-    <div class="copy">
-      <h1>Call Span. Ask if you’ll make payroll.<br>Watch the answer get made.</h1>
-      <p class="lead">A phone number for small business owners. Every step below is a real run.</p>
-      <p class="cta"><a class="btn primary" href="demo.html">Watch the demo</a><a class="btn" href="https://github.com/comp-Ryan/span">GitHub</a></p>
-    </div>
+    <div class="voice" id="voice"><canvas id="voicegraph" aria-label="A voice at the center connecting books, invoices, forecast, customers, pay links and the report" role="img"></canvas></div>
+    <p class="cta"><a class="btn primary" href="demo.html">Watch the demo</a><a class="btn" href="https://github.com/comp-Ryan/span">Source</a></p>
   </div>
   <section id="demo" class="run" aria-label="How a run unfolds">
     
@@ -363,6 +363,100 @@
     });
     anime({ targets: q('.nums div'), opacity: [0, 1], translateY: [10, 0], duration: 450, delay: anime.stagger(90), easing: 'easeOutCubic' });
   });
+})();
+</script>
+<script>
+// Voice graph: the owner's voice at the center reaches every system Span touches, in the order a real run does.
+(function () {
+  var canvas = document.getElementById('voicegraph'); if (!canvas) return;
+  var ctx = canvas.getContext('2d'), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var css = getComputedStyle(document.documentElement), dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  var C = { green: '#2ca01c', red: '#d93025', amber: '#e08a1e', blue: '#2d7ff9', ink: css.getPropertyValue('--ink').trim() || '#393a3d', muted: css.getPropertyValue('--muted').trim() || '#6b6c72', line: dark ? '#3a3d44' : '#d7dae0', card: css.getPropertyValue('--card').trim() || '#fff' };
+  var W = 0, H = 0, dpr = Math.min(2, window.devicePixelRatio || 1);
+  var nodes = [
+    { id: 'you', label: 'You', sub: 'phone · browser', a: -90 },
+    { id: 'books', label: 'Books', sub: 'bank · bills · payroll', a: -150 },
+    { id: 'invoices', label: 'Invoices', sub: '204 scored', a: 150 },
+    { id: 'forecast', label: 'Forecast', sub: 'cash on payday', a: 100 },
+    { id: 'customers', label: 'Customers', sub: 'texts · replies', a: 35 },
+    { id: 'pay', label: 'Pay link', sub: 'Visa · Solana', a: -10 },
+    { id: 'report', label: 'Report', sub: 'one page', a: -45 }
+  ];
+  // the run, as packets: from → to, start (ms), length (ms), color, and what lights up when it lands
+  var run = [
+    { f: 'you', t: 'hub', s: 0, d: 900, c: C.green, speak: true },
+    { f: 'hub', t: 'books', s: 900, d: 600, c: C.blue },
+    { f: 'hub', t: 'invoices', s: 1450, d: 650, c: C.blue },
+    { f: 'hub', t: 'forecast', s: 2050, d: 650, c: C.blue },
+    { f: 'forecast', t: 'hub', s: 2700, d: 500, c: C.red },
+    { f: 'hub', t: 'you', s: 3200, d: 600, c: C.red, speak: true, verdict: true },
+    { f: 'you', t: 'hub', s: 4100, d: 500, c: C.green, speak: true, yes: true },
+    { f: 'hub', t: 'customers', s: 4600, d: 650, c: C.green, texts: 3 },
+    { f: 'customers', t: 'hub', s: 5600, d: 650, c: C.amber, replies: 3 },
+    { f: 'customers', t: 'pay', s: 6400, d: 650, c: C.green, paid: true },
+    { f: 'pay', t: 'forecast', s: 7050, d: 600, c: C.green, covered: true },
+    { f: 'hub', t: 'report', s: 7700, d: 650, c: C.blue, report: true }
+  ];
+  var LOOP = 9800, t0 = performance.now();
+  function layout() {
+    var r = canvas.getBoundingClientRect(); W = r.width; H = r.height;
+    canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var rx = Math.min(W * 0.40, 420), ry = Math.min(H * 0.36, 170), cx = W / 2, cy = H / 2 + 6;
+    nodes.forEach(function (n) { var a = n.a * Math.PI / 180; n.x = cx + rx * Math.cos(a); n.y = cy + ry * Math.sin(a); });
+    layout.cx = cx; layout.cy = cy;
+  }
+  function pos(id) { if (id === 'hub') return { x: layout.cx, y: layout.cy }; return nodes.filter(function (n) { return n.id === id; })[0]; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function draw(now) {
+    var t = reduced ? 8600 : (now - t0) % LOOP;
+    ctx.clearRect(0, 0, W, H);
+    // links
+    nodes.forEach(function (n) { ctx.strokeStyle = C.line; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(layout.cx, layout.cy); ctx.lineTo(n.x, n.y); ctx.stroke(); });
+    var lit = {}, speaking = 0, verdict = false, covered = false, paidOn = false, texts = 0, replies = 0, yes = false, reportOn = false;
+    run.forEach(function (p) {
+      var k = (t - p.s) / p.d;
+      if (t >= p.s) { lit[p.t] = Math.max(lit[p.t] || 0, k >= 1 ? 1 : 0); if (k >= 1) { if (p.verdict) verdict = true; if (p.covered) covered = true; if (p.paid) paidOn = true; if (p.texts) texts = p.texts; if (p.replies) replies = p.replies; if (p.yes) yes = true; if (p.report) reportOn = true; } }
+      if (k >= 0 && k < 1) {
+        if (p.speak) speaking = 1;
+        var a = pos(p.f), b = pos(p.t), e = ease(k), x = a.x + (b.x - a.x) * e, y = a.y + (b.y - a.y) * e;
+        // packet with a soft trail
+        for (var i = 4; i >= 0; i--) { var kk = Math.max(0, k - i * 0.035), ee = ease(kk); ctx.globalAlpha = 0.18 * (5 - i) / 5; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(a.x + (b.x - a.x) * ee, a.y + (b.y - a.y) * ee, 5 - i * 0.6, 0, Math.PI * 2); ctx.fill(); }
+        ctx.globalAlpha = 1; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+        // customers get three packets, fanned
+        if (p.texts || p.replies) { for (var j = -1; j <= 1; j++) { if (!j) continue; ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.arc(x + j * 10 * (1 - Math.abs(0.5 - k) * 2), y + j * 6, 3.5, 0, Math.PI * 2); ctx.fill(); } ctx.globalAlpha = 1; }
+      }
+    });
+    // hub: a voice waveform in a ring
+    var hubR = 44; ctx.save();
+    if (speaking || t < 900) { ctx.shadowColor = C.green; ctx.shadowBlur = 24; }
+    ctx.fillStyle = C.card; ctx.strokeStyle = speaking ? C.green : C.line; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(layout.cx, layout.cy, hubR, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+    var bars = 9; for (var b = 0; b < bars; b++) { var ph = now / 140 + b * 0.9, amp = speaking ? 16 : 5, h = 4 + Math.abs(Math.sin(ph)) * amp; ctx.fillStyle = speaking ? C.green : C.muted; roundRect(layout.cx - 22 + b * 5.5, layout.cy - h / 2, 3, h, 1.5); ctx.fill(); }
+    // nodes
+    nodes.forEach(function (n) {
+      var on = !!lit[n.id]; var color = C.line;
+      if (on) color = n.id === 'you' && verdict && !yes ? C.red : n.id === 'forecast' ? (covered ? C.green : (lit.forecast ? C.red : C.line)) : n.id === 'customers' && replies ? C.amber : C.green;
+      if (n.id === 'you' && yes) color = C.green;
+      ctx.save(); if (on) { ctx.shadowColor = color; ctx.shadowBlur = 18; }
+      ctx.fillStyle = C.card; ctx.strokeStyle = on ? color : C.line; ctx.lineWidth = on ? 2.5 : 1.5; ctx.beginPath(); ctx.arc(n.x, n.y, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+      // glyphs
+      ctx.strokeStyle = on ? color : C.muted; ctx.fillStyle = on ? color : C.muted; ctx.lineWidth = 1.8;
+      if (n.id === 'you') { ctx.beginPath(); ctx.arc(n.x, n.y - 3, 5, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y + 11, 9, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); }
+      if (n.id === 'books') { ctx.strokeRect(n.x - 8, n.y - 6, 16, 12); ctx.beginPath(); ctx.moveTo(n.x - 8, n.y - 1); ctx.lineTo(n.x + 8, n.y - 1); ctx.stroke(); }
+      if (n.id === 'invoices') { for (var r2 = 0; r2 < 3; r2++) { ctx.beginPath(); ctx.moveTo(n.x - 7, n.y - 5 + r2 * 5); ctx.lineTo(n.x + 7, n.y - 5 + r2 * 5); ctx.stroke(); } }
+      if (n.id === 'forecast') { ctx.beginPath(); ctx.moveTo(n.x - 8, n.y + 6); ctx.lineTo(n.x - 2, n.y + (covered ? -1 : 2)); ctx.lineTo(n.x + 3, n.y + (covered ? 2 : -1)); ctx.lineTo(n.x + 8, n.y + (covered ? -6 : 6)); ctx.stroke(); }
+      if (n.id === 'customers') { [-7, 0, 7].forEach(function (dx, i) { var c2 = on ? (i < texts ? (i < replies ? C.amber : C.green) : C.muted) : C.muted; ctx.fillStyle = c2; ctx.beginPath(); ctx.arc(n.x + dx, n.y, 3, 0, Math.PI * 2); ctx.fill(); }); }
+      if (n.id === 'pay') { roundRect(n.x - 9, n.y - 6, 18, 12, 2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(n.x - 9, n.y - 2); ctx.lineTo(n.x + 9, n.y - 2); ctx.stroke(); if (paidOn) { ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(n.x + 7, n.y + 7, 4, 0, Math.PI * 2); ctx.fill(); } }
+      if (n.id === 'report') { ctx.strokeRect(n.x - 6, n.y - 8, 12, 16); for (var r3 = 0; r3 < 3; r3++) { ctx.beginPath(); ctx.moveTo(n.x - 3, n.y - 4 + r3 * 4); ctx.lineTo(n.x + 3, n.y - 4 + r3 * 4); ctx.stroke(); } }
+      // labels
+      ctx.textAlign = 'center'; ctx.fillStyle = on ? C.ink : C.muted; ctx.font = '600 13px Inter, system-ui, sans-serif'; ctx.fillText(n.label, n.x, n.y + 38);
+      ctx.fillStyle = C.muted; ctx.font = '11px Inter, system-ui, sans-serif';
+      var sub = n.sub; if (n.id === 'you' && verdict && !yes) sub = '“No. $385 short.”'; if (n.id === 'you' && yes) sub = '“Yes, text them.”'; if (n.id === 'forecast' && covered) sub = 'cushion +$43'; if (n.id === 'pay' && paidOn) sub = '$1,691 received'; if (n.id === 'customers' && replies) sub = '3 replies · 3 agreements'; if (n.id === 'report' && reportOn) sub = 'written';
+      ctx.fillText(sub, n.x, n.y + 53);
+    });
+    if (!reduced) requestAnimationFrame(draw);
+  }
+  layout(); window.addEventListener('resize', function () { layout(); }); requestAnimationFrame(draw);
 })();
 </script>
 </body>
