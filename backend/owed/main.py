@@ -85,7 +85,9 @@ def health():
                       "phone_number": settings.voice_phone_number.strip() or None,
                       "elevenlabs": bool(settings.elevenlabs_api_key and settings.elevenlabs_voice_id),
                       "live_model": settings.gemini_live_model},
-            "planner": settings.planner, "finance_tools": settings.finance_tools}
+            "planner": settings.planner, "planner_backup": "openrouter" if settings.openrouter_api_key else None,
+            "planner_backup_model": settings.openrouter_model if settings.openrouter_api_key else None,
+            "finance_tools": settings.finance_tools}
 
 
 app.add_api_route('/api/health', health, methods=['GET'])

@@ -14,6 +14,7 @@ from google.genai import errors, types
 from owed.config import settings
 from owed.db import conn
 from owed.events import emit
+from owed.planner_backup import OpenRouterClient
 from owed.finance import queries as q
 from owed.finance.model import band
 from owed.runs import finish
@@ -545,11 +546,13 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
         'title': 'Understanding the question', 'status': 'done', 'parent': None,
         'data': {'question': question, 'as_of': '2026-10-06', 'target_date': target.isoformat()}})
     owned = client is None
+    backup, model_name, primary = None, settings.gemini_model, client
     try:
         if client is None:
             if not settings.gemini_api_key:
                 raise ValueError('Gemini is not configured. Payroll questions work without keys.')
             client = genai.Client(api_key=settings.gemini_api_key)
+        primary = client
         prompt = planner_followup_message(question, **{k: v for k, v in pc.items() if k != 'assumption_asked'})
         contents = [types.Content(role='user', parts=[types.Part(text=prompt)])]
         config = types.GenerateContentConfig(system_instruction=system_prompt(company, target),
@@ -559,8 +562,19 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
             function_calling_config=types.FunctionCallingConfig(mode='NONE'))})
         started, final = time.monotonic(), False
         for step in range(MAX_STEPS):
-            response = await generate(client, model=settings.gemini_model, contents=contents,
-                                      config=final_config if final else config)
+            cfg = final_config if final else config
+            try:
+                response = await generate(client, model=model_name, contents=contents, config=cfg)
+            except errors.APIError as exc:
+                if backup is not None or not settings.openrouter_api_key:
+                    raise
+                # Gemini cannot answer (credits, key, outage): continue the same conversation on OpenRouter.
+                log.warning('Gemini %s on %s; continuing on OpenRouter %s', exc.code, run_id, settings.openrouter_model)
+                backup = OpenRouterClient(settings.openrouter_api_key, settings.openrouter_model)
+                client, model_name = backup, settings.openrouter_model
+                await asyncio.to_thread(emit, run_id, 'node.update', {'node_id': 'context', 'data': {
+                    'planner': 'openrouter', 'planner_model': model_name, 'gemini_error': exc.code}})
+                response = await generate(client, model=model_name, contents=contents, config=cfg)
             if not response.candidates or not response.candidates[0].content:
                 raise ValueError('Gemini returned no answer')
             content = response.candidates[0].content
@@ -578,7 +592,8 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
                 awaiting_input = is_awaiting_input(text, detail, expected=ctx.pending_question)
                 await asyncio.to_thread(emit, run_id, 'node.create', {'node_id': 'answer', 'type': 'answer',
                     'title': text[:160], 'status': 'done', 'parent': ctx.parent,
-                    'data': {'spoken': text, 'detail': detail, 'awaiting_input': awaiting_input, **({} if awaiting_input else verdict_of(text))}})
+                    'data': {'spoken': text, 'detail': detail, 'awaiting_input': awaiting_input, 'provider': 'openrouter' if backup else 'gemini',
+                             **({} if awaiting_input else verdict_of(text))}})
                 await asyncio.to_thread(emit, run_id, 'speech', {'text': text, 'audio_url': None})
                 with conn() as c:
                     c.execute('update runs set answer_title=%s where run_id=%s', (text[:160], run_id))
@@ -601,5 +616,7 @@ async def run_planner(run_id, company, question, target, client=None, parent_con
             'title': message, 'status': 'failed', 'parent': ctx.parent, 'data': {'spoken': message, 'error': message}})
         await asyncio.to_thread(finish, run_id, 'closed')
     finally:
-        if owned and client is not None:
-            await client.aio.aclose()
+        if backup is not None:
+            await backup.aio.aclose()
+        if owned and primary is not None:
+            await primary.aio.aclose()

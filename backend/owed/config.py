@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     twilio_auth_token: str = ""
     gemini_model: str = "gemini-3.8-flash"
     gemini_api_key: str = ""
+    # Backup planner when Gemini cannot answer (credits, key, outage): OpenAI-compatible OpenRouter.
+    openrouter_api_key: str = ""
+    openrouter_model: str = "google/gemini-3.8-flash"
     environment: str = "development"
     release: str = "hackathon"
     sentry_dsn: str = ""

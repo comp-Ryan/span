@@ -121,3 +121,20 @@ real Chrome (fake microphone input) and checks every rail page for data and cons
 new chat / past chat / rename / reload, the dock and Home mics, a "yes" that resolves the
 pending decision, the pay page updating Get paid, and the report (print + PDF). The Web
 Speech checks are informational: Chrome's speech service is not available to automation.
+
+## Planner backup: OpenRouter
+
+When Gemini cannot answer (prepaid credits depleted → 402, a rejected key, or an outage after
+the retries), the planner continues the same conversation through OpenRouter's OpenAI-compatible
+API with the same prompts and tools. Set in `backend/.env` and restart the backend:
+
+```
+OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_MODEL=google/gemini-3.8-flash    # optional; any OpenRouter model with tool calling
+```
+
+`/health` then reports `planner_backup: "openrouter"`. A run that failed over carries
+`planner: "openrouter"` on its context node and `provider: "openrouter"` on its answer; the
+canvas, approvals and reports are unchanged. The voice bridge (Gemini Live) has no backup.
+`owed/planner_backup.py` is unit-tested with a mocked transport; it has not been exercised
+against a live OpenRouter account from this machine.
