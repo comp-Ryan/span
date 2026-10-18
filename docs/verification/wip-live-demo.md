@@ -69,3 +69,12 @@ through the normal API.
 | Both LLM providers at $0 (Gemini 402 since 05:26 UTC; OpenRouter trial at 3,485 affordable tokens) | `OpenRouterClient` walks a model chain: 402 "can only afford N" → retry with N−64 tokens; 402/404/429/5xx → next model; 429 → one 1.5 s retry. Default chain ends in free tool-capable models (`nvidia/nemotron-3-ultra-550b-a55b:free`, `…-super-120b-a12b:free`, probed live: tool calls returned, cost 0). Context node records `planner_model` actually used |
 | Chrome e2e run 8 (`demo-out/e2e-20261018085023479`) | 17 passed, 0 failed, 1 informational (Home mic transcript in headless Chrome). Dock-call check now passes only when the mic re-arms after Span speaks ("heard → Span is speaking → listening again") |
 | Backend DB-free suite | 118 passed (`test_version`, `test_chat_cli`, `test_planner_backup` +5) |
+
+## 2026-10-18 15:40–16:10 UTC — "buttons don't work", stray "No" customer in Messages
+
+| What | Evidence |
+|---|---|
+| Clicking "Yes, text them" resolved the decision server-side (200, reminders sent) but the canvas did not change for many seconds | Cause: the presentation queue paced every event (420 ms per node) including the page-load history of a long chat (7 runs ≈ 100 events ≈ 17 s), and the click's local echo waited behind it. `presentationBeat(event, queued)` now skips pacing for any backlog (`events.test.ts`); the owner's own decision is applied with `applyNow`. Headless re-check on the owner's call chat: 7 runs on canvas in 1.7 s, button flips to "Texting 3" in 86 ms, Messages card in 90 ms |
+| Messages card showed a customer named "No" with "No actions taken · SENT" after a "Not now" | The `action` node the worker emits for a decline was grouped as a conversation. `conversationActions()` keeps only reminder/reply/negotiation/payment actions (`events.test.ts`); a declined lever now reads "nothing sent" |
+| Spoken approvals in the owner's words ("Yes you can you draft up some reminders", "Yeah please send them out") became new questions, each creating another approval, none resolved | `approvalChoice` accepts a leading yes/no plus an instruction and plain "send them out" / "go ahead and text them"; hedges ("but", "if", "only") or a question after the yes keep it a question (`browserVoice.test.ts`, 4 new tests) |
+| Frontend | vitest 68 passed, build and lint clean |

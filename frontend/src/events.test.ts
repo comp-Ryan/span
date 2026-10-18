@@ -150,3 +150,24 @@ it('planner rows use the payroll ScoreRow shape without duplication across updat
   expect(run.nodes['tool-1'].rows).toEqual([row])
   expect(run.nodes['tool-1'].data.tool).toBe('score_customer')
 })
+
+describe('conversation actions', () => {
+  it('only messaging actions (reminder, reply, negotiation, payment) become customer threads; "No actions taken" does not', async () => {
+    const { conversationActions } = await import('./events')
+    const node = (id: string, title: string, kind?: string) => ({ node_id: id, type: 'action', title, status: 'done', parent: null, data: kind ? { kind, customer_id: 'cust-1' } : {}, order: 0, rounds: [], createdAt: 0 } as any)
+    const nodes = [node('a1', 'No actions taken'), node('a2', 'Texting Hearth', 'reminder'), node('a3', 'Owner follow-up requested'), node('a4', 'Hearth replied', 'reply')]
+    expect(conversationActions(nodes).map(n => n.node_id)).toEqual(['a2', 'a4'])
+  })
+})
+
+describe('presentation pacing', () => {
+  it('paces live events so nodes appear one at a time, but never a backlog (history replay, long chats)', async () => {
+    const { presentationBeat } = await import('./events')
+    expect(presentationBeat('node.create', 0)).toBe(420)
+    expect(presentationBeat('decision', 1)).toBe(250)
+    expect(presentationBeat('speech', 2)).toBe(150)
+    expect(presentationBeat('node.update', 0)).toBe(0)
+    expect(presentationBeat('node.create', 4)).toBe(0)
+    expect(presentationBeat('decision', 40)).toBe(0)
+  })
+})

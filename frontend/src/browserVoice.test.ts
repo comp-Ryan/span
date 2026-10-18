@@ -42,3 +42,30 @@ describe('browser voice helpers', () => {
     expect(approvalChoice('yes', [{ id: 'a', label: 'Approve' }, { id: 'b', label: 'Yes please' }])).toBeUndefined()
   })
 })
+
+describe('spoken approvals in the owner\'s own words', () => {
+  const options = [{ id: 'yes', label: 'Yes, text them' }, { id: 'chase_only', label: "Text, don't touch bills" }, { id: 'no', label: 'Not now' }]
+  it('a leading yes followed by an instruction is an approval', () => {
+    expect(approvalChoice('Yes you can you draft up some reminders', options)).toBe('yes')
+    expect(approvalChoice('Yeah please send them out', options)).toBe('yes')
+    expect(approvalChoice('Yep, go for it.', options)).toBe('yes')
+    expect(approvalChoice('okay do it', options)).toBe('yes')
+  })
+  it('a plain instruction to send or text them is an approval', () => {
+    expect(approvalChoice('go ahead and text them', options)).toBe('yes')
+    expect(approvalChoice('send them out', options)).toBe('yes')
+    expect(approvalChoice('please send the reminders', options)).toBe('yes')
+  })
+  it('a leading no, or hold off, is a decline', () => {
+    expect(approvalChoice("no don't text anyone", options)).toBe('no')
+    expect(approvalChoice('hold off for now', options)).toBe('no')
+    expect(approvalChoice('Nope, not yet', options)).toBe('no')
+  })
+  it('hedges and questions after a yes are still questions, never approvals', () => {
+    expect(approvalChoice('yes but only if they agree', options)).toBeUndefined()
+    expect(approvalChoice('Yes, is Hearth reliable?', options)).toBeUndefined()
+    expect(approvalChoice("why don't we do that why don't we look at overdue invoices first", options)).toBeUndefined()
+    expect(approvalChoice('yes if the forecast holds', options)).toBeUndefined()
+    expect(approvalChoice('no what about Evergreen', options)).toBeUndefined()
+  })
+})

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type React from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
-import { emptyRun, k, money, plain, reduce } from './events'
+import { conversationActions, emptyRun, k, money, plain, presentationBeat, reduce } from './events'
 import { generateReport, getHealth, playFixture, resolveDecision, startRun } from './api'
 import { callReducer, callStatusLabel, initialCall, type CallState } from './voiceCall'
 import ForecastHistory from './ForecastHistory'
@@ -136,7 +136,7 @@ function LeverCard({ l, rec, decision, onChoose, chosen }: { l: Lever; rec: bool
       {targets.length > 0 && <div className="chips" style={{ marginTop: 10 }}>{targets.map((t, i) => <button type="button" className={`chip pick ${isOn(t.customer_id) ? 'on' : 'off'}`} key={t.customer_id} disabled={!!chosen} onClick={() => setSel(x => ({ ...x, [t.customer_id]: !isOn(t.customer_id) }))} title={t.reason || t.customer}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(t.customer)}</span>{t.customer.split(' ')[0]} · {money(t.amount)}<span className="tick">{I.check}</span></button>)}</div>}
       {l.bills && <div className="chips" style={{ marginTop: 10 }}>{l.bills.map(b => <span className="chip plain" key={b.bill_id}>{b.vendor} · {money(b.amount)}</span>)}</div>}
       <div className="fine" style={{ marginTop: 10, display: 'flex', gap: 6, alignItems: 'center' }}>
-        {targets.length > 0 && <><i className="dot" />{chosen ? 'sent to the ones you picked' : 'tap a name to leave them out'}</>}
+        {targets.length > 0 && <><i className="dot" />{chosen === 'no' ? 'nothing sent' : chosen ? 'sent to the ones you picked' : 'tap a name to leave them out'}</>}
         {l.bills && <><i className="dot" />both have taken late payment before, no fee</>}
         {zero && 'Nothing scheduled this month, so nothing to hold.'}
       </div>
@@ -483,7 +483,7 @@ function PlannerThread({ run, parent, onDecide, reportFailedFor, retryReportFor 
   // the planner's "context" node only echoes the question, which the question card already shows
   const tools = nodes.filter(n => n.type !== 'answer' && (n.type !== 'action' || toolOf(n)) && !(n.node_id === 'context' && !n.data?.company && !n.data?.customers))
   const fcNode = nodes.find(n => n.data?.cash_at_target != null)
-  const actions = nodes.filter(n => n.type === 'action' && !toolOf(n))
+  const actions = conversationActions(nodes.filter(n => !toolOf(n)))
   const payments = actions.filter(n => n.data?.kind === 'payment')
   const fcLatest = [...nodes].reverse().find(n => n.data?.cash_at_target != null)
   const sc = nodes.find(n => n.rows.length > 0)
@@ -512,7 +512,7 @@ function PlannerThread({ run, parent, onDecide, reportFailedFor, retryReportFor 
 function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryReportFor }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean; parent?: RunState; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
   const byType = (t: string) => run.order.map(id => run.nodes[id]).find(n => n.type === t)
   const ctx = byType('context'), sc = byType('scoring'), fc = byType('forecast'), ans = byType('answer'), lv = byType('levers')
-  const actions = run.order.map(id => run.nodes[id]).filter(n => n.type === 'action')
+  const actions = conversationActions(run.order.map(id => run.nodes[id]))
   const payments = actions.filter(a => a.data.kind === 'payment'); const received = payments.reduce((a, p) => a + (p.data.amount || 0), 0)
   const levers: Lever[] = lv?.data.levers || []
   const decision = Object.values(run.decisions).find(d => d.node_id === lv?.node_id)
@@ -734,7 +734,7 @@ export default function App() {
     draining.current = true
     while (queue.current.length) {
       const ev = queue.current.shift()!; applyNow(ev)
-      const beat = ev.event === 'node.create' ? 420 : ev.event === 'decision' ? 250 : ev.event === 'speech' ? 150 : 0
+      const beat = presentationBeat(ev.event, queue.current.length)
       if (beat) await new Promise(r => setTimeout(r, beat))
     }
     draining.current = false
@@ -793,7 +793,7 @@ export default function App() {
   const onDecide = async (d: Decision, opt: string, selected?: string[]) => {
     try {
       if (LIVE) await resolveDecision(d.decision_id, opt, COMPANY, selected)
-      apply({ event: 'decision.resolved', data: { decision_id: d.decision_id, option_id: opt, run_id: runs.find(r => r.decisions[d.decision_id])?.run_id } })
+      applyNow({ event: 'decision.resolved', data: { decision_id: d.decision_id, option_id: opt, run_id: runs.find(r => r.decisions[d.decision_id])?.run_id } })
       setError('')
     } catch (e) { setError(String(e)) }
   }
@@ -807,7 +807,7 @@ export default function App() {
       if (pending && optionId) {
         try {
           await resolveDecision(pending.decision_id, optionId, COMPANY)
-          apply({ event: 'decision.resolved', data: { decision_id: pending.decision_id, option_id: optionId, run_id: latest.run_id } })
+          applyNow({ event: 'decision.resolved', data: { decision_id: pending.decision_id, option_id: optionId, run_id: latest.run_id } })
           setError('')
           if (BROWSER_VOICE) speakText(optionId === 'no' ? 'Okay, not now.' : 'Done. I am on it, and I will tell you what comes back.')
         } catch (e) { setError(String(e)); if (BROWSER_VOICE) dispatchCall({ type: 'speech_ended' }) }

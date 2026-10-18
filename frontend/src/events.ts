@@ -79,3 +79,12 @@ function summarize(n: GraphNode): string {
 export const plain = (t: string) => (t || '').replace(/[#*_`>]+/g, '').replace(/\n{2,}/g, ' ').replace(/\s+/g, ' ').trim()
 export const k = (v?: number) => v == null ? '—' : (Math.abs(v) >= 1000 ? (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : Math.round(v).toString())
 export const money = (v?: number) => v == null ? '—' : '$' + Math.round(v).toLocaleString()
+
+/** Action nodes that are part of a customer conversation. "No actions taken" and owner follow-ups are status, not messages. */
+export const CONVERSATION_KINDS = new Set(['reminder', 'reply', 'negotiation', 'payment'])
+export const conversationActions = (nodes: GraphNode[]) => nodes.filter(n => n.type === 'action' && CONVERSATION_KINDS.has(String(n.data?.kind)))
+
+/** Milliseconds to hold before the next event so a live run unfolds step by step. A backlog (page load of a long chat,
+ *  a burst from the server) is shown at once: pacing a history makes clicks look dead. */
+export const presentationBeat = (event: string, queued: number) =>
+  queued > 3 ? 0 : event === 'node.create' ? 420 : event === 'decision' ? 250 : event === 'speech' ? 150 : 0

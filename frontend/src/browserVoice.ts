@@ -114,7 +114,7 @@ export function approvalChoice(
 
   const affirmative = new Set(['yes', 'yes please', 'approve', 'approved', 'i approve', 'go ahead', 'do it'])
   const negative = new Set(['no', 'no thanks', 'decline', 'i decline', 'reject', 'not now', 'cancel'])
-  const category = affirmative.has(spoken) ? 'yes' : negative.has(spoken) ? 'no' : undefined
+  const category = affirmative.has(spoken) ? 'yes' : negative.has(spoken) ? 'no' : spokenCategory(spoken)
   if (!category) return undefined
 
   const matches = options.filter(option => {
@@ -125,4 +125,17 @@ export function approvalChoice(
       : id === 'no' || /\b(no|decline|reject|not now|cancel)\b/.test(label)
   })
   return matches.length === 1 ? matches[0].id : undefined
+}
+
+/** The owner's own words: "Yeah please send them out" is a yes, "no don't text anyone" is a no. A hedge ("but", "if",
+ *  "only") or a question after the yes/no keeps it a question: Span never acts on an uncertain approval. */
+function spokenCategory(spoken: string): 'yes' | 'no' | undefined {
+  const hedge = /\b(but|if|unless|only|maybe|except|however|although|what about|as long as)\b/
+  const question = /^(what|why|how|when|where|which|who|is|are|can|could|should|would|will|does|did|am|do (you|we|they|i))\b/  // "do it" is an instruction, "do you think" a question
+  const yes = spoken.match(/^(yes|yeah|yep|yup|ok|okay|sure thing)\b\s*(.*)$/)
+  if (yes) return yes[2] && (hedge.test(yes[2]) || question.test(yes[2])) ? undefined : (yes[2] || /^(ok|okay)$/.test(yes[1]) === false ? 'yes' : undefined)
+  const no = spoken.match(/^(no|nope|nah|not now|not yet|hold off|don't|do not|cancel|skip)\b\s*(.*)$/)
+  if (no) return no[2] && (hedge.test(no[2]) || question.test(no[2])) ? undefined : 'no'
+  if (/^(please\s+)?(go ahead|do it|send (them|it|the reminders|the texts)( out)?|text them( all)?|yes do that)\b/.test(spoken) && !hedge.test(spoken)) return 'yes'
+  return undefined
 }
