@@ -474,6 +474,8 @@ function PlannerThread({ run, parent, onDecide, reportFailedFor, retryReportFor 
   const tools = nodes.filter(n => n.type !== 'answer' && (n.type !== 'action' || toolOf(n)) && !(n.node_id === 'context' && !n.data?.company && !n.data?.customers))
   const fcNode = nodes.find(n => n.data?.cash_at_target != null)
   const actions = nodes.filter(n => n.type === 'action' && !toolOf(n))
+  const payments = actions.filter(n => n.data?.kind === 'payment')
+  const fcLatest = [...nodes].reverse().find(n => n.data?.cash_at_target != null)
   const sc = nodes.find(n => n.rows.length > 0)
   const ctxLike: GraphNode | undefined = fcNode ? { ...fcNode, data: { ...fcNode.data, payroll_due_by_target: fcNode.data.need } } : undefined
   return <section className="thread">
@@ -483,6 +485,7 @@ function PlannerThread({ run, parent, onDecide, reportFailedFor, retryReportFor 
         {ctxLike && (LIVE ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={ctxLike.data.target_date} revision={`${fcNode?.data.forecast_id}:${fcNode?.data.cash_at_target}`} neverPays={fcNode?.data.excluded_customer_id} willPay={fcNode?.data.assumed_customer_id} /></div> : <CashChart ctx={ctxLike} fc={fcNode} W={420} />)}
         {LIVE && fcNode && <ForecastHistory company={run.company_id || COMPANY} runId={run.run_id} revision={String(fcNode.data.forecast_id || fcNode.data.cash_at_target)} />}
         {sc && sc.rows.length > 1 && <RiskPanel sc={sc} fc={fcNode} />}
+        {payments.length > 0 && fcLatest && <Outcome fc={fcLatest} payments={payments} levers={[]} />}
         <div className={`card report ${run.report_id ? 'ready' : ''}`}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>{run.report_id ? <a className="btn" href={`/report/${run.report_id}?company=${encodeURIComponent(COMPANY)}`}>Open report</a> : ans?.data.awaiting_input ? <div className="fine">Waiting for your answer before continuing.</div> : reportFailedFor?.(run) ? <button className="btn" onClick={() => retryReportFor?.(run)}>Generate report</button> : run.status === 'closed' ? <div className="thinking"><i/><i/><i/> writing</div> : <div className="fine">Builds itself when this run finishes.</div>}</div>
       </aside>
       <div className="steps">

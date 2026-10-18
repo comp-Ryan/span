@@ -503,3 +503,44 @@ def test_followup_message_carries_the_pending_assumption():
                                             {'customer_id': 'cust-37', 'customer_name': 'Evergreen', 'target_date': '2026-10-20'})
     assert 'customer_id cust-37' in text and 'target_date 2026-10-20' in text and text.endswith('follow-up: No')
     assert planner.planner_followup_message('No') == 'No'
+
+
+def test_the_clarifying_question_is_asked_once_per_conversation(monkeypatch):
+    monkeypatch.setattr(planner, 'conn', lambda: Connection({'id': 'ever'}))
+    monkeypatch.setattr(pt, '_customer_stats', lambda c, company: [{'id': k, **v} for k, v in STATS.items()])
+    monkeypatch.setattr(planner, 'snapshot', lambda company, target, **kw: {
+        **fake_books(forecast={'gap': 385, 'cash_at_target': 100, 'need': 485}), 'scored': ROWS})
+    asked = planner.ToolContext('run-2', 'company-1', PAYDAY, assumption_asked=True)
+    assert 'assumption_needed' not in asked.read_tool('forecast_cash', {})
+    fresh = planner.ToolContext('run-3', 'company-1', PAYDAY)
+    assert 'assumption_needed' in fresh.read_tool('forecast_cash', {})
+    text = planner.planner_followup_message("I'm not sure, go with your estimate", 'Will I make payroll?',
+                                            'Should I assume Evergreen pays?', {'customer_id': 'cust-37', 'customer_name': 'Evergreen', 'target_date': '2026-10-20'})
+    assert 'estimate' in text
+
+
+def test_followup_after_the_question_does_not_ask_again(monkeypatch):
+    import asyncio
+    from types import SimpleNamespace as NS
+
+    built = {}
+
+    class Capture(planner.ToolContext):
+        def __init__(self, *args, **kwargs):
+            built.update(kwargs)
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr(planner, 'ToolContext', Capture)
+    monkeypatch.setattr(planner, 'emit', lambda run_id, event, data: None)
+    monkeypatch.setattr(planner, 'finish', lambda run_id, status: None)
+    monkeypatch.setattr(planner, 'conn', lambda: Connection(None))
+    monkeypatch.setattr(planner.types, 'Content', lambda role, parts: NS(role=role, parts=parts))
+
+    class Models:
+        async def generate_content(self, model, contents, config):
+            return NS(candidates=[NS(content=NS(parts=[NS(function_call=None, thought=False, text='Fine.\n---\n## Why\nOk.')]))])
+
+    pending = {'customer_id': 'cust-37', 'customer_name': 'Evergreen', 'target_date': '2026-10-20'}
+    asyncio.run(planner.run_planner('run-1', 'company-1', 'No', date(2026, 10, 20), client=NS(aio=NS(models=Models())),
+                                    parent_context={'parent_question': 'q', 'parent_speech': 's', 'pending_assumption': pending}))
+    assert built.get('assumption_asked') is True

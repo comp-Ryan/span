@@ -23,6 +23,8 @@ describe('forecast over time', () => {
       point({ forecast_id: 'c', computed_at: '2026-10-17T22:00:00Z', gap: Number.NaN }),
     ])
     expect(series.points.map(p => p.forecast_id)).toEqual(['a', 'b'])
+    expect(coverageSeries([point({ gap: 0 })]).points[0].coverage).toBe(0)
+    expect(Object.is(coverageSeries([point({ gap: 0 })]).points[0].coverage, -0)).toBe(false)
     expect(coverageSeries([]).points).toEqual([])
     expect(coverageSeries([]).latest).toBeNull()
   })

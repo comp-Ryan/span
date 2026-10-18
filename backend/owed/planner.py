@@ -111,11 +111,12 @@ def score_row(r):
 
 
 class ToolContext:
-    def __init__(self, run_id, company, target):
+    def __init__(self, run_id, company, target, assumption_asked=False):
         self.run_id, self.company, self.target = run_id, company, target
         self.parent = 'context'
         self.snap = None
         self.snaps = {}
+        self.assumption_asked = assumption_asked  # one clarifying question per conversation
 
     def snapshot_for(self, target):
         """Snapshot whose payroll schedule and bills cover `target` (cached per run)."""
@@ -195,7 +196,7 @@ class ToolContext:
                 c.execute('update runs set target_date=%s, excluded_customer_id=%s where run_id=%s',
                           (self.target, s['forecast'].get('excluded_customer_id'), self.run_id))
             result = {**s['forecast'], **self.books(s)}
-            if not customer_id and s.get('scored'):
+            if not customer_id and s.get('scored') and not self.assumption_asked:
                 # Before any owner assumption: is there one dependable late payer whose timing decides the verdict?
                 with conn() as c:
                     stats = {r['id']: r for r in pt._customer_stats(c, self.company)}
@@ -448,7 +449,9 @@ def planner_followup_message(question, parent_question=None, parent_speech=None,
         parts.append(f"That response asked whether to assume customer_id {pending_assumption.get('customer_id')} "
                      f"({pending_assumption.get('customer_name')}) pays by {pending_assumption.get('target_date')}. "
                      f"If the owner's reply answers it, call forecast_cash with target_date {pending_assumption.get('target_date')}, "
-                     f"that customer_id and will_pay set to their answer before anything else, and do not ask it again.")
+                     f"that customer_id and will_pay set to their answer before anything else. If they are unsure or prefer "
+                     f"your estimate, call forecast_cash with no customer assumption. Either way do not ask it again, and "
+                     f"when the result is short (gap > 0) call rank_chase once so they can approve the one action.")
     parts.append(f"Owner’s current reply or follow-up: {question[:4000]}")
     return '\n'.join(parts)
 
@@ -477,7 +480,7 @@ FINAL_NUDGE = ('Tool budget reached. Answer the owner now using only the tool re
 
 
 async def run_planner(run_id, company, question, target, client=None, parent_context=None):
-    ctx = ToolContext(run_id, company, target)
+    ctx = ToolContext(run_id, company, target, assumption_asked=bool((parent_context or {}).get('pending_assumption')))
     await asyncio.to_thread(emit, run_id, 'node.create', {'node_id': 'context', 'type': 'context',
         'title': 'Understanding the question', 'status': 'done', 'parent': None,
         'data': {'question': question, 'as_of': '2026-10-06', 'target_date': target.isoformat()}})
