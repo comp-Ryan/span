@@ -9,6 +9,7 @@ import pytest
 os.environ['DEMO_COMPANY'] = 'company-020'
 for name in ('GEMINI_API_KEY', 'PHOTON_API_KEY', 'SENTRY_DSN', 'AGENTVERSE_API_KEY', 'ELEVENLABS_API_KEY', 'ELEVEN_LABS_KEY',
              'OPENROUTER_API_KEY', 'OPENROUTER_KEY', 'OPEN_ROUTER', 'OPEN_ROUTER_API_KEY',
+             'SPECTRUM_BRIDGE_URL', 'SPECTRUM_PROJECT_ID', 'SPECTRUM_PROJECT_SECRET', 'PHOTON_PROJECT_ID', 'PHOTON_SMS_SENDER_ID', 'PHOTON_DEMO_RECIPIENT', 'PHOTON_WEBHOOK_TOKEN',
              'BROWSER_USE_API_KEY', 'VISA_USER_ID', 'VISA_PASSWORD'):
     os.environ[name] = ''
 DB_FREE = {'test_voice.py', 'test_version.py', 'test_sponsors.py', 'test_photon_platform.py', 'test_chat_cli.py', 'test_planner_conversation.py', 'test_solana_reference.py', 'test_call_smoke.py', 'test_reset_demo.py', 'test_report_markdown.py', 'test_planner_backup.py',

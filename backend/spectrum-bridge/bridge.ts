@@ -18,6 +18,7 @@ const app = await Spectrum({ providers: [imessage.config()] });
 const im = imessage(app);
 const spaces = new Map<string, any>();        // phone digits → DM space (a shared line can only answer inside the thread the phone started)
 const sent = new Map<string, { to: string; text: string; at: number }>();
+let inbound = 0;
 const digits = (handle: string) => handle.replace(/\D/g, "");
 
 async function dmFor(to: string) {
@@ -35,7 +36,7 @@ Bun.serve({
   hostname: "127.0.0.1",
   async fetch(req) {
     const url = new URL(req.url);
-    if (req.method === "GET" && url.pathname === "/health") return Response.json({ ok: true, platform: "imessage", spaces: spaces.size });
+    if (req.method === "GET" && url.pathname === "/health") return Response.json({ ok: true, platform: "imessage", spaces: spaces.size, inbound });
     if (req.method === "POST" && url.pathname === "/send") {
       const body = await req.json().catch(() => ({}));
       const to = String(body.to || "").trim(), text = String(body.text || "");
@@ -60,6 +61,8 @@ console.log(`spectrum bridge on http://127.0.0.1:${PORT} (project ${(process.env
 
 // Replies from the phone go to the backend's inbound webhook in the shape its Photon handler reads.
 for await (const [space, message] of app.messages) {
+  inbound += 1;
+  console.log(`event #${inbound}: platform=${message.platform} type=${message.content?.type} from=${String(message.sender?.id ?? "?")}`);
   if (message.platform !== "imessage" || message.content.type !== "text") continue;
   const handle = String(message.sender?.id ?? "");
   spaces.set(digits(handle) || handle, space);

@@ -104,8 +104,16 @@ async def send_reminder(run_id, company, invoice_id, parent='n5', channel='sms',
                 'status': 'running', 'parent': parent, 'data': {'kind': 'reminder', 'invoice_id': invoice_id,
                 'customer_id': row['customer_id'], 'customer': row['customer_name'], 'channel': actual_channel, 'draft': draft}}, connection=c)
     try:
-        receipt = await Photon().send(recipient, body, channel, reminder_id) if live else {
-            'provider_message_id': None, 'space_id': None, 'provider_status': 'simulated'}
+        receipt = {'provider_message_id': None, 'space_id': None, 'provider_status': 'simulated'}
+        if live:
+            try:
+                receipt = await Photon().send(recipient, body, channel, reminder_id)
+            except Exception as exc:  # the real line refused (shared-line rule, bridge down): stay honest and keep the run moving
+                log.warning('Photon live send failed for %s; this reminder is simulated instead: %s', reminder_id, exc)
+                live, actual_channel = False, 'simulated'
+                receipt['provider_status'] = f'simulated (live send refused: {str(exc)[:80]})'
+                with conn() as c:
+                    c.execute("update reminders set channel='simulated', recipient=%s where reminder_id=%s", ('simulated:' + row['customer_id'], reminder_id))
         now = datetime.now(UTC)
         result = {'sent_at': now.isoformat(), 'reminder_id': reminder_id, 'pay_link': link,
                   'channel': actual_channel, **receipt}

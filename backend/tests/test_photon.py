@@ -110,3 +110,40 @@ def test_simulated_yes_actions_and_installment_payment(monkeypatch):
             c.execute('delete from runs where run_id=%s', (rid,))
 
         refresh_forecasts('company-020')
+
+
+def test_refused_live_send_falls_back_to_a_simulated_reminder(monkeypatch):
+    """A shared iMessage line refuses phones that never texted it; the demo must not fail, it labels that reminder simulated."""
+    from datetime import date
+    from owed.channels import photon
+    from owed.db import conn
+    from owed.runs import create
+    monkeypatch.setattr(settings, 'spectrum_bridge_url', 'http://127.0.0.1:1')
+    monkeypatch.setattr(settings, 'photon_demo_recipient', '+19495550000')
+
+    async def refused(self, recipient, body, channel, key):
+        raise RuntimeError('[spectrum-imessage] Target not allowed for this project')
+    monkeypatch.setattr(photon.Photon, 'send', refused)
+    rid = create('company-020', 'Who should I chase today?', 'web', 'chase_today', target_date=date(2026, 10, 9))
+    invoice = None
+    with conn() as c:
+        invoice = c.execute("select invoice_id from invoice_facts where company_id='company-020' and open_balance>0 order by due_date limit 1").fetchone()['invoice_id']
+    try:
+        result = asyncio.run(photon.send_reminder(rid, 'company-020', invoice, operation_id='fallback-test'))
+        assert result['channel'] == 'simulated' and result['provider_status'].startswith('simulated (live send refused')
+        with conn() as c:
+            row = c.execute('select channel, status, recipient from reminders where reminder_id=%s', (result['reminder_id'],)).fetchone()
+        assert row['channel'] == 'simulated' and row['status'] == 'simulated' and row['recipient'].startswith('simulated:')
+        from owed.agents import negotiation
+
+        async def no_negotiation(*args, **kwargs):
+            return None
+        monkeypatch.setattr(negotiation, 'negotiate', no_negotiation)  # the bureau is not part of this test
+        asyncio.run(photon.simulated_reply(rid, 'company-020', result))  # the disclosed customer still answers
+        with conn() as c:
+            assert c.execute("select count(*) from events where run_id=%s and data->>'node_id'=%s", (rid, 'reply-' + result['reminder_id'])).fetchone()['count'] == 1
+    finally:
+        with conn() as c:
+            for sql in ('delete from negotiations where run_id=%s', 'delete from reminders where run_id=%s', 'delete from pay_tokens where run_id=%s', 'delete from events where run_id=%s', 'delete from runs where run_id=%s'):
+                try: c.execute(sql, (rid,))
+                except Exception: pass
