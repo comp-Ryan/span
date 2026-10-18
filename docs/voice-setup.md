@@ -6,7 +6,7 @@ Span's voice has two entry points that share the same planner, tools and approva
 
 - Home → **Call Span in the browser** (or the Ask page with `?voice=browser&call=1`), then
   **Call Span** in the dock. Span greets you aloud, listens, hands your words to the planner,
-  speaks the answer and listens again until you press **Hang up**. A spoken "yes" or "not now"
+  speaks the answer and listens again until you press **Hang up**. **Mute** keeps Span silent (text only) while it keeps listening; it is remembered per browser until you press **Unmute**. A spoken "yes" or "not now"
   resolves the pending approval; anything else is a follow-up question in the same chat.
 - The Home mic asks one question and opens the chat in call mode.
 - Speech recognition is the browser's Web Speech API (Chrome, localhost or HTTPS).

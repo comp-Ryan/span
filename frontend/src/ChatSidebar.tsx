@@ -14,10 +14,10 @@ export default function ChatSidebar({ company, active, revision, onRename }: { c
   const [, refresh] = useState(0)
   useEffect(() => {
     let cancelled = false
-    const load = () => getRuns(company).then(rows => { if (!cancelled) { setRuns(rootChats(rows)); setError('') } }).catch(() => { if (!cancelled) setError('Chat history unavailable') })
+    const load = () => getRuns(company).then(rows => { if (!cancelled) { setRuns(rootChats(rows, active)); setError('') } }).catch(() => { if (!cancelled) setError('Chat history unavailable') })
     void load(); const timer = setInterval(load, 15000)
     return () => { cancelled = true; clearInterval(timer) }
-  }, [company, revision])
+  }, [company, revision, active])
   const save = (id: string) => {
     try { const title = writeChatTitle(company, id, draft); onRename(id, title); refresh(n => n + 1); setEditing(undefined) }
     catch { setError('Your browser could not save this name') }

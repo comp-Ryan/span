@@ -369,7 +369,7 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 /* Ask history: browser-local names, server-backed root conversations. */
 .chat-sidebar { width: 210px; flex: 0 0 210px; padding: 20px 12px; border-right: 1px solid var(--line, #e5e7eb); overflow-y: auto; background: #fafbf9; }
 .chat-sidebar h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 24px 8px 10px; }
-.chat-sidebar > .btn { display: block; text-align: center; }
+.chat-sidebar > .btn { display: block; text-align: center; text-decoration: none; }
 .chat-history-item { position: relative; padding: 12px 24px 12px 8px; border-radius: 8px; display: flex; flex-direction: column; gap: 5px; }
 .chat-history-item.active { background: #e6f3e5; }
 .chat-history-item > a { font-size: 13px; font-weight: 600; color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -377,6 +377,16 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .chat-rename { position: absolute; right: 3px; top: 10px; border: 0; background: transparent; cursor: pointer; color: var(--muted); }
 .chat-history-item input { width: 100%; min-width: 0; }
 .empty-chat { padding: 30px 0; color: var(--muted); }
+.fresh-ask { max-width: 640px; }
+.fresh-ask p { margin: 6px 0 18px; }
+.fresh-box { display: flex; gap: 10px; align-items: center; }
+.fresh-box input { flex: 1; min-width: 0; height: 44px; padding: 0 16px; border: 1px solid var(--muted2); border-radius: 22px; font: 15px var(--font); color: var(--text); background: var(--card); outline: 0; }
+.fresh-box input:focus { border-color: var(--green); }
+.fresh-ask .sugg { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.fresh-ask .sugg button { border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 7px 12px; font: 13px var(--font); color: var(--text); cursor: pointer; }
+.fresh-ask .sugg button:hover { border-color: var(--green); color: var(--green); }
+.fresh-ask .sugg button:disabled { opacity: .6; cursor: default; }
+.btn.muted { border-color: var(--green); color: var(--green); }
 .status { white-space: nowrap; }
 @media (max-width: 1050px) { .chat-sidebar { width: 165px; flex-basis: 165px; } }
 @media (max-width: 760px) { .chat-sidebar { width: 130px; flex-basis: 130px; padding: 12px 6px; } }

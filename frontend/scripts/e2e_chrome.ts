@@ -99,7 +99,8 @@ async function chatAndDecisions(browser: Browser) {
   await check('new chat: typed question starts a run and the sidebar lists it', async () => {
     await page.goto(`${BASE}/?live&new=1&company=${COMPANY}`)
     const response = page.waitForResponse(r => r.url().includes('/api/ask?') && r.request().method() === 'POST')
-    const input = page.getByRole('textbox', { name: 'Ask Span', exact: true }); await input.fill('Will I make payroll in two weeks?'); await input.press('Enter')
+    await page.locator('[data-testid="fresh-ask"]').waitFor()  // the composer is in the body of a new chat, not only the header search
+    const input = page.getByRole('textbox', { name: 'Ask Span a question', exact: true }); await input.fill('Will I make payroll in two weeks?'); await input.press('Enter')
     runId = (await (await response).json()).run_id
     await until(() => replay(runId), r => r.events.some((e: any) => e.event === 'run.end'), 'payroll run end', 120000)
     await page.locator(`[data-run-id="${runId}"] .verdict`).waitFor()
@@ -181,9 +182,14 @@ async function chatAndDecisions(browser: Browser) {
     const callRun = (await ask.json()).run_id
     await until(() => replay(callRun), r => r.events.some((e: any) => e.event === 'run.end'), 'answer to the spoken question', 120000)
     await until(async () => (await status.textContent()) || '', t => t.startsWith('Listening') || t.startsWith('Span is speaking'), 'Span speaking or listening again', 40000)
+    await page.getByRole('button', { name: 'Mute', exact: true }).click()  // Span goes silent, the call keeps listening
+    await until(async () => (await status.textContent()) || '', t => /muted/i.test(t), 'listening while muted', 20000)
+    if (await page.getByRole('button', { name: 'Unmute', exact: true }).getAttribute('aria-pressed') !== 'true') throw new Error('Mute is not pressed')
+    await page.getByRole('button', { name: 'Unmute', exact: true }).click()
+    await page.getByRole('button', { name: 'Mute', exact: true }).waitFor()
     await page.getByRole('button', { name: 'Hang up' }).click()
     await until(async () => (await status.textContent()) || '', t => t.startsWith('Browser call'), 'hung up', 10000)
-    return `greeting via ${greeting ? `ElevenLabs (${greeting.status()})` : 'browser voice'}; ${how} question became ${callRun}`
+    return `greeting via ${greeting ? `ElevenLabs (${greeting.status()})` : 'browser voice'}; ${how} question became ${callRun}; mute/unmute toggled`
   })
   let token = '', amount = 0
   await check('after approval: simulated reminders, negotiation and a pay link appear', async () => {

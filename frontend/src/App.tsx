@@ -24,6 +24,11 @@ const STATIC = new URLSearchParams(location.search).has('static')
 const BROWSER_VOICE = PARAMS.get('voice') === 'browser'
 const CALL_REQUESTED = PARAMS.has('call')
 const GREETING = 'Hi, this is Span. What do you want to know about your money?'
+// Mute is a browser-local preference: Span answers in text while muted and keeps listening.
+const MUTE_KEY = 'span.voiceMuted'
+const readMuted = () => { try { return localStorage.getItem(MUTE_KEY) === '1' } catch { return false } }
+const writeMuted = (muted: boolean) => { try { if (muted) localStorage.setItem(MUTE_KEY, '1'); else localStorage.removeItem(MUTE_KEY) } catch { /* private mode: not remembered */ } }
+const SUGGESTIONS = ['Am I going to make payroll these next two weeks?', 'Who should I chase today?', 'Can I afford a $3,000 forklift next week?']
 
 /* ---------- icons ---------- */
 const I = {
@@ -575,7 +580,7 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
 }
 
 /* ---------- bottom-right dock: call transcript + chat ---------- */
-function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoice, callState, onStartCall, onHangup, onMic, voiceStatus, voiceMessage }: { run: RunState; elapsed: number; input: string; setInput: (s: string) => void; onAsk: (q: string) => void; live: boolean; onReplay: (speed: number) => void; browserVoice: boolean; callState: CallState; onStartCall: () => void; onHangup: () => void; onMic: () => void; voiceStatus: VoiceStatus; voiceMessage: string }) {
+function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoice, callState, onStartCall, onHangup, onMic, onMute, voiceStatus, voiceMessage }: { run: RunState; elapsed: number; input: string; setInput: (s: string) => void; onAsk: (q: string) => void; live: boolean; onReplay: (speed: number) => void; browserVoice: boolean; callState: CallState; onStartCall: () => void; onHangup: () => void; onMic: () => void; onMute: () => void; voiceStatus: VoiceStatus; voiceMessage: string }) {
   const [open, setOpen] = useState(browserVoice)
   const onCall = run.status === 'open'
   const lastOwed = [...run.turns].reverse().find(t => t.kind === 'owed')
@@ -610,7 +615,8 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
           ? <><button className="btn danger" type="button" onClick={onHangup}>{I.phone} Hang up</button>
             <button className={`mic ${callState.phase === 'listening' ? 'listening' : ''}`} type="button" aria-label={callState.phase === 'listening' ? 'Listening for one follow-up' : 'Speak one follow-up'} aria-pressed={callState.phase === 'listening'} disabled={callState.phase === 'listening' || callState.phase === 'speaking'} onClick={onMic}>{I.mic} Speak follow-up</button></>
           : <button className="btn primary" type="button" onClick={onStartCall}>{I.phone} Call Span</button>}
-        <span role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'error' ? voiceMessage : callState.active ? callStatusLabel(callState) : 'Browser call: Span listens, answers aloud and keeps listening until you hang up.'}</span>
+        <button className={`btn ${callState.muted ? 'muted' : ''}`} type="button" aria-pressed={callState.muted} onClick={onMute}>{callState.muted ? 'Unmute' : 'Mute'}</button>
+        <span role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'error' ? voiceMessage : callState.active ? callStatusLabel(callState) : callState.muted ? 'Browser call, muted: Span answers in text and keeps listening until you hang up.' : 'Browser call: Span listens, answers aloud and keeps listening until you hang up.'}</span>
       </div>}
       {live && !browserVoice && <div className="browser-voice-control" data-testid="call-controls">
         <a className="btn primary" href={(() => { const u = new URL(location.href); u.searchParams.set('voice', 'browser'); u.searchParams.set('call', '1'); if (!u.searchParams.has('run')) { u.searchParams.set('live', ''); u.searchParams.set('new', '1') } return u.pathname + u.search })()}>{I.phone} Call Span</a>
@@ -625,6 +631,28 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
       <b>{!live ? 'Demo replay' : onCall ? `On a call · ${mm}` : 'Transcript'}</b>
       {run.turns.length > 0 && <span className="badge">{run.turns.length}</span>}
     </button>}
+  </div>
+}
+
+/* ---------- a brand-new chat: the composer lives in the body, not only in the header search box ---------- */
+function FreshChat({ onAsk }: { onAsk: (q: string) => Promise<void> | void }) {
+  const [q, setQ] = useState('')
+  const [starting, setStarting] = useState('')
+  const ask = async (text: string) => {
+    const t = text.trim(); if (!t || starting) return
+    setStarting(t)
+    try { await onAsk(t) } finally { setStarting('') }
+  }
+  const callHref = `/?live&new=1&voice=browser&call=1${COMPANY !== 'company-020' ? `&company=${encodeURIComponent(COMPANY)}` : ''}`
+  return <div className="empty-chat fresh-ask" data-testid="fresh-ask">
+    <h1 className="q">New chat</h1>
+    <p>Ask about your money. {BRAND} checks the books, forecasts cash and asks before it acts.</p>
+    <form className="fresh-box" onSubmit={e => { e.preventDefault(); void ask(q) }}>
+      <input autoFocus aria-label="Ask Span a question" placeholder="What do you want to know about your money?" value={q} onChange={e => setQ(e.target.value)} disabled={!!starting} />
+      <button className="btn primary" type="submit" disabled={!q.trim() || !!starting}>{starting && starting === q.trim() ? 'Starting…' : 'Ask'}</button>
+    </form>
+    <div className="sugg">{SUGGESTIONS.map(s => <button key={s} type="button" onClick={() => void ask(s)} disabled={!!starting}>{starting === s ? 'Starting…' : s}</button>)}</div>
+    <a className="rlink" href={callHref}>{I.phone} Call {BRAND} instead</a>
   </div>
 }
 
@@ -649,8 +677,12 @@ export default function App() {
     const next = prev.slice(); next[idx] = reduce(prev[idx], ev); return next
   })
   /* ---------- browser call: Span listens, answers aloud (ElevenLabs when configured), listens again ---------- */
-  const [callState, dispatchCall] = useReducer(callReducer, undefined, () =>
-    BROWSER_VOICE && !CALL_REQUESTED ? { active: true, phase: 'resting' as const, noSpeech: 0 } : initialCall)
+  const [callState, dispatchCall] = useReducer(callReducer, undefined, () => {
+    const muted = readMuted()
+    return BROWSER_VOICE && !CALL_REQUESTED ? { active: true, phase: 'resting' as const, noSpeech: 0, muted } : { ...initialCall, muted }
+  })
+  const mutedRef = useRef(callState.muted)
+  useEffect(() => { mutedRef.current = callState.muted; writeMuted(callState.muted) }, [callState.muted])
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
   const [voiceMessage, setVoiceMessage] = useState('')
   const stopListening = useRef<() => void>(() => {})
@@ -664,6 +696,8 @@ export default function App() {
   const speakText = (text: string) => {
     if (!BROWSER_VOICE || !text) return
     stopSpeaking()
+    // Muted: the answer stays in the transcript; the reducer treats the turn as over and re-arms the mic.
+    if (mutedRef.current) { dispatchCall({ type: 'speech_started' }); return }
     dispatchCall({ type: 'speech_started' })
     let finished = false
     const done = () => { if (!finished) { finished = true; clearTimeout(watchdog); audioRef.current = null; dispatchCall({ type: 'speech_ended' }) } }
@@ -753,6 +787,7 @@ export default function App() {
     if (!runs.length) speakText(GREETING)
   }
   const hangUp = () => { stopSpeaking(); dispatchCall({ type: 'hangup' }) }
+  const toggleMute = () => { if (callState.muted) dispatchCall({ type: 'unmute' }); else { stopSpeaking(); dispatchCall({ type: 'mute' }) } }
   useEffect(() => { const t = setInterval(() => setElapsed(e => e + 1), 1000); return () => clearInterval(t) }, [])
 
   const onDecide = async (d: Decision, opt: string, selected?: string[]) => {
@@ -876,7 +911,7 @@ export default function App() {
                   if (e.key === 'Enter' || e.key === 'F2') { setChatTitleDraft(chatTitle); setEditingChatTitle(true) }
                 }}
               >{chatTitle}</h1>}
-        </> : <div className="empty-chat"><h1 className="q">General chat</h1><p>{FRESH ? "Ask a question about your books to start a new conversation." : "Connecting…"}</p></div>}
+        </> : FRESH ? <FreshChat onAsk={followUp} /> : <div className="empty-chat"><h1 className="q">General chat</h1><p>Connecting…</p></div>}
         {runs.map(r => <div key={r.run_id} id={`thread-${r.run_id}`} data-run-id={r.run_id}>
           {isPlannerRun(r)
             ? <PlannerThread run={r} parent={runs.find(p => p.run_id === r.parent_run_id)} onDecide={onDecide} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />
@@ -884,6 +919,6 @@ export default function App() {
         </div>)}
       </main>
     </div>
-    {(main || BROWSER_VOICE) && <Dock run={main || emptyRun()} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} callState={callState} onStartCall={startCall} onHangup={hangUp} onMic={() => dispatchCall({ type: 'start' })} voiceStatus={voiceStatus} voiceMessage={voiceMessage} browserVoice={BROWSER_VOICE} />}
+    {(main || BROWSER_VOICE) && <Dock run={main || emptyRun()} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} callState={callState} onStartCall={startCall} onHangup={hangUp} onMic={() => dispatchCall({ type: 'start' })} onMute={toggleMute} voiceStatus={voiceStatus} voiceMessage={voiceMessage} browserVoice={BROWSER_VOICE} />}
   </div>
 }
