@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getBrief, getCash, getCashHistory, getCompanies, getRuns, startRun } from './api'
+import { getBrief, getCash, getCashHistory, getCompanies, getHealth, getRuns, startRun } from './api'
 import { coverageSeries, type HistoryPoint } from './forecastTrend'
 import type { Brief, CashProjection, Company, RunSummary } from './types'
 import { money as moneyPos } from './events'
@@ -127,6 +127,8 @@ export default function Home() {
   const [q, setQ] = useState('')
   const [asking, setAsking] = useState<string | null>(null)
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
+  const [phone, setPhone] = useState<{ number: string | null; ready: boolean } | null>(null)
+  useEffect(() => { getHealth().then(h => { const v = (h as any).voice || {}; setPhone({ number: v.phone_number || null, ready: !!v.phone }) }).catch(() => setPhone({ number: null, ready: false })) }, [])
   const [voiceMessage, setVoiceMessage] = useState('')
   const stopListening = useRef<() => void>(() => {})
   const fail = (key: string) => (e: unknown) => setErrors(prev => ({ ...prev, [key]: e instanceof Error ? e.message : String(e) }))
@@ -211,6 +213,10 @@ export default function Home() {
               <button className="btn primary" onClick={() => ask(q)} disabled={!q.trim() || !!asking}>{asking ? 'Starting…' : 'Ask'}</button>
             </div>
             <div className="fine" role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'listening' ? 'Listening… Speak one question.' : voiceMessage}</div>
+            <div className="call-row" data-testid="call-span">
+              <a className="btn" href={`/?live&new=1&voice=browser&call=1${company !== DEFAULT_COMPANY ? `&company=${encodeURIComponent(company)}` : ''}`}>{I.phone}Call {BRAND} in the browser</a>
+              <span className="fine">{phone?.ready && phone.number ? `Or call ${phone.number} from any phone.` : 'Phone calls arrive on a Twilio number once VOICE_PHONE_NUMBER, TWILIO_AUTH_TOKEN and VOICE_STREAM_TOKEN are set (see docs/voice-setup.md).'}</span>
+            </div>
             <div className="sugg" style={{ marginTop: 12 }}>
               {SUGGESTIONS.map(s => <button key={s} onClick={() => ask(s)} disabled={!!asking}>{asking === s ? 'Starting…' : s}</button>)}
             </div>

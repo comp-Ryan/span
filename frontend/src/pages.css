@@ -119,3 +119,6 @@
 .hm-written-off{background:#7A1C14}
 .hm-more{align-self:flex-start;color:var(--blue);text-decoration:none}
 .hm-more:hover{text-decoration:underline}
+
+.call-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+.call-row .btn svg{margin-right:6px}

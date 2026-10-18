@@ -10,8 +10,8 @@ from urllib.parse import parse_qs
 from xml.sax.saxutils import escape
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response
+from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import Response, StreamingResponse
 from google import genai
 from google.genai import types
 
@@ -137,6 +137,32 @@ async def tts_chunks(text):
         async for chunk in response.aiter_bytes(160):
             if chunk:
                 yield chunk
+
+
+async def tts_mp3(text):
+    """ElevenLabs speech for the browser call (mp3); the phone bridge uses tts_chunks (mu-law)."""
+    async with (
+        httpx.AsyncClient(timeout=30) as client,
+        client.stream(
+            'POST',
+            f'https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}/stream',
+            params={'output_format': 'mp3_22050_32'},
+            headers={'xi-api-key': settings.elevenlabs_api_key},
+            json={'text': text, 'model_id': 'eleven_flash_v2_5'},
+        ) as response,
+    ):
+        response.raise_for_status()
+        async for chunk in response.aiter_bytes(4096):
+            if chunk:
+                yield chunk
+
+
+@router.get('/voice/speech')
+async def browser_speech(text: str = Query(..., min_length=1, max_length=2000)):
+    """Span's voice for the browser call. 503 when ElevenLabs is not configured (the page falls back to the browser voice)."""
+    if not (settings.elevenlabs_api_key and settings.elevenlabs_voice_id):
+        raise HTTPException(503, 'ElevenLabs is not configured')
+    return StreamingResponse(tts_mp3(text), media_type='audio/mpeg', headers={'Cache-Control': 'private, max-age=300'})
 
 
 class Playback:

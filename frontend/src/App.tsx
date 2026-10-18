@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
 import type React from 'react'
 import type { Decision, GraphNode, Lever, RawEvent, RunState } from './types'
 import { emptyRun, k, money, plain, reduce } from './events'
-import { generateReport, playFixture, resolveDecision, startRun } from './api'
+import { generateReport, getHealth, playFixture, resolveDecision, startRun } from './api'
+import { callReducer, callStatusLabel, initialCall, type CallState } from './voiceCall'
 import ForecastHistory from './ForecastHistory'
 import ChatSidebar from './ChatSidebar'
 import { readChatTitle, writeChatTitle } from './chatHistory'
@@ -19,6 +20,8 @@ const RUN = new URLSearchParams(location.search).get('run')
 const FRESH = PARAMS.has('new')
 const STATIC = new URLSearchParams(location.search).has('static')
 const BROWSER_VOICE = PARAMS.get('voice') === 'browser'
+const CALL_REQUESTED = PARAMS.has('call')
+const GREETING = 'Hi, this is Span. What do you want to know about your money?'
 
 /* ---------- icons ---------- */
 const I = {
@@ -570,11 +573,8 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
 }
 
 /* ---------- bottom-right dock: call transcript + chat ---------- */
-function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoice }: { run: RunState; elapsed: number; input: string; setInput: (s: string) => void; onAsk: (q: string) => void; live: boolean; onReplay: (speed: number) => void; browserVoice: boolean }) {
+function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoice, callState, onStartCall, onHangup, onMic, voiceStatus, voiceMessage }: { run: RunState; elapsed: number; input: string; setInput: (s: string) => void; onAsk: (q: string) => void; live: boolean; onReplay: (speed: number) => void; browserVoice: boolean; callState: CallState; onStartCall: () => void; onHangup: () => void; onMic: () => void; voiceStatus: VoiceStatus; voiceMessage: string }) {
   const [open, setOpen] = useState(browserVoice)
-  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
-  const [voiceMessage, setVoiceMessage] = useState('')
-  const stopListening = useRef<() => void>(() => {})
   const onCall = run.status === 'open'
   const lastOwed = [...run.turns].reverse().find(t => t.kind === 'owed')
   const [preview, setPreview] = useState<string | null>(null)
@@ -586,17 +586,7 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
   const mm = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`
   const scroller = useRef<HTMLDivElement | null>(null)
   useEffect(() => { scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' }) }, [run.turns.length, open])
-  useEffect(() => () => stopListening.current(), [])
   const send = () => { const q = input.trim(); if (q) onAsk(q) }
-  const startVoiceFollowUp = () => {
-    setVoiceMessage('')
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
-    stopListening.current()
-    stopListening.current = listenOnce(
-      text => { stopListening.current(); setVoiceStatus('idle'); onAsk(text) },
-      (status, message) => { setVoiceStatus(status); setVoiceMessage(message || '') },
-    )
-  }
   return <div className={`dock ${open ? 'open' : ''}`}>
     {open && <div className="dpanel">
       <div className="dhead" onClick={() => setOpen(false)}>
@@ -613,9 +603,12 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoi
       </div>
       <div className="sugg">{['What if Evergreen doesn’t pay?', 'Show me who’s late', 'Can I afford a hire in January?'].map(q => <button key={q} onClick={() => onAsk(q)}>{q}</button>)}</div>
       <div className="dinput"><input placeholder={`Ask ${BRAND} a follow-up, or just say it…`} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }} /><button className="btn primary" style={{ height: 32, padding: '0 14px' }} onClick={send}>Ask</button></div>
-      {browserVoice && <div className="browser-voice-control">
-        <button className={`mic ${voiceStatus === 'listening' ? 'listening' : ''}`} type="button" aria-label={voiceStatus === 'listening' ? 'Listening for one follow-up' : 'Speak one follow-up'} aria-pressed={voiceStatus === 'listening'} disabled={voiceStatus === 'listening'} onClick={startVoiceFollowUp}>{I.mic} Speak follow-up</button>
-        <span role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'listening' ? 'Listening…' : voiceMessage}</span>
+      {browserVoice && <div className="browser-voice-control" data-testid="call-controls">
+        {callState.active
+          ? <><button className="btn danger" type="button" onClick={onHangup}>{I.phone} Hang up</button>
+            <button className={`mic ${callState.phase === 'listening' ? 'listening' : ''}`} type="button" aria-label={callState.phase === 'listening' ? 'Listening for one follow-up' : 'Speak one follow-up'} aria-pressed={callState.phase === 'listening'} disabled={callState.phase === 'listening' || callState.phase === 'speaking'} onClick={onMic}>{I.mic} Speak follow-up</button></>
+          : <button className="btn primary" type="button" onClick={onStartCall}>{I.phone} Call Span</button>}
+        <span role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'error' ? voiceMessage : callState.active ? callStatusLabel(callState) : 'Browser call: Span listens, answers aloud and keeps listening until you hang up.'}</span>
       </div>}
       {!live && <div className="controls" style={{ justifyContent: 'flex-end' }}>demo replay · <button onClick={() => onReplay(1)}>restart</button><button onClick={() => onReplay(3)}>3× speed</button><a href="?live">connect live</a></div>}
     </div>}
@@ -649,15 +642,47 @@ export default function App() {
     if (ev.event === 'run.start' || idx < 0) return [...prev.filter(r => r.run_id !== rid), reduce(emptyRun(), ev)]
     const next = prev.slice(); next[idx] = reduce(prev[idx], ev); return next
   })
+  /* ---------- browser call: Span listens, answers aloud (ElevenLabs when configured), listens again ---------- */
+  const [callState, dispatchCall] = useReducer(callReducer, undefined, () =>
+    BROWSER_VOICE && !CALL_REQUESTED ? { active: true, phase: 'resting' as const, noSpeech: 0 } : initialCall)
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
+  const [voiceMessage, setVoiceMessage] = useState('')
+  const stopListening = useRef<() => void>(() => {})
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const elevenRef = useRef(false)
+  useEffect(() => { if (BROWSER_VOICE) getHealth().then(h => { elevenRef.current = !!(h as any).voice?.elevenlabs }).catch(() => {}) }, [])
+  const stopSpeaking = () => {
+    if (audioRef.current) { audioRef.current.onended = null; audioRef.current.pause(); audioRef.current = null }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel()
+  }
+  const speakText = (text: string) => {
+    if (!BROWSER_VOICE || !text) return
+    stopSpeaking()
+    dispatchCall({ type: 'speech_started' })
+    let finished = false
+    const done = () => { if (!finished) { finished = true; audioRef.current = null; dispatchCall({ type: 'speech_ended' }) } }
+    const fallback = () => {
+      try {
+        if (!('speechSynthesis' in window)) return done()
+        const u = new SpeechSynthesisUtterance(text); u.onend = done; u.onerror = done; window.speechSynthesis.speak(u)
+      } catch { done() }
+    }
+    if (!elevenRef.current) return fallback()
+    try {
+      const a = new Audio(`/api/voice/speech?text=${encodeURIComponent(text.slice(0, 2000))}`)
+      audioRef.current = a; a.onended = done; a.onerror = () => { audioRef.current = null; fallback() }
+      a.play().catch(() => { audioRef.current = null; fallback() })
+    } catch { fallback() }
+  }
   // sequential presentation: never mount two nodes in the same instant, even if the backend bursts
   const queue = useRef<RawEvent[]>([]); const draining = useRef(false)
   const apply = (ev: RawEvent) => {
     if (BROWSER_VOICE) {
       const text = assistantSpeechText(ev)
-      if (text && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      if (text && typeof window !== 'undefined') {
         try {
           const eventId = ev.data?.id == null ? undefined : String(ev.data.id)
-          if (claimSpeechEvent(eventId, window.sessionStorage)) window.speechSynthesis.speak(new SpeechSynthesisUtterance(text))
+          if (claimSpeechEvent(eventId, window.sessionStorage)) speakText(text)
         } catch { /* speech is an enhancement; the transcript remains available */ }
       }
     }
@@ -686,11 +711,40 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
-    if (!BROWSER_VOICE || !('speechSynthesis' in window)) return
-    const stopSpeech = () => window.speechSynthesis.cancel()
+    if (!BROWSER_VOICE) return
+    const stopSpeech = () => stopSpeaking()
     window.addEventListener('pagehide', stopSpeech)
     return () => { window.removeEventListener('pagehide', stopSpeech); stopSpeech() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  // The microphone follows the call phase: one recognition session per turn, re-armed after Span speaks.
+  useEffect(() => {
+    if (!BROWSER_VOICE) return
+    stopListening.current(); stopListening.current = () => {}
+    if (callState.phase !== 'listening') return
+    setVoiceMessage('')
+    stopListening.current = listenOnce(
+      text => { stopListening.current(); setVoiceStatus('idle'); dispatchCall({ type: 'heard' }); followUp(text) },
+      (status, message) => {
+        setVoiceStatus(status); setVoiceMessage(message || '')
+        if (status === 'error') dispatchCall({ type: /No speech/i.test(message || '') ? 'no_speech' : 'mic_error' })
+      },
+    )
+    return () => stopListening.current()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callState.phase, callState.noSpeech])
+  // If Span finished without saying anything (a failed step, a silent approval), go back to listening.
+  const latestStatus = runs[runs.length - 1]?.status
+  useEffect(() => {
+    if (!BROWSER_VOICE || callState.phase !== 'thinking' || latestStatus === 'open') return
+    const t = setTimeout(() => dispatchCall({ type: 'speech_ended' }), 8000)
+    return () => clearTimeout(t)
+  }, [callState.phase, latestStatus])
+  const startCall = () => {
+    dispatchCall({ type: 'start' })
+    if (!runs.length) speakText(GREETING)
+  }
+  const hangUp = () => { stopSpeaking(); dispatchCall({ type: 'hangup' }) }
   useEffect(() => { const t = setInterval(() => setElapsed(e => e + 1), 1000); return () => clearInterval(t) }, [])
 
   const onDecide = async (d: Decision, opt: string, selected?: string[]) => {
@@ -702,7 +756,7 @@ export default function App() {
   }
   const followUp = async (q: string) => {
     setInput('')
-    if (BROWSER_VOICE && 'speechSynthesis' in window) window.speechSynthesis.cancel()
+    if (BROWSER_VOICE) { stopSpeaking(); if (callState.active) dispatchCall({ type: 'heard' }) }
     if (LIVE) {
       const latest = runs[runs.length - 1]
       const pending = latest && Object.values(latest.decisions).filter(decision => !decision.resolved).slice(-1)[0]
@@ -712,7 +766,8 @@ export default function App() {
           await resolveDecision(pending.decision_id, optionId, COMPANY)
           apply({ event: 'decision.resolved', data: { decision_id: pending.decision_id, option_id: optionId, run_id: latest.run_id } })
           setError('')
-        } catch (e) { setError(String(e)) }
+          if (BROWSER_VOICE) speakText(optionId === 'no' ? 'Okay, not now.' : 'Done. I am on it, and I will tell you what comes back.')
+        } catch (e) { setError(String(e)); if (BROWSER_VOICE) dispatchCall({ type: 'speech_ended' }) }
         return
       }
     }
@@ -821,6 +876,6 @@ export default function App() {
         </div>)}
       </main>
     </div>
-    {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} browserVoice={BROWSER_VOICE} />}
+    {(main || BROWSER_VOICE) && <Dock run={main || emptyRun()} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} callState={callState} onStartCall={startCall} onHangup={hangUp} onMic={() => dispatchCall({ type: 'start' })} voiceStatus={voiceStatus} voiceMessage={voiceMessage} browserVoice={BROWSER_VOICE} />}
   </div>
 }

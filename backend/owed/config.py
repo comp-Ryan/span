@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = Field("", validation_alias=AliasChoices("ELEVENLABS_API_KEY", "ELEVEN_LABS_KEY"))
     elevenlabs_voice_id: str = "EXAVITQu4vr4xnSDxMaL"
     voice_stream_token: str = ""
+    voice_phone_number: str = ""   # the Twilio number owners can call once /voice/twiml is wired
     twilio_auth_token: str = ""
     gemini_model: str = "gemini-3.8-flash"
     gemini_api_key: str = ""

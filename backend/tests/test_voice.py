@@ -162,3 +162,44 @@ def test_settings_accept_the_eleven_labs_key_alias_and_default_voice(monkeypatch
     s = Settings(_env_file=None)
     assert s.elevenlabs_api_key == 'alias-key'
     assert s.elevenlabs_voice_id  # a premade ElevenLabs voice so the bridge speaks without extra config
+
+
+def test_browser_voice_speech_endpoint_streams_elevenlabs_or_says_so(monkeypatch):
+    from fastapi.testclient import TestClient
+    from owed.config import settings
+    from owed.main import app
+    client = TestClient(app)
+    monkeypatch.setattr(settings, 'elevenlabs_api_key', '')
+    assert client.get('/api/voice/speech', params={'text': 'hello'}).status_code == 503
+    monkeypatch.setattr(settings, 'elevenlabs_api_key', 'k')
+
+    async def fake_mp3(text):
+        assert text == 'You are short by $385.'
+        yield b'ID3'
+        yield b'rest'
+    monkeypatch.setattr(live, 'tts_mp3', fake_mp3)
+    r = client.get('/api/voice/speech', params={'text': 'You are short by $385.'})
+    assert r.status_code == 200 and r.headers['content-type'].startswith('audio/mpeg') and r.content == b'ID3rest'
+    assert client.get('/api/voice/speech', params={'text': ''}).status_code == 422
+    assert client.get('/api/voice/speech', params={'text': 'x' * 2001}).status_code == 422
+
+
+def test_health_reports_voice_readiness(monkeypatch):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+    from fastapi.testclient import TestClient
+    from owed import db
+    from owed.config import settings
+    from owed.main import app
+    monkeypatch.setattr(db, 'conn', lambda: nullcontext(SimpleNamespace(execute=lambda *a: None)))
+    monkeypatch.setattr(settings, 'gemini_api_key', 'g')
+    monkeypatch.setattr(settings, 'twilio_auth_token', '')
+    monkeypatch.setattr(settings, 'voice_stream_token', '')
+    monkeypatch.setattr(settings, 'elevenlabs_api_key', 'k')
+    monkeypatch.setattr(settings, 'voice_phone_number', '')
+    voice = TestClient(app).get('/api/health').json()['voice']
+    assert voice == {'browser': True, 'phone': False, 'phone_number': None, 'elevenlabs': True, 'live_model': settings.gemini_live_model}
+    monkeypatch.setattr(settings, 'twilio_auth_token', 't')
+    monkeypatch.setattr(settings, 'voice_stream_token', 's')
+    monkeypatch.setattr(settings, 'voice_phone_number', '+1 555 010 0000')
+    assert TestClient(app).get('/api/health').json()['voice']['phone'] is True

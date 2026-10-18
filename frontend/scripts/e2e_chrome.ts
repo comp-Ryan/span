@@ -160,6 +160,22 @@ async function chatAndDecisions(browser: Browser, fakeAudio: string) {
     throw new Error((await status.textContent().catch(() => '')) || first)
   })
   { const r = results.at(-1)!; if (!r.ok) { r.ok = null; r.detail = `Web Speech in automated Chrome: ${r.detail}` } }
+  await check('browser call: Call Span greets aloud, listens, hears the question, answers, listens again, hangs up', async () => {
+    await page.goto(`${BASE}/?live&new=1&voice=browser&call=1&company=${COMPANY}`)
+    const speech = page.waitForResponse(r => r.url().includes('/api/voice/speech'), { timeout: 20000 }).catch(() => null)
+    await page.getByRole('button', { name: 'Call Span' }).click()
+    const status = page.locator('[data-testid="call-controls"] [role="status"], [data-testid="call-controls"] [role="alert"]')
+    const greeting = await speech
+    const asked = page.waitForResponse(r => r.url().includes('/api/ask?') && r.request().method() === 'POST', { timeout: 60000 })
+    await until(async () => (await status.textContent()) || '', t => t.startsWith('Listening'), 'listening after the greeting', 40000)
+    const ask = await asked  // Chrome's fake microphone plays the question file; Web Speech transcribes it
+    const callRun = (await ask.json()).run_id
+    await until(() => replay(callRun), r => r.events.some((e: any) => e.event === 'run.end'), 'answer to the spoken question', 120000)
+    await until(async () => (await status.textContent()) || '', t => t.startsWith('Listening') || t.startsWith('Span is speaking'), 'Span speaking or listening again', 40000)
+    await page.getByRole('button', { name: 'Hang up' }).click()
+    await until(async () => (await status.textContent()) || '', t => t.startsWith('Browser call'), 'hung up', 10000)
+    return `greeting via ${greeting ? `ElevenLabs (${greeting.status()})` : 'browser voice'}; spoken question became ${callRun}`
+  })
   let token = '', amount = 0
   await check('after approval: simulated reminders, negotiation and a pay link appear', async () => {
     const r = await until(() => replay(runId), rr => rr.events.some((e: any) => e.data.data?.agreement?.installments?.length), 'agreement', 240000)

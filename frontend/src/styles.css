@@ -67,6 +67,7 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .chip.plain{padding:4px 8px;background:var(--line2);border:0}
 .btn{height:36px;border-radius:18px;border:1px solid var(--muted2);background:var(--card);color:var(--text);font:600 13px var(--font);cursor:pointer;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
 .btn.ghost{border-color:var(--line);color:var(--muted2)}
 .btn:disabled{opacity:.6;cursor:default}
 .btn.done{background:var(--green-bg);border-color:var(--green);color:var(--green)}
