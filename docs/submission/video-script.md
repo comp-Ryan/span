@@ -31,9 +31,10 @@ installments under the owner's rules." Show the exchange and the agreements.
 
 ## 1:15–1:35 · Payment and the outcome (05–07)
 "Each agreement comes with a real pay link. The first installments land on the Visa sandbox
-card." Show the pay page and the receipt, then the outcome card: it turns green only when the
-collected cash actually covers the gap; otherwise say how much is still short. The forecast
-history keeps every revision in the Timescale hypertable.
+card." Show the pay page and the receipt, then the outcome card. In the recorded take the three
+first installments left $82 short because those invoices were already partly expected; one more
+installment closed it and the card turned green. Say that out loud: the gap only closes when the
+cash really arrives. The forecast history keeps every revision in the Timescale hypertable.
 
 ## 1:35–1:50 · A follow-up (08-what-if-evergreen)
 Owner: **What if Evergreen doesn't pay?** "Same chat, a branch: the new shortfall and one next
