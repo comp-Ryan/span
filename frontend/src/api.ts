@@ -1,4 +1,4 @@
-import type { RawEvent, ReportDoc } from './types'
+import type { Brief, CashProjection, Company, RawEvent, ReportDoc, RunSummary } from './types'
 
 const BASE = '/api'
 
@@ -20,6 +20,15 @@ export async function getReport(id: string): Promise<ReportDoc> {
   if (!r.ok) throw new Error(`${r.status}`)
   return r.json()
 }
+async function getJson<T>(path: string): Promise<T> {
+  const r = await fetch(`${BASE}${path}`)
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error?.message || `${r.status} ${r.statusText}`)
+  return r.json()
+}
+export const getCompanies = () => getJson<{ companies: Company[] }>('/companies').then(j => j.companies)
+export const getBrief = (company: string) => getJson<Brief>(`/brief?company=${encodeURIComponent(company)}`)
+export const getRuns = (company: string) => getJson<{ runs: RunSummary[] }>(`/runs?company=${encodeURIComponent(company)}`).then(j => j.runs)
+export const getCash = (company: string, target: string) => getJson<CashProjection>(`/cash?${new URLSearchParams({ company, target })}`)
 export function subscribe(company: string, onEvent: (e: RawEvent) => void): () => void {
   const es = new EventSource(`${BASE}/events?company=${encodeURIComponent(company)}`)
   const kinds = ['run.start', 'node.create', 'node.update', 'decision', 'decision.resolved', 'speech', 'report.ready', 'run.end', 'card.updated']
@@ -44,4 +53,10 @@ export async function playFixture(url: string, onEvent: (e: RawEvent) => void, s
     }
   })()
   return () => { stopped = true }
+}
+
+export async function generateReport(runId: string, company: string): Promise<{ report_id: string } | null> {
+  const r = await fetch(`${BASE}/reports/generate?run_id=${encodeURIComponent(runId)}&company=${encodeURIComponent(company)}`, { method: 'POST' })
+  if (!r.ok) return null
+  return r.json()
 }

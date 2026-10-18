@@ -45,7 +45,7 @@ function status(r: ReportDoc): { label: string; cls: 'ok' | 'tight' | 'short' } 
 }
 
 function NodeStrip({ nodes }: { nodes: ReportNode[] }) {
-  return <div className="steps">
+  return <div className="rsteps">
     {nodes.map((n, i) => <Fragment key={n.id}>
       {i > 0 && <span className="step-arrow">{I.arrow}</span>}
       <span className="step">

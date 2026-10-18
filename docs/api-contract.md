@@ -17,7 +17,7 @@ Companies available for the demo (POS companies excluded, they have no invoices)
 ]}
 ```
 
-## GET /brief?company=  (legacy; the canvas replaces it, keep for ASI:One text answers)
+## GET /brief?company=  (home page tiles; also ASI:One text answers)
 ```json
 {
   "company": { "id": "company-001", "name": "Hearthloaf Bakeries", "profile": "wholesale" },
@@ -27,10 +27,16 @@ Companies available for the demo (POS companies excluded, they have no invoices)
   "overdue_total": 5098.37,
   "expected_in_30d": 21030.50,
   "benchmark": { "dso_days": 34, "peer_median_dso_days": 23, "peer_profile": "wholesale", "peer_count": 21 },
-  "audio_url": "https://api.<domain>/audio/brief-company-001-2026-10-06.mp3"
+  "audio_url": "https://api.<domain>/audio/brief-company-001-2026-10-06.mp3",
+  "bank_balance": 6533.65,
+  "open_invoices": 204,
+  "payroll_next": { "date": "2026-10-07", "amount": 1575.00, "headcount": 6 },
+  "bills_due_week": { "total": 3412.10, "count": 4, "through": "2026-10-13" }
 }
 ```
-`benchmark` and `audio_url` may be `null`.
+`benchmark`, `audio_url`, and `payroll_next` may be `null`. `bank_balance` includes runtime payments
+(same as the forecast node); `open_invoices` counts invoices with a positive open balance;
+`payroll_next` is the next trailing-cadence pay date within 7 days; `bills_due_week` covers bills due within 7 days.
 
 ## GET /cards?company=  (legacy; superseded by `levers` node data)
 ```json

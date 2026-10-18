@@ -3,11 +3,11 @@ import { replay, startRun, subscribe } from './api'
 import { descendants, runIngestor } from './branches'
 
 /** Subscribe before replaying so the handoff cannot lose a newly created branch. */
-export function connectLive(company: string, savedRun: string | null, onEvent: (event: RawEvent) => void, onError: (error: unknown) => void) {
+export function connectLive(company: string, savedRun: string | null, onEvent: (event: RawEvent) => void, onError: (error: unknown) => void, staticOnly = false) {
   let cancelled = false, ready = false
   const pending: RawEvent[] = []
   const accept = runIngestor(onEvent)
-  const off = subscribe(company, event => ready ? accept.ingest(event) : pending.push(event))
+  const off = staticOnly ? () => {} : subscribe(company, event => ready ? accept.ingest(event) : pending.push(event))
   ;(async () => {
     try {
       const root = savedRun ? { run_id: savedRun } : await startRun(company, 'Am I going to make payroll these next two weeks?')

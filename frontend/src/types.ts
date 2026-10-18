@@ -41,3 +41,18 @@ export interface ReportDoc {
   actions: { title: string; result: string }[]
   open_items: string[]; narrative: string; disclosures: string[]; pdf_url?: string
 }
+
+/* ---------- home page (GET /companies, /brief, /runs, /cash) ---------- */
+export interface Company { id: string; name: string; profile: string; distressed: boolean; owed_total: number; overdue_total: number }
+export interface Brief {
+  company: { id: string; name: string; profile: string }; as_of: string; headline: string
+  owed_total: number; overdue_total: number; expected_in_30d: number
+  benchmark: { dso_days: number; peer_median_dso_days: number; peer_profile: string; peer_count: number } | null
+  audio_url: string | null
+  bank_balance: number; open_invoices: number
+  payroll_next: { date: string; amount: number; headcount: number } | null
+  bills_due_week: { total: number; count: number; through: string }
+}
+export interface RunSummary { run_id: string; question: string; source: string; started_at: string; status: string; answer_title: string | null; report_id: string | null; parent_run_id?: string | null }
+export interface CashDay { date: string; inflow: number; outflow: number; balance: number }
+export interface CashProjection { start: string; target: string; opening_balance: number; days: CashDay[]; pessimistic_days: CashDay[]; payroll_dates: string[]; low_point: { date: string; balance: number }; pessimistic_low_point: { date: string; balance: number } }
