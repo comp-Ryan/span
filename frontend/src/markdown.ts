@@ -1,6 +1,6 @@
-/** Light markdown from the planner's written detail: headings, bullets, paragraphs, **bold**; backticks dropped. */
+/** Light markdown from the planner's written detail: headings, bullets, paragraphs, pipe tables, **bold**; backticks dropped. */
 export type Run = { bold: boolean; text: string }
-export type Block = { kind: 'heading'; text: string } | { kind: 'paragraph'; runs: Run[] } | { kind: 'list'; items: Run[][] }
+export type Block = { kind: 'heading'; text: string } | { kind: 'paragraph'; runs: Run[] } | { kind: 'list'; items: Run[][] } | { kind: 'table'; header: Run[][]; rows: Run[][][] }
 
 export function inlineRuns(text: string): Run[] {
   const clean = text.replace(/`/g, '')
@@ -16,12 +16,26 @@ export function inlineRuns(text: string): Run[] {
   return runs
 }
 
+const tableCells = (line: string) => line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim())
+const isTableRow = (line: string) => line.length > 2 && line.startsWith('|') && line.endsWith('|')
+const isSeparator = (line: string) => tableCells(line).every(c => /^:?-+:?$/.test(c))
+
 export function markdownBlocks(text: string): Block[] {
   const blocks: Block[] = []
   let para: string[] = []
+  let table: Extract<Block, { kind: 'table' }> | null = null
   const flush = () => { if (para.length) { blocks.push({ kind: 'paragraph', runs: inlineRuns(para.join(' ')) }); para = [] } }
   for (const raw of (text || '').split('\n')) {
     const line = raw.trim()
+    if (isTableRow(line)) {  // GitHub-style pipe table: first row is the header, the |---| line is skipped
+      flush()
+      if (isSeparator(line)) continue
+      const cells = tableCells(line).map(inlineRuns)
+      if (table) table.rows.push(cells)
+      else { table = { kind: 'table', header: cells, rows: [] }; blocks.push(table) }
+      continue
+    }
+    table = null
     if (!line) { flush(); continue }
     const heading = line.match(/^#{1,6}\s+(.*)$/)
     const bullet = line.match(/^[-*•]\s+(.*)$/)

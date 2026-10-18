@@ -24,3 +24,22 @@ describe('planner markdown on the report page', () => {
     expect(markdownBlocks('')).toEqual([])
   })
 })
+
+describe('tables', () => {
+  it('a pipe table becomes a table block with a header row and body rows, bold kept in cells', async () => {
+    const { markdownBlocks } = await import('./markdown')
+    const text = '### Numbers used\n| Customer | Overdue | Days late |\n|---|---|---|\n| **Evergreen** | $1,156.20 | 23.0 |\n| Yeoman | $668.58 | 21.1 |\n\nAll have 7-day terms.'
+    const blocks = markdownBlocks(text)
+    expect(blocks.map(b => b.kind)).toEqual(['heading', 'table', 'paragraph'])
+    const table = blocks[1] as any
+    expect(table.header.map((runs: any[]) => runs.map(r => r.text).join(''))).toEqual(['Customer', 'Overdue', 'Days late'])
+    expect(table.rows.length).toBe(2)
+    expect(table.rows[0][0]).toEqual([{ bold: true, text: 'Evergreen' }])
+    expect(table.rows[1].map((runs: any[]) => runs.map(r => r.text).join(''))).toEqual(['Yeoman', '$668.58', '21.1'])
+  })
+  it('a table without a separator line is still a table; a lone pipe in prose is not', async () => {
+    const { markdownBlocks } = await import('./markdown')
+    expect(markdownBlocks('| a | b |\n| 1 | 2 |').map(b => b.kind)).toEqual(['table'])
+    expect(markdownBlocks('either this | or that').map(b => b.kind)).toEqual(['paragraph'])
+  })
+})

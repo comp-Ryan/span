@@ -285,6 +285,15 @@ def build_report(con, run_id: str, report_id: str | None = None, narrate: bool =
         "disclosures": _disclosures(nodes),
         "pdf_url": f"{settings.public_base_url.rstrip('/')}/reports/{report_id}.pdf",
     }
+    if all(v is None for v in report["numbers"].values()):
+        # A ranking-only answer ("Show me who's late") never read the books: report what it ranked instead of nothing.
+        scoring = next((n["data"] for n in nodes.values() if n.get("type") == "scoring" and isinstance(n["data"].get("customers"), list)), None)
+        if scoring:
+            ranked = scoring["customers"]
+            report["numbers"].update({
+                "overdue": round(sum(float(c.get("overdue_balance") or 0) for c in ranked), 2),
+                "open_balance": round(sum(float(c.get("open_balance") or 0) for c in ranked), 2),
+                "customers_ranked": len(ranked), "customers_considered": scoring.get("customers_considered")})
     decided = {d["node_id"]: ("open" if _decision_open(con, d, nodes) else "resolved") for d in st["decisions"]}
     report["workflow"]["svg"] = render_svg(report["workflow"]["nodes"], decided)
     try:

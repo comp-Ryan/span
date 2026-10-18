@@ -105,14 +105,26 @@ export default function Report({ id }: { id: string }) {
   const bills = r.numbers.bills_due_by_target ?? fc.bills_due_by_target
   const gapT = r.numbers.gap_then, gapN = r.numbers.gap_now
   const acts = r.workflow.nodes.filter(n => n.type === 'action')
-  const stats: { l: string; v?: number; sub?: string; hot?: boolean }[] = [
+  const decided = r.workflow.nodes.some(n => n.type === 'levers')
+  // A ranking-only answer ("Show me who's late") never reads the cash numbers: show what it ranked instead of dashes.
+  const scoring = r.workflow.nodes.find(n => n.type === 'scoring')?.data || {}
+  const ranked: Record<string, unknown>[] = Array.isArray(scoring.customers) ? scoring.customers : []
+  const sum = (key: string) => ranked.reduce((a, c) => a + (Number(c[key]) || 0), 0)
+  const cashKnown = [r.numbers.bank_balance, r.numbers.payroll, bills, r.numbers.owed, r.numbers.expected_by_target, gapN].some(v => v != null)
+  type Stat = { l: string; v?: number; sub?: string; hot?: boolean; count?: boolean }
+  const stats: Stat[] = (cashKnown ? [
     { l: 'In the bank', v: r.numbers.bank_balance },
     { l: 'Payroll', v: r.numbers.payroll },
     { l: 'Bills due first', v: bills },
     { l: 'Customers owe', v: r.numbers.owed },
     { l: 'Expected in time', v: r.numbers.expected_by_target },
     { l: 'Cushion', v: gapN == null ? undefined : -gapN, sub: gapT != null && gapN != null && gapT !== gapN ? `was ${(gapT > 0 ? '−$' : '$') + Math.round(Math.abs(gapT)).toLocaleString()} when asked` : 'at the time of asking', hot: true },
-  ]
+  ] : r.numbers.overdue != null || ranked.length ? [
+    { l: 'Overdue, ranked customers', v: r.numbers.overdue ?? sum('overdue_balance') },
+    { l: 'Open balance, ranked customers', v: r.numbers.open_balance ?? sum('open_balance') },
+    { l: 'Customers ranked', v: r.numbers.customers_ranked ?? ranked.length, count: true },
+    { l: 'Customers considered', v: r.numbers.customers_considered ?? (scoring.customers_considered as number | undefined), count: true },
+  ] : []).filter(s => s.v != null)
   return <div className="report-wrap"><div className="sheet">
     <header className="rhead">
       <a className="rbrand" href="/"><span className="mark">{BRAND[0]}</span><span className="name">{BRAND.toLowerCase()}</span></a>
@@ -132,15 +144,15 @@ export default function Report({ id }: { id: string }) {
     </div>
 
     <h2 className="rsec">Numbers used</h2>
-    <div className="stats">
+    {stats.length ? <div className="stats" style={{ gridTemplateColumns: `repeat(${stats.length === 6 ? 3 : Math.min(stats.length, 5)}, 1fr)` }}>
       {stats.map(s => <div className="stat" key={s.l}>
         <div className="sl">{s.l}</div>
         <div className="sv" style={s.hot ? { color: (s.v ?? 0) >= 0 ? 'var(--green)' : 'var(--red)' } : undefined}>
-          {s.v == null ? '—' : (s.v < 0 ? '−$' : '$') + Math.round(Math.abs(s.v)).toLocaleString()}
+          {s.v == null ? '—' : s.count ? Math.round(s.v).toLocaleString() : (s.v < 0 ? '−$' : '$') + Math.round(Math.abs(s.v)).toLocaleString()}
         </div>
         {s.sub && <div className="fine">{s.sub}</div>}
       </div>)}
-    </div>
+    </div> : <div className="fine">This answer did not need a cash forecast.</div>}
 
     <h2 className="rsec">How I got there</h2>
     {r.workflow.svg
@@ -152,7 +164,7 @@ export default function Report({ id }: { id: string }) {
       ? <div className="dids">{acts.map(n => <DidRow key={n.id} n={n} />)}</div>
       : r.actions.length > 0
         ? <ul className="plain">{r.actions.map((a, i) => <li key={i}><b>{a.title}</b> — {a.result}</li>)}</ul>
-        : <div className="fine">Nothing yet.</div>}
+        : <div className="fine">{decided ? 'Nothing yet.' : 'No actions were needed for this question.'}</div>}
 
     <h2 className="rsec">Still open</h2>
     {r.open_items.length > 0
@@ -162,6 +174,8 @@ export default function Report({ id }: { id: string }) {
     <h2 className="rsec">Narrative</h2>
     <div className="nar">{markdownBlocks(r.narrative).map((b, i) => b.kind === 'heading' ? <h3 key={i}>{b.text}</h3>
       : b.kind === 'list' ? <ul key={i}>{b.items.map((runs, j) => <li key={j}><Runs runs={runs} /></li>)}</ul>
+      : b.kind === 'table' ? <table key={i} className="ntable"><thead><tr>{b.header.map((runs, j) => <th key={j}><Runs runs={runs} /></th>)}</tr></thead>
+        <tbody>{b.rows.map((row, ri) => <tr key={ri}>{row.map((runs, j) => <td key={j}><Runs runs={runs} /></td>)}</tr>)}</tbody></table>
       : <p key={i}><Runs runs={b.runs} /></p>)}</div>
 
     <footer className="rfoot">{r.disclosures.join(' · ')}</footer>

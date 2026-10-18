@@ -200,6 +200,10 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .open li{display:flex;gap:10px;align-items:flex-start;font-size:13px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .chk{color:var(--amber);flex-shrink:0;margin-top:1px}
 .nar{display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.55;max-width:720px}
+.nar .ntable{border-collapse:collapse;width:100%;font-size:12.5px;line-height:1.35}
+.nar .ntable th,.nar .ntable td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.nar .ntable th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.nar .ntable td:not(:first-child){white-space:nowrap;font-variant-numeric:tabular-nums}
 .rfoot{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--muted2);line-height:1.6}
 .rlink{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;font-weight:500;color:var(--blue);text-decoration:none;border-bottom:1px dashed var(--blue);padding-bottom:1px}
 @media print{

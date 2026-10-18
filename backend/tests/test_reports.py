@@ -142,3 +142,31 @@ def test_planner_run_report_has_numbers_and_keeps_the_markdown_narrative():
             c.execute('delete from decisions where run_id=%s', (rid,))
             c.execute('delete from events where run_id=%s', (rid,))
             c.execute('delete from runs where run_id=%s', (rid,))
+
+
+def test_ranking_only_run_reports_what_it_ranked_instead_of_dashes():
+    """"Show me who's late" never reads the books: the numbers block carries the ranking totals, not six dashes."""
+    from datetime import date
+    from owed.events import emit
+    from owed.runs import create
+    rid = create('company-020', 'Show me who’s late', 'web', 'free_question', target_date=date(2026, 10, 9))
+    customers = [{'id': 'cust-1', 'display_name': 'Evergreen', 'overdue_balance': 1156.2, 'open_balance': 1221.93, 'avg_days_late': 23.0, 'reliability': 'amber'},
+                 {'id': 'cust-2', 'display_name': 'Yeoman', 'overdue_balance': 668.58, 'open_balance': 1338.01, 'avg_days_late': 21.1, 'reliability': 'amber'}]
+    try:
+        emit(rid, 'node.create', {'node_id': 'context', 'type': 'context', 'title': 'Understanding the question', 'status': 'done', 'parent': None, 'data': {'question': 'Show me who’s late'}})
+        emit(rid, 'node.create', {'node_id': 'tool-1', 'type': 'scoring', 'title': 'Ranked customers', 'status': 'done', 'parent': 'context',
+                                  'data': {'tool': 'rank_customers', 'ranked_by': 'most_overdue', 'customers': customers, 'customers_considered': 56}})
+        emit(rid, 'node.create', {'node_id': 'answer', 'type': 'answer', 'title': 'Two are late', 'status': 'done', 'parent': 'tool-1',
+                                  'data': {'spoken': 'Evergreen and Yeoman are late.', 'detail': '### Numbers used\n| Customer | Overdue |\n|---|---|\n| Evergreen | $1,156.20 |\n| Yeoman | $668.58 |', 'awaiting_input': False}})
+        with conn() as c:
+            report = build_report(c, rid, narrate=False)
+        n = report['numbers']
+        assert n['bank_balance'] is None and n['owed'] is None and n['gap_then'] is None
+        assert n['overdue'] == pytest.approx(1824.78) and n['open_balance'] == pytest.approx(2559.94)
+        assert n['customers_ranked'] == 2 and n['customers_considered'] == 56
+        from owed.reports.pdf import render_pdf
+        assert render_pdf(report)[:5] == b'%PDF-'
+    finally:
+        with conn() as c:
+            c.execute('delete from events where run_id=%s', (rid,))
+            c.execute('delete from runs where run_id=%s', (rid,))

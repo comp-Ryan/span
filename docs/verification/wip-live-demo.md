@@ -78,3 +78,11 @@ through the normal API.
 | Messages card showed a customer named "No" with "No actions taken · SENT" after a "Not now" | The `action` node the worker emits for a decline was grouped as a conversation. `conversationActions()` keeps only reminder/reply/negotiation/payment actions (`events.test.ts`); a declined lever now reads "nothing sent" |
 | Spoken approvals in the owner's words ("Yes you can you draft up some reminders", "Yeah please send them out") became new questions, each creating another approval, none resolved | `approvalChoice` accepts a leading yes/no plus an instruction and plain "send them out" / "go ahead and text them"; hedges ("but", "if", "only") or a question after the yes keep it a question (`browserVoice.test.ts`, 4 new tests) |
 | Frontend | vitest 68 passed, build and lint clean |
+
+## 2026-10-18 16:20–16:45 UTC — Reports: empty numbers, raw markdown tables
+
+| What | Evidence |
+|---|---|
+| A ranking-only report ("Show me who's late") showed six dashes under Numbers used and "Nothing yet." | `build_report` fills `overdue`, `open_balance`, `customers_ranked`, `customers_considered` from the scoring node when no cash numbers exist (`test_reports.py::test_ranking_only_run_reports_what_it_ranked_instead_of_dashes`); the page derives the same from the stored workflow for reports generated earlier; tiles without a value are hidden; "No actions were needed for this question." when the run had no approval |
+| Narrative pipe tables rendered as one line of pipes | `markdownBlocks` (page) and `markdown_paragraphs` (PDF) parse GitHub-style tables; the page renders `<table class="ntable">`, the PDF a reportlab grid (`markdown.test.ts`, `test_report_markdown.py`). Checked on the owner's report rep-aa5c4e6ca916: 4 tiles, 10-row table |
+| Suites | frontend vitest 70 passed, build + lint clean; backend DB-free 27 report/version/CLI/backup tests, `test_reports.py` 6 passed on an isolated clone |

@@ -36,6 +36,7 @@ export interface ReportDoc {
   numbers: {
     bank_balance?: number; payroll?: number; owed?: number
     expected_by_target?: number; bills_due_by_target?: number; gap_then?: number; gap_now?: number
+    overdue?: number; open_balance?: number; customers_ranked?: number; customers_considered?: number  // ranking-only runs
   }
   workflow: { nodes: ReportNode[]; edges: { from: string; to: string }[]; svg?: string }
   actions: { title: string; result: string }[]

@@ -48,8 +48,9 @@ def _workflow(svg: str, max_w: float, max_h: float):
 
 
 def markdown_paragraphs(text: str) -> list[dict]:
-    """Planner narratives are light markdown; turn them into reportlab-safe blocks (heading, bullet, text)."""
+    """Planner narratives are light markdown; turn them into reportlab-safe blocks (heading, bullet, text, table)."""
     blocks, para = [], []
+    table = None
 
     def flush():
         if para:
@@ -62,6 +63,19 @@ def markdown_paragraphs(text: str) -> list[dict]:
 
     for line in (text or "").splitlines():
         stripped = line.strip()
+        if len(stripped) > 2 and stripped.startswith("|") and stripped.endswith("|"):  # pipe table row
+            flush()
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
+            if all(re.fullmatch(r":?-+:?", c) for c in cells):
+                continue  # the |---|---| line under the header
+            cells = [_inline(c) for c in cells]
+            if table is None:
+                table = {"kind": "table", "header": cells, "rows": []}
+                blocks.append(table)
+            else:
+                table["rows"].append(cells)
+            continue
+        table = None
         if not stripped:
             flush()
         elif re.match(r"^#{1,6}\s+", stripped):
@@ -94,12 +108,18 @@ def render_pdf(report: dict) -> bytes:
                               ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
 
     n = report["numbers"]
-    stats = [("Bank balance", n.get("bank_balance")), ("Payroll", n.get("payroll")), ("Customers owe", n.get("owed")),
-             ("Expected in time", n.get("expected_by_target")), ("Gap when asked", n.get("gap_then")),
-             ("Gap now", n.get("gap_now"))]
+    if any(n.get(k) is not None for k in ("bank_balance", "payroll", "owed", "expected_by_target", "gap_then", "gap_now")):
+        stats = [("Bank balance", _money(n.get("bank_balance"))), ("Payroll", _money(n.get("payroll"))), ("Customers owe", _money(n.get("owed"))),
+                 ("Expected in time", _money(n.get("expected_by_target"))), ("Gap when asked", _money(n.get("gap_then"))),
+                 ("Gap now", _money(n.get("gap_now")))]
+    elif n.get("overdue") is not None:  # ranking-only answer: what it ranked
+        stats = [("Overdue, ranked", _money(n.get("overdue"))), ("Open balance, ranked", _money(n.get("open_balance"))),
+                 ("Customers ranked", str(n.get("customers_ranked") or 0)), ("Considered", str(n.get("customers_considered") or "\u2014"))]
+    else:
+        stats = [("Numbers", "This answer did not need a cash forecast.")]
     numbers = Table([[Paragraph(label.upper(), LABEL) for label, _ in stats],
-                     [Paragraph(_money(v), VALUE_NOW if i == len(stats) - 1 else VALUE)
-                      for i, (_, v) in enumerate(stats)]], colWidths=[fw / 6] * 6)
+                     [Paragraph(value, VALUE_NOW if i == len(stats) - 1 and len(stats) > 1 else VALUE)
+                      for i, (_, value) in enumerate(stats)]], colWidths=[fw / len(stats)] * len(stats))
     numbers.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), PAPER), ("LEFTPADDING", (0, 0), (-1, -1), 8),
                                  ("TOPPADDING", (0, 0), (-1, 0), 8), ("BOTTOMPADDING", (0, -1), (-1, -1), 8),
                                  ("LINEBEFORE", (1, 0), (-1, -1), 0.6, RULE)]))
@@ -107,7 +127,8 @@ def render_pdf(report: dict) -> bytes:
     left_w = fw * 0.46
     left = [Paragraph("WHAT I DID", H)]
     left += [Paragraph(f"<b>{escape(a['title'])}</b> \u2014 {escape(a['result'])}", ITEM, bulletText="\u2022")
-             for a in report["actions"]] or [Paragraph("Nothing yet.", BODY)]
+             for a in report["actions"]] or [Paragraph("Nothing yet." if any(x.get("type") == "levers" for x in report["workflow"]["nodes"])
+                                                       else "No actions were needed for this question.", BODY)]
     left.append(Paragraph("STILL OPEN", H))
     left += [Paragraph(escape(i), ITEM, bulletText="\u2022") for i in report["open_items"]] or \
         [Paragraph("Nothing open.", BODY)]
@@ -117,6 +138,17 @@ def render_pdf(report: dict) -> bytes:
             left.append(Paragraph(f"<b>{block['text']}</b>", _s("nh", spaceBefore=4, spaceAfter=2)))
         elif block["kind"] == "bullet":
             left.append(Paragraph(block["text"], ITEM, bulletText="\u2022"))
+        elif block["kind"] == "table":
+            ncols = max([len(block["header"])] + [len(r) for r in block["rows"]]) or 1
+            pad = lambda cells: cells + [""] * (ncols - len(cells))
+            data = [[Paragraph(f"<b>{c}</b>", FINE) for c in pad(block["header"])]]
+            data += [[Paragraph(c, FINE) for c in pad(row)] for row in block["rows"]]
+            grid = Table(data, colWidths=[left_w / ncols] * ncols)
+            grid.setStyle(TableStyle([("LINEBELOW", (0, 0), (-1, 0), 0.6, RULE), ("LINEBELOW", (0, 1), (-1, -1), 0.3, RULE),
+                                      ("LEFTPADDING", (0, 0), (-1, -1), 3), ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                                      ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+                                      ("VALIGN", (0, 0), (-1, -1), "TOP")]))
+            left.append(grid)
         else:
             left.append(Paragraph(block["text"], _s("np", spaceAfter=6)))
 
