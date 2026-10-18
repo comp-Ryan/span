@@ -43,3 +43,21 @@ Re-record any time with `cd frontend && npm run record` (fresh isolated database
 - Planner error on the canvas names the cause (Gemini credits, key, OpenRouter balance).
 - Browser mic needs Chrome on localhost; typing the same sentence is identical for Span.
 - The outcome card turns green only when collected cash covers the gap; say the number it shows.
+
+## Testing from the terminal (no browser, no voice)
+
+`backend/scripts/chat.py` talks to the running backend with the same `/ask`, `/runs` and `/decisions` calls the web app makes, so you can check an answer without clicking through the UI or hearing it speak:
+
+```bash
+cd backend
+.venv/bin/python scripts/chat.py                                   # interactive: questions, then yes/no when Span asks
+.venv/bin/python scripts/chat.py "Will I make payroll in two weeks?"
+.venv/bin/python scripts/chat.py --decide no "Will I make payroll in two weeks?"   # answer the approval without a prompt
+```
+
+- The first line it prints is the backend's commit (`/health.version`), so you know which build you are talking to.
+- Each next question is a follow-up of the previous run, like the web chat; `/new` starts a fresh thread, `/runs` lists recent chats, `/quit` leaves.
+- Approvals wait for you: `yes`, `no`, an option number, or Enter to leave them pending (nothing is ever approved on its own).
+- `--source call` routes the question like the phone/browser call does (payroll questions go to the planner).
+
+On a browser call, **Mute** keeps Span silent: answers still appear in the transcript and the mic keeps listening. It is remembered in this browser until you press **Unmute**.
