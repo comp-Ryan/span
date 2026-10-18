@@ -25,6 +25,14 @@ class Photon:
     def __init__(self, transport=None):
         self.transport = transport
 
+    async def send_via_bridge(self, recipient, body, key):
+        """Photon Spectrum (stable) projects speak the spectrum-ts SDK, not the v2 REST API: a local bridge sends for us."""
+        async with httpx.AsyncClient(base_url=settings.spectrum_bridge_url.rstrip('/'), timeout=30, transport=self.transport) as client:
+            response = await client.post('/send', json={'to': recipient, 'text': body, 'key': key})
+            response.raise_for_status()
+            receipt = response.json()
+        return {'provider_message_id': receipt['message_id'], 'space_id': receipt['space_id'], 'provider_status': receipt.get('status', 'sent')}
+
     async def request(self, method, path, body=None, key=None):
         if not settings.photon_api_key or not settings.photon_project_id:
             raise ValueError('Photon API key and project ID are required')
@@ -38,6 +46,8 @@ class Photon:
             return response.json()
 
     async def send(self, recipient, body, channel, key):
+        if settings.spectrum_bridge_url and channel != 'email':
+            return await self.send_via_bridge(recipient, body, key)
         sender = settings.photon_email_sender_id if channel == 'email' else settings.photon_sms_sender_id
         if not sender:
             raise ValueError(f'Photon {channel} sender is not configured')
@@ -75,7 +85,7 @@ async def send_reminder(run_id, company, invoice_id, parent='n5', channel='sms',
     if row['open_balance'] <= 0:
         raise ValueError('Invoice is already paid')
     sender = settings.photon_email_sender_id if channel == 'email' else settings.photon_sms_sender_id
-    live = bool(settings.photon_api_key and settings.photon_project_id and sender)
+    live = bool(settings.spectrum_bridge_url and channel != 'email') or bool(settings.photon_api_key and settings.photon_project_id and sender)
     if live and not settings.photon_demo_recipient:
         raise ValueError('Set PHOTON_DEMO_RECIPIENT before sending synthetic dataset reminders')
     actual_channel = channel if live else 'simulated'
@@ -169,9 +179,12 @@ async def inbound(request: Request, tasks: BackgroundTasks):
     payload = await request.json()
     data = payload.get('data', {})
     message_id = data.get('id') or data.get('message', {}).get('id')
-    if not isinstance(message_id, str) or not message_id.startswith('pho_msg_') or '/' in message_id:
+    if isinstance(message_id, str) and message_id.startswith('spectrum:') and settings.spectrum_bridge_url and request.headers.get('x-spectrum-bridge'):
+        message = data  # the local Spectrum bridge already holds the canonical message; there is no v2 API to re-read it from
+    elif not isinstance(message_id, str) or not message_id.startswith('pho_msg_') or '/' in message_id:
         return {'ok': True, 'ignored': True}
-    message = await Photon().request('GET', 'messages/' + message_id)
+    else:
+        message = await Photon().request('GET', 'messages/' + message_id)
     if message.get('sentBy', {}).get('kind') != 'human' or message.get('content', {}).get('type') != 'text':
         return {'ok': True, 'ignored': True}
     space_id = message.get('space', {}).get('id')

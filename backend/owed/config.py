@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     photon_project_id: str = ""
     photon_sms_sender_id: str = ""      # the line's agent user id (pho_usr_…), see scripts/photon_senders.py
     photon_platform: str = "sms"         # "imessage" when the project's line is a shared iMessage number
+    spectrum_bridge_url: str = ""        # Photon Spectrum (stable) projects: http://127.0.0.1:8071 from spectrum-bridge/bridge.ts
     photon_email_sender_id: str = ""
     photon_demo_recipient: str = ""
     photon_webhook_token: str = ""

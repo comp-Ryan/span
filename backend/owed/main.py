@@ -76,7 +76,7 @@ def health():
     with conn() as c:
         c.execute('select 1')
     return {"ok": True, "version": api_version(), "branch": api_branch(), "db": "postgres", "gemini": bool(settings.gemini_api_key),
-            "drafter": "template_fallback", "photon": bool(settings.photon_api_key and settings.photon_project_id),
+            "drafter": "template_fallback", "photon": bool(settings.spectrum_bridge_url) or bool(settings.photon_api_key and settings.photon_project_id),
             "visa": "sandbox" if visa.configured() else "simulated",
             "solana": "devnet" if settings.solana_recipient.strip() else "unconfigured",
             "agentverse": bool(settings.agentverse_api_key and settings.agent_public_endpoint), "jev": False,
