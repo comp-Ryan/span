@@ -202,6 +202,16 @@
   .trend{width:100%;height:auto;display:block}
   .paper{margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;max-width:640px;box-shadow:0 18px 50px rgba(57,58,61,.12)}.paper img{display:block;width:100%;height:auto;background:#fff}
   .integrations{margin:0 auto 56px;max-width:1040px}
+  .int-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .int-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .int-actions .btn{height:42px;padding:0 18px;font-size:14px;border-radius:999px;white-space:nowrap;border:1.5px solid var(--green-dk);color:var(--green-dk);background:transparent;cursor:pointer;font-weight:600;font-family:inherit}
+  .int-actions .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .int-actions .btn[disabled]{opacity:.7;cursor:progress}
+  .sponsors tr.checking td{opacity:.55}
+  .spill.checking{background:#eceef2;color:var(--muted)}
+  .spill.checking::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--green);display:inline-block;margin-right:6px;animation:intblink 1s infinite}
+  @keyframes intblink{50%{opacity:.2}}
+  .int-live{color:var(--green);font-weight:700}
   .sponsor-summary{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 14px}
   .spill{padding:4px 12px;border-radius:13px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
   .spill.pass{background:#e6f3e5;color:var(--green)}.spill.warn{background:#fff3d6;color:#9a6b00}.spill.fail{background:#fde8e8;color:#d93025}.spill.off,.spill.info{background:#eceef2;color:var(--muted)}
@@ -224,7 +234,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 </head>
 <body>
 <div class="wrap">
-  <header><img src="img/logo.png" alt=""><b>span</b><nav><a href="#demo">How it works</a><a href="https://github.com/comp-Ryan/span">GitHub</a><a class="pill" href="demo.html">Watch the demo &#8599;</a></nav></header>
+  <header><img src="img/logo.png" alt=""><b>span</b><nav><a href="#demo">How it works</a><a href="https://github.com/comp-Ryan/span">GitHub</a><a class="pill" id="try-span" href="demo.html" target="_blank" rel="noopener">Try Span live &#8599;</a></nav></header>
   <div class="hero">
     <div class="copy">
       <div class="eyebrow"><i></i>A clearer picture of your cash</div>
@@ -284,7 +294,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     </div></div>
         <div class="panel" data-panel="7"><div class="two-up"><div class="pay">
         <div class="ph"><span class="av" style="background:#2d7ff9">BL</span><div><b>Brightwater Lantern Toyworks &amp; Co.</b><div>Installment 1 of 2 · inv-03282</div></div><b class="amt">$183.11</b></div>
-        <div class="rails"><span class="on">Card · Visa sandbox</span><span>USDC · Solana devnet</span></div>
+        <div class="rails"><span class="on">Card · simulated, labeled</span></div>
         <div class="field">4111 1111 1111 1111<span>12/28 · 123</span></div>
         <div class="paybtn">Pay $183.11</div>
         <div class="receipt">&#10003; $183.11 received · card ending 1111 · forecast refreshed</div>
@@ -309,7 +319,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   </section>
 
   <section class="integrations" id="integrations">
-    <div class="shead"><b>Every integration, called live.</b><span id="int-when">Snapshot from the running backend. In the app it is the Integrations page and re-runs on demand.</span></div>
+    <div class="int-head"><div class="shead"><b>Every integration, called live.</b><span id="int-when">Snapshot from the running backend.</span></div><div class="int-actions"><button class="btn primary" id="int-run" type="button">Run the checks now</button><a class="btn" id="int-try" href="demo.html" target="_blank" rel="noopener">Try Span live &#8599;</a></div></div>
     <div class="sponsor-summary" id="int-summary"></div>
     <table class="sponsors" id="int-table"><thead><tr><th>Integration</th><th>Role</th><th>Status</th><th>What it said</th><th class="num">ms</th></tr></thead><tbody></tbody></table>
   </section>
@@ -321,7 +331,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     <div><b>0</b><span>actions without the owner’s yes</span></div>
   </section>
 
-  <footer>Built solo at LA Hacks AI 2026 by Ryan Lee · Gemini · ElevenLabs · Tiger Data · Fetch.ai uAgents · Photon · Visa · Solana · Sentry · Intuit dataset · <a href="https://github.com/comp-Ryan/span">github.com/comp-Ryan/span</a></footer>
+  <footer>Built solo at LA Hacks AI 2026 by Ryan Lee · Gemini · OpenRouter · ElevenLabs · Tiger Data · Fetch.ai uAgents · Photon · Intuit dataset · <a href="https://github.com/comp-Ryan/span">github.com/comp-Ryan/span</a></footer>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
 <script>
@@ -435,20 +445,48 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 })();
 </script>
 <script>
-// Integrations snapshot: the same checks the app's /sponsors page runs, captured from the backend when the site was published.
+// Integrations: the published snapshot, plus buttons that run the same checks live and open the running app.
 (function () {
   var LABEL = { pass: 'Answering', warn: 'Degraded', fail: 'Not answering', off: 'Fallback', info: 'Build tool' }, ORDER = ['pass', 'warn', 'fail', 'off', 'info'];
-  fetch('sponsors.json').then(function (r) { return r.json(); }).then(function (d) {
-    var tb = document.querySelector('#int-table tbody'), sum = document.getElementById('int-summary'); if (!tb) return;
-    document.getElementById('int-when').textContent = 'Checked ' + new Date(d.generated_at).toLocaleString() + ' on the demo backend. In the app it is the Integrations page and re-runs on demand.';
+  var tb = document.querySelector('#int-table tbody'), sum = document.getElementById('int-summary'), when = document.getElementById('int-when');
+  var runBtn = document.getElementById('int-run'), tryA = document.getElementById('int-try'), navTry = document.getElementById('try-span');
+  if (!tb) return;
+  var snapshot = null, api = (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, ''), reachable = false;
+  var fmt = function (iso) { return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+  function render(d) {
+    tb.innerHTML = ''; sum.innerHTML = '';
     ORDER.forEach(function (st) { if (d.summary[st]) { var sp = document.createElement('span'); sp.className = 'spill ' + st; sp.textContent = d.summary[st] + ' ' + LABEL[st].toLowerCase(); sum.appendChild(sp); } });
-    d.checks.sort(function (a, b) { return ORDER.indexOf(a.status) - ORDER.indexOf(b.status); }).forEach(function (c) {
+    var rows = d.checks.slice().sort(function (x, y) { return ORDER.indexOf(x.status) - ORDER.indexOf(y.status); }).map(function (c) {
       var tr = document.createElement('tr');
       tr.innerHTML = '<td><b></b></td><td class="fine"></td><td><span class="spill ' + c.status + '">' + LABEL[c.status] + '</span></td><td></td><td class="num fine"></td>';
       tr.children[0].firstChild.textContent = c.name; tr.children[1].textContent = c.track; tr.children[3].textContent = c.detail; tr.children[4].textContent = c.ms.toLocaleString();
-      tb.appendChild(tr);
+      tb.appendChild(tr); return tr;
     });
-  }).catch(function () {});
+    if (window.anime) anime({ targets: rows, opacity: [0, 1], translateY: [8, 0], duration: 320, delay: anime.stagger(60), easing: 'easeOutCubic' });
+  }
+  function timeout(ms) { var c = window.AbortController ? new AbortController() : null; if (c) setTimeout(function () { c.abort(); }, ms); return c ? c.signal : undefined; }
+  Promise.all([
+    fetch('sponsors.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+    api ? Promise.resolve({ api: api }) : fetch('config.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).catch(function () { return null; })
+  ]).then(function (res) {
+    snapshot = res[0]; api = ((res[1] && res[1].api) || '').replace(/\/$/, '');
+    if (snapshot) { render(snapshot); when.textContent = 'Snapshot from ' + fmt(snapshot.generated_at) + '. Run them again live with the button.'; }
+    if (!api) return;
+    // the app link goes live only when the running backend answers; otherwise it stays on the recorded demo
+    fetch(api + '/api/health', { cache: 'no-store', signal: timeout(8000) }).then(function (r) { if (!r.ok) throw 0; reachable = true;
+      [tryA, navTry].forEach(function (el) { if (el) el.href = api + '/home'; });
+    }).catch(function () { if (navTry) navTry.innerHTML = 'Watch the demo &#8599;'; if (tryA) tryA.style.display = 'none'; });
+  });
+  if (runBtn) runBtn.addEventListener('click', function () {
+    if (!api) { when.textContent = 'No live backend is linked right now. Showing the snapshot.'; return; }
+    runBtn.disabled = true; runBtn.textContent = 'Checking…';
+    Array.prototype.forEach.call(tb.querySelectorAll('tr'), function (tr) { tr.classList.add('checking'); var sp = tr.querySelector('.spill'); if (sp) { sp.className = 'spill checking'; sp.textContent = 'Checking'; } });
+    fetch(api + '/api/sponsors/checks', { cache: 'no-store', signal: timeout(30000) })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) { render(d); when.textContent = ''; var live = document.createElement('span'); live.className = 'int-live'; live.textContent = '● Live'; when.appendChild(live); when.appendChild(document.createTextNode(' · checked ' + new Date(d.generated_at).toLocaleTimeString() + ' on the running Span backend.')); })
+      .catch(function () { if (snapshot) render(snapshot); when.textContent = 'The live backend did not answer (it runs on the builder’s laptop). Showing the snapshot from ' + (snapshot ? fmt(snapshot.generated_at) : 'earlier') + '.'; })
+      .then(function () { runBtn.disabled = false; runBtn.textContent = 'Run the checks again'; });
+  });
 })();
 </script>
 <script>
@@ -465,7 +503,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     { id: 'invoices', label: 'Invoices', sub: '204 scored', a: 150 },
     { id: 'forecast', label: 'Forecast', sub: 'cash on payday', a: 100 },
     { id: 'customers', label: 'Customers', sub: 'texts · replies', a: 35 },
-    { id: 'pay', label: 'Pay link', sub: 'Visa · Solana', a: -10 },
+    { id: 'pay', label: 'Pay link', sub: 'simulated card', a: -10 },
     { id: 'report', label: 'Report', sub: 'one page', a: -45 }
   ];
   // the run, as packets: from → to, start (ms), length (ms), color, and what lights up when it lands
@@ -495,7 +533,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     { at: 'you', s: 3850, d: 1500, kind: 'bad', title: 'Span', lines: ['No. $385 short.', 'Here is what would close it.'] },
     { at: 'you', s: 4150, d: 900, kind: 'you', title: 'You', lines: ['Yes, text them.'], dy: 70 },
     { at: 'customers', s: 5250, d: 2000, kind: 'cust', title: 'Customers', lines: ['Hearth: can we split this into two?', 'Marchetti: half now, half in two weeks', 'Ironbridge: two payments works'] },
-    { at: 'pay', s: 7050, d: 1400, kind: 'good', title: 'Pay link', lines: ['$183.11 received · Visa sandbox', '4 installments → $1,691'] },
+    { at: 'pay', s: 7050, d: 1400, kind: 'good', title: 'Pay link', lines: ['$183.11 received · simulated card', '4 installments → $1,691'] },
     { at: 'forecast', s: 7700, d: 1300, kind: 'good', title: 'Forecast', lines: ['cushion −$385 → +$43', 'payroll covered'] },
     { at: 'report', s: 8400, d: 1300, kind: 'span', title: 'Report', lines: ['one page: numbers used,', 'what it did, what is open'] }
   ];
