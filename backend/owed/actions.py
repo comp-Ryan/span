@@ -134,7 +134,8 @@ def refresh_forecasts(company):
             (select 1 from events e where e.run_id=r.run_id and e.event='node.create' and e.data->>'type'='forecast')''',(company,)).fetchall()
     for run in runs:
         with conn() as c:
-            nodes=c.execute("select data->>'node_id' node_id from events where run_id=%s and event='node.create' and data->>'type'='forecast'",(run['run_id'],)).fetchall()
+            # in creation order, so refreshed rows land in forecast_history in the same order as the originals
+            nodes=c.execute("select data->>'node_id' node_id from events where run_id=%s and event='node.create' and data->>'type'='forecast' order by id",(run['run_id'],)).fetchall()
         for node in nodes:
             with conn() as c:
                 previous=c.execute("""select data->'data' data from events where run_id=%s
