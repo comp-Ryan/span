@@ -282,27 +282,136 @@ function Conversations({ actions }: { actions: GraphNode[]; decisions?: Decision
   </div>
 }
 
-/* ---------- a thread = one run ---------- */
-function ToolNode({ n }: { n: GraphNode }) {
-  const icon = n.type === 'scoring' ? I.people : n.type === 'forecast' ? I.trend : n.type === 'levers' ? I.star : I.book
-  const d = n.data || {}
-  const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
-  return <div className={`node ${n.status}`}><h3><span className={`ic ${n.type === 'scoring' ? 'green' : n.type === 'forecast' ? 'dark' : 'blue'}`}>{icon}</span>{n.title}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
-    {d.question && <div className="fine">“{d.question}”</div>}
-    {facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{typeof v === 'number' && Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}
-    {d.spoken && <div style={{ fontSize: 14, lineHeight: '20px' }}>{plain(d.spoken)}</div>}
+/* ---------- planner runs: each tool gets the same visual the payroll run uses ---------- */
+function QuestionNode({ n }: { n: GraphNode }) {
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.chat}</span>{n.title}</h3>
+    <div style={{ fontSize: 14, lineHeight: '20px' }}>“{n.data.question}”<div className="fine" style={{ marginTop: 4 }}>as of {fmtDate(n.data.as_of)} · looking through {fmtDate(n.data.target_date)}</div></div></div>
+}
+function CustomerNode({ n }: { n: GraphNode }) {
+  const d = n.data, s = d.summary || {}, who = d.customer?.display_name || n.rows[0]?.customer || 'Customer'
+  const col = { green: 'var(--green)', amber: 'var(--amber)', red: 'var(--red)' }
+  const hist: any[] = (d.history || []).slice(-24)
+  const working = n.status === 'running' && !n.rows.length && !hist.length
+  return <div className={`node ${n.status}`}>
+    <h3><span className="ic green">{I.person}</span>{who}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>reading history…</span>}</h3>
+    {working ? <div className="thinking"><i/><i/><i/> scoring</div> : <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="fine">Open invoices · {n.rows.length}{s.open_total != null ? ` · ${money(s.open_total)}` : ''}</div>
+        <div className="dots">{n.rows.map(r => <i key={r.invoice_id} style={{ background: col[r.band] || col.amber }} title={`${r.invoice_id} · $${Math.round(r.amount)} · ${r.days_past_due}d · ${Math.round(r.p_paid_by_target * 100)}% by target`} />)}</div>
+        <div className="legend"><span><i style={{ background: 'var(--green)' }} />will pay</span><span><i style={{ background: 'var(--amber)' }} />maybe</span><span><i style={{ background: 'var(--red)' }} />unlikely</span></div>
+        {n.rows.slice(0, 4).map(r => <div className="kv" key={r.invoice_id}><span>{r.invoice_id}<span className="fine"> · {r.days_past_due > 0 ? `${r.days_past_due}d late` : 'not due yet'}</span></span><b>{money(r.amount)} · {Math.round(r.p_paid_by_target * 100)}%</b></div>)}
+      </div>
+      {hist.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="fine">Payment history · last {hist.length}</div>
+        <div className="dots">{hist.map((h, i) => <i key={i} style={{ background: h.status === 'written_off' ? 'var(--red)' : h.status !== 'paid' ? 'var(--line)' : (h.days_late ?? 0) > 7 ? 'var(--amber)' : 'var(--green)', borderRadius: 2 }} title={`${h.invoice_id} · ${h.status}${h.days_late != null ? ` · ${h.days_late}d` : ''}`} />)}</div>
+        <div className="kv"><span style={{ color: 'var(--muted)' }}>{s.n_paid ?? hist.filter(h => h.status === 'paid').length} paid{s.late_rate != null ? ` · ${Math.round(s.late_rate * 100)}% late` : ''}</span><b>{s.avg_days_late != null ? `avg ${s.avg_days_late}d late` : ''}{s.n_write_offs ? ` · ${s.n_write_offs} written off` : ''}</b></div>
+      </div>}
+    </>}
   </div>
 }
-function PlannerThread({ run }: { run: RunState }) {
+function BillsNode({ n }: { n: GraphNode }) {
+  const bills: any[] = n.data.bills || []
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.cal}</span>Bills due by {fmtDate(n.data.target_date)}</h3>
+    {!bills.length ? <div className="fine">{n.status === 'running' ? 'reading…' : 'Nothing due in the window.'}</div>
+      : <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{bills.slice(0, 6).map(b => <div className="kv" key={b.bill_id}><span>{b.vendor_name}<span className="fine"> · {fmtDate(b.due_date)}</span></span><b>{money(Number(b.open_amount))}</b></div>)}{bills.length > 6 && <div className="fine">+ {bills.length - 6} more</div>}</div>}
+  </div>
+}
+function CustomersNode({ n }: { n: GraphNode }) {
+  const cs: any[] = n.data.customers || []
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.people}</span>{cs.length ? `${cs.length} customers` : 'Customers'}</h3>
+    {!cs.length ? <div className="fine">{n.status === 'running' ? 'reading…' : 'None on file.'}</div>
+      : <div className="chips">{cs.slice(0, 18).map((c, i) => <span className="chip" key={c.id}><span className="av" style={{ background: AV_COLORS[i % 5] }}>{initials(c.display_name)}</span>{c.display_name}</span>)}{cs.length > 18 && <span className="chip plain">+ {cs.length - 18} more</span>}</div>}
+  </div>
+}
+function ApprovalNode({ n, decision, onDecide }: { n: GraphNode; decision?: Decision; onDecide: (d: Decision, opt: string) => void }) {
+  const d = n.data
+  const what = d.tool === 'defer_bill' ? `Defer bill ${d.bill_id}` : d.tool === 'send_message' ? `Send a reminder for ${d.invoice_id}` : n.title
+  return <div className={`node ${n.status}`}><h3><span className="ic amber">{I.star}</span>{what}</h3>
+    {d.error ? <div className="fine" style={{ color: 'var(--red)' }}>{d.error}</div>
+      : decision ? (decision.resolved ? <button className="btn done" disabled>{I.check} {decision.resolved === 'no' ? 'Not now' : 'Approved'}</button>
+        : <div style={{ display: 'flex', gap: 8 }}>{decision.options.map(o => <button key={o.id} className={`btn ${o.id === 'yes' ? 'primary' : ''}`} onClick={() => onDecide(decision, o.id)}>{o.label}</button>)}</div>)
+      : <div className="fine">{d.status === 'approval_required' ? 'Waiting for your approval' : n.status === 'running' ? 'working…' : 'Done'}</div>}
+  </div>
+}
+function DraftNode({ n }: { n: GraphNode }) {
+  const d = n.data
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.chat}</span>Draft · {d.invoice_id || ''}{d.tone && <span className="chip plain" style={{ marginLeft: 8 }}>{d.tone}</span>}</h3>
+    {d.body ? <div className="bub out" style={{ maxWidth: 420 }}><div>{String(d.body).replace('{pay_link}', 'pay.span.app/8f3a')}</div><span className="meta">not sent</span></div> : <div className="fine">drafting…</div>}
+  </div>
+}
+function NoteNode({ n }: { n: GraphNode }) {
+  const d = n.data || {}
+  const facts = Object.entries(d).filter(([k, v]) => typeof v === 'number' && !/id$/.test(k)).slice(0, 4)
+  return <div className={`node ${n.status}`}><h3><span className="ic blue">{I.book}</span>{n.title}{n.status === 'running' && <span className="fine" style={{ marginLeft: 'auto' }}>working…</span>}</h3>
+    {d.error && <div className="fine" style={{ color: 'var(--red)' }}>{d.error}</div>}
+    {d.text && <div style={{ fontSize: 14, lineHeight: '20px' }}>{plain(d.text)}</div>}
+    {!d.text && facts.length > 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{facts.map(([k, v]) => <div className="kv" key={k}><span style={{ color: 'var(--muted)' }}>{k.replace(/_/g, ' ')}</span><b>{Math.abs(v as number) >= 100 ? money(v as number) : String(v)}</b></div>)}</div>}
+  </div>
+}
+/** Verdict strip: a yes/no word and the headline number lifted from the spoken answer. */
+function AnswerStrip({ n }: { n: GraphNode }) {
+  const d = n.data || {}
+  const v: string | undefined = d.verdict ?? (d.answer === 'yes' || d.answer === 'no' ? d.answer : undefined)
+  const num: number | undefined = d.number ?? (d.gap > 0 ? d.gap : undefined)
+  if (!v && num == null) return <div className={`node ${n.status}`}><h3><span className="ic green">{I.check}</span>Answer</h3><div style={{ fontSize: 15, lineHeight: '22px', fontWeight: 600 }}>{plain(d.spoken || n.title)}</div></div>
+  const cls = v === 'no' ? 'bad' : v === 'yes' ? 'ok' : ''
+  const word = v === 'yes' ? 'Yes.' : v === 'no' ? 'No.' : v === 'barely' ? 'Barely.' : money(num)
+  return <div className={`node verdict ${cls}`}>
+    <div className="big">{word}</div>
+    {v && num != null && <div className="sub">{money(num)}</div>}
+    <div className="fine" style={{ flex: 1 }}>{plain(d.spoken || n.title)}</div>
+  </div>
+}
+function toolOf(n: GraphNode): string {
+  if (n.data?.tool) return n.data.tool
+  const t = (n.title || '').toLowerCase().replace(/ /g, '_')  // runs recorded before data.tool existed
+  return ['forecast_cash', 'rank_chase', 'score_customer', 'predict_payment', 'query_books', 'draft_reminder', 'send_message', 'defer_bill', 'show_node', 'resolve_decision'].find(x => t.startsWith(x)) || ''
+}
+function PlannerStep({ n, run, onDecide }: { n: GraphNode; run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void }) {
+  const tool = toolOf(n), d = n.data || {}
+  const decision = Object.values(run.decisions).find(x => x.node_id === n.node_id || (d.decision_id && x.decision_id === d.decision_id))
+  if (n.node_id === 'context' && d.question) return <QuestionNode n={n} />
+  if (n.type === 'answer') return <AnswerStrip n={n} />
+  if (tool === 'forecast_cash') return <CashNode n={n} ctx={n} />
+  if (tool === 'score_customer' || tool === 'predict_payment') return <CustomerNode n={n} />
+  if (tool === 'query_books') {
+    if (d.rows || d.invoices) return <ScoredNode n={n} />
+    if (d.bills) return <BillsNode n={n} />
+    if (d.customers) return <CustomersNode n={n} />
+    if (d.bank_balance != null || n.status === 'running') return <BooksNode n={n} />
+  }
+  if (tool === 'rank_chase') {
+    const levers: Lever[] = d.levers || []
+    if (!levers.length) return <div className={`node ${n.status}`}><h3><span className="ic green">{I.star}</span>{n.title}</h3><div className="fine">{n.status === 'running' ? 'working out what would close the gap…' : d.error || 'No supported levers found.'}</div></div>
+    return <div className="levers" style={{ width: '100%' }}>{levers.map(l => <div key={l.id} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={(d.recommended || ['chase'])[0] === l.id} decision={decision} chosen={decision?.resolved} onChoose={(opt, selected) => decision && onDecide(decision, opt, selected)} /></div>)}</div>
+  }
+  if (tool === 'send_message' || tool === 'defer_bill' || d.status === 'approval_required') return <ApprovalNode n={n} decision={decision} onDecide={onDecide} />
+  if (tool === 'draft_reminder') return <DraftNode n={n} />
+  return <NoteNode n={n} />
+}
+function PlannerThread({ run, onDecide, isFollowUp }: { run: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; isFollowUp?: boolean }) {
   const nodes = run.order.map(id => run.nodes[id])
   const ans = nodes.find(n => n.type === 'answer')
-  const tools = nodes.filter(n => n.type !== 'answer')
+  const steps = nodes.filter(n => n.type !== 'action' || toolOf(n))
+  const actions = nodes.filter(n => n.type === 'action' && !toolOf(n))
+  const fc = nodes.find(n => toolOf(n) === 'forecast_cash' && n.status === 'done')
+  const sc = nodes.find(n => n.rows.length > 0)
+  const payments = actions.filter(a => a.data.kind === 'payment'); const received = payments.reduce((a, p) => a + (p.data.amount || 0), 0)
   return <section className="thread">
+    {isFollowUp && <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span>Follow-up · branches from this run</div>}
+    {isFollowUp && <h1 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 14 }}>{run.question}</h1>}
     <div className="workspace">
-      <aside className="live"><div className="card status pending" style={{ borderStyle: ans ? 'solid' : 'dashed' }}><div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Answer</div><div style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{ans ? plain(ans.title) : 'Working it out…'}</div>{ans?.data.spoken && plain(ans.data.spoken) !== plain(ans.title) && <div className="fine" style={{ fontSize: 13, lineHeight: '18px' }}>{plain(ans.data.spoken)}</div>}</div></aside>
+      <aside className="live">
+        <div className="card status pending" style={{ borderStyle: ans ? 'solid' : 'dashed' }}><div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Answer</div><div style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{ans ? plain(ans.data.spoken || ans.title) : 'Working it out…'}</div></div>
+        {fc && (LIVE
+          ? <div className="chart-wrap card"><DailyCashChart company={run.company_id || COMPANY} target={fc.data.target_date} revision={`${fc.data.cash_at_target}:${fc.data.owed_total}`} neverPays={fc.data.excluded_customer_id} /></div>
+          : <CashChart ctx={fc} sc={sc} fc={fc} received={received} W={420} />)}
+        {sc && sc.rows.length > 1 && <RiskPanel sc={sc} fc={fc} />}
+      </aside>
       <div className="steps">
-        {tools.map((n, i) => <div key={n.node_id}>{i > 0 && <div className="vconn" />}<div className="vstep"><ToolNode n={n} /></div></div>)}
-        {!ans && <div className="thinking" style={{ marginTop: 14 }}><i/><i/><i/> {BRAND} is thinking</div>}
+        {steps.map((n, i) => <div key={n.node_id}>{i > 0 && <div className="vconn" />}<div className="vstep"><PlannerStep n={n} run={run} onDecide={onDecide} /></div></div>)}
+        {!ans && run.status !== 'closed' && <div className="thinking" style={{ marginTop: 14 }}><i/><i/><i/> {BRAND} is thinking</div>}
+        {actions.length > 0 && <><div className="vconn" style={{ marginTop: 4 }} /><Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} /></>}
       </div>
     </div>
   </section>
@@ -502,7 +611,7 @@ export default function App() {
           <h1 className="q">{main.question}</h1>
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
         {runs.map((r, i) => (r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => id === 'n2' || id === 'n3' || id === 'f3')))
-          ? <PlannerThread key={r.run_id} run={r} />
+          ? <PlannerThread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />
           : <Thread key={r.run_id} run={r} onDecide={onDecide} isFollowUp={i > 0} />)}
       </main>
     </div>

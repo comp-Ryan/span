@@ -251,7 +251,7 @@ h1.q{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.01em;margi
 .live{display:flex;flex-direction:column;gap:14px;position:sticky;top:80px}
 .live .chart{margin-top:0}
 .live .card{margin-top:0}
-.status{display:flex;flex-direction:column;gap:8px;border-width:2px;animation:pop .4s ease-out both}
+.card.status{display:flex;flex-direction:column;gap:8px;border-width:2px;animation:pop .4s ease-out both;white-space:normal;padding-left:14px;min-width:0;overflow-wrap:anywhere}
 .status.bad{border-color:var(--red);background:#FFF1F0}.status.tight{border-color:var(--amber);background:var(--amber-bg)}.status.ok{border-color:var(--green);background:var(--green-bg)}.status.pending{border-style:dashed}
 .status .big{font-size:26px;line-height:30px;font-weight:700;letter-spacing:-.01em}
 .status .sub{font-size:14px;font-weight:600;color:var(--amber-dk)}.status.ok .sub{color:var(--green)}.status.bad .sub{color:var(--red)}

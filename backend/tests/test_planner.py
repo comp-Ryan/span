@@ -40,3 +40,35 @@ def test_intent_routes():
     assert route_intent('Can I afford to hire?') == 'afford_check'
     assert route_intent("How is this customer doing?") == 'client_status'
     assert route_intent('Explain my books') == 'free_question'
+
+
+def test_verdict_of():
+    from owed.planner import verdict_of
+    assert verdict_of('Yes, you make payroll with about $4,200 to spare.') == {'verdict': 'yes', 'number': 4200.0}
+    assert verdict_of('No. You are $1,156 short on the twentieth.') == {'verdict': 'no', 'number': 1156.0}
+    assert verdict_of('You cannot afford it; projected cash is $4,355.') == {'verdict': 'no', 'number': 4355.0}
+    assert verdict_of('You can afford it, $2k to spare.') == {'verdict': 'yes', 'number': 2000.0}
+    assert verdict_of('Barely. $300 to spare.')['verdict'] == 'barely'
+    assert verdict_of('Evergreen owes $12.5k across three invoices.') == {'number': 12500.0}
+    assert verdict_of('Chase Gallagher first.') == {}
+
+
+def test_tool_nodes_carry_tool_and_payroll_shapes():
+    rid = create('company-020', 'How is my cash?', 'web', 'free_question')
+    try:
+        ctx = ToolContext(rid, 'company-020', date(2026, 10, 9))
+        fc = asyncio.run(ctx.execute('forecast_cash', {}))
+        assert {'bank_balance', 'payroll_due_by_target', 'bills_due_by_target', 'cash_at_target', 'target_date'} <= set(fc)
+        books = asyncio.run(ctx.execute('query_books', {'entity': 'invoices'}))
+        assert books['rows'] and {'invoice_id', 'customer', 'amount', 'band', 'p_paid_by_target'} <= set(books['rows'][0])
+        cust = asyncio.run(ctx.execute('score_customer', {'customer_id': books['rows'][0]['customer_id']}))
+        assert 'summary' in cust and 'history' in cust and cust['rows']
+        events = replay_run(rid)['events']
+        creates = [e['data'] for e in events if e['event'] == 'node.create' and e['data']['node_id'].startswith('tool-')]
+        assert [c['data']['tool'] for c in creates] == ['forecast_cash', 'query_books', 'score_customer']
+        assert [c['type'] for c in creates] == ['forecast', 'context', 'scoring']
+        assert creates[1]['title'] == 'Reading invoices'
+    finally:
+        with conn() as c:
+            c.execute('delete from events where run_id=%s', (rid,))
+            c.execute('delete from runs where run_id=%s', (rid,))

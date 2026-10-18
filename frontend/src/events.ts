@@ -28,6 +28,7 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
       if (d.status) { n.status = d.status; if (d.status === 'done') n.doneAt = now }
       if (d.progress) n.progress = d.progress
       if (d.row) n.rows.push(d.row)
+      if (Array.isArray(d.data?.rows) && !n.rows.length) n.rows = d.data.rows.slice()  // planner tools return rows in one go
       if (d.data?.round) n.rounds.push(d.data.round)
       let turns = run.turns
       if (d.status === 'done') {
@@ -55,8 +56,8 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
 function summarize(n: GraphNode): string {
   const x = n.data
   switch (n.type) {
-    case 'context': return `bank $${k(x.bank_balance)}, payroll $${k(x.payroll_due_by_target ?? x.payroll_amount)}, bills $${k(x.bills_due_by_target)}`
-    case 'scoring': return `${n.rows.length || n.progress?.total || ''} scored`
+    case 'context': return x.bank_balance != null ? `bank $${k(x.bank_balance)}, payroll $${k(x.payroll_due_by_target ?? x.payroll_amount)}, bills $${k(x.bills_due_by_target)}` : n.title
+    case 'scoring': return x.customer?.display_name ? `${x.customer.display_name} · ${n.rows.length} open` : `${n.rows.length || n.progress?.total || ''} scored`
     case 'forecast': return `cushion $${Math.round(x.cash_at_target ?? -(x.gap ?? 0)).toLocaleString()}`
     case 'levers': return (x.levers || []).map((l: any) => l.label).join(', ')
     default: return n.title
