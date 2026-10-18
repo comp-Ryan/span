@@ -49,7 +49,9 @@ async def lifespan(app):
 
 
 app = FastAPI(title="Span", version="0.1.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# allow_private_network: the public site (youare.cooking) may call a Span backend on the visitor's own machine.
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"], allow_private_network=True)
+
 app.mount("/hub/static", StaticFiles(directory=HUB_STATIC), name="hub-static")
 app.include_router(hub_router)
 for router in (product_router, cash_router, history_router, events_router, runs_router, payroll_router,

@@ -34,6 +34,30 @@ def test_checks_page_is_resilient_and_never_leaks_secrets(monkeypatch):
 
 
 def test_every_real_check_is_a_coroutine_with_a_track():
-    assert len(sponsors.CHECKS) >= 12
+    assert len(sponsors.CHECKS) == 8 and {'Visa', 'Solana', 'Sentry', 'Vultr'}.isdisjoint(n for n, _, _ in sponsors.CHECKS)
     for name, track, fn in sponsors.CHECKS:
         assert name and track and asyncio.iscoroutinefunction(fn)
+
+
+def test_the_public_site_may_call_a_backend_on_the_visitors_machine():
+    """youare.cooking runs the checks against the laptop's backend; Chrome's private-network preflight must be allowed."""
+    from owed.main import app
+    r = TestClient(app).options('/api/sponsors/checks', headers={
+        'Origin': 'https://youare.cooking', 'Access-Control-Request-Method': 'GET', 'Access-Control-Request-Private-Network': 'true'})
+    assert r.status_code == 200
+    assert r.headers.get('access-control-allow-private-network') == 'true'
+    assert r.headers.get('access-control-allow-origin') in ('*', 'https://youare.cooking')
+
+
+def test_ordinary_requests_do_not_get_the_private_network_header():
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+    from owed import db
+    from owed.main import app
+    import pytest
+    mp = pytest.MonkeyPatch(); mp.setattr(db, 'conn', lambda: nullcontext(SimpleNamespace(execute=lambda *a: None)))
+    try:
+        r = TestClient(app).get('/api/health')
+        assert r.status_code == 200 and 'access-control-allow-private-network' not in r.headers
+    finally:
+        mp.undo()

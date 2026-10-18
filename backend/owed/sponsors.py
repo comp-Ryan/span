@@ -167,6 +167,8 @@ async def check_build_tools():
     return 'info', 'design in Paper (QuickBooks-style canvas); Devin wrote data chunks; no runtime call', True
 
 
+# Only what the running product actually calls. (Visa sandbox, Solana, Sentry, the phone line, Browser Use and Vultr are
+# wired in code but unconfigured, so the product never calls them; they are not listed.)
 CHECKS = [
     ('Gemini', 'Google: planner + Live voice', check_gemini),
     ('OpenRouter backup', 'planner failover, free models last', check_openrouter),
@@ -174,15 +176,8 @@ CHECKS = [
     ('Tiger Data', 'TimescaleDB forecast history', check_tigerdata),
     ('Intuit dataset', 'books, customers, invoices', check_intuit),
     ('Model Learning', 'days-late scoring model', check_model),
-    ('Fetch.ai uAgents', 'customer agents, negotiation, Agentverse', check_uagents),
-    ('Photon', 'reminders and replies', check_photon),
-    ('Visa', 'card pay links', check_visa),
-    ('Solana', 'USDC devnet pay links', check_solana),
-    ('Sentry', 'tracing and logs', check_sentry),
-    ('Phone line', 'Twilio media stream fallback', check_phone),
-    ('Browser Use', 'customer portal automation', check_browser_use),
-    ('Vultr', 'hosting', check_hosting),
-    ('Paper + Devin', 'build-time tools', check_build_tools),
+    ('Fetch.ai uAgents', 'customer agents and negotiation', check_uagents),
+    ('Photon', 'reminders as real iMessages', check_photon),
 ]
 
 
