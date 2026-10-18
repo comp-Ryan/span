@@ -19,6 +19,9 @@
   .cta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:44px}
   .btn{display:inline-flex;align-items:center;height:42px;padding:0 18px;border-radius:21px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600}
   .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .demo{margin-bottom:44px}
+  .demo video{display:block;width:100%;border-radius:14px;border:1px solid var(--line);background:#000}
+  .demo .fine{font-size:13px;color:var(--muted);margin:10px 2px 0}
   .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:44px}
   .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
   .step b{display:block;margin-bottom:6px}
@@ -39,9 +42,14 @@
   <h1>Call Span. Ask if you’ll make payroll.<br>Watch the answer get made.</h1>
   <p class="lead">A phone number for small business owners. Ask “am I making payroll in two weeks?” and Span reads the books, scores every open invoice by that customer’s payment history, forecasts cash on payday, and asks before it acts. Say yes and it texts the right customers, negotiates installments, takes the payment through a pay link, and the gap on screen ticks down.</p>
   <p class="cta">
-    <a class="btn primary" href="https://github.com/comp-Ryan/span">Source on GitHub</a>
+    <a class="btn primary" href="#demo">Watch the demo</a>
+    <a class="btn" href="https://github.com/comp-Ryan/span">Source on GitHub</a>
     <a class="btn" href="https://github.com/comp-Ryan/span/blob/main/docs/demo-runbook.md">How the demo runs</a>
   </p>
+  <section id="demo" class="demo">
+    <video controls playsinline preload="metadata" poster="img/03-verdict-approval.png" src="demo.webm"></video>
+    <p class="fine">Recorded live against the real backend: the payroll question, the clarifying question, the approval, three reminders with replies and negotiation, four installments paid, the follow-up, and the report. Nothing scripted.</p>
+  </section>
   <div class="steps">
     <div class="step"><b>1. Ask</b><span>By browser call, typed, or on the phone line. The planner picks tools: read books, score invoices, forecast cash.</span></div>
     <div class="step"><b>2. See the verdict</b><span>“No. $385 short; $2,753 short if the slow payers slip.” Every number is from the books, dated.</span></div>
