@@ -13,17 +13,20 @@ def test_photon_wire_format_and_idempotency(monkeypatch):
     def handle(request):
         requests.append(request)
         assert request.headers['authorization'] == 'Bearer test-key'
+        if request.method == 'GET':  # no conversation with this handle yet
+            return httpx.Response(200,json={'items':[]})
         if request.url.path.endswith('/users'):
             return httpx.Response(200,json={'id':'recipient'})
         if request.url.path.endswith('/spaces'):
             assert json.loads(request.content)['participantIds'] == ['sender','recipient']
+            assert request.headers['idempotency-key']=='rem-test:space'
             return httpx.Response(200,json={'id':'space'})
         assert request.headers['idempotency-key']=='rem-test'
         assert json.loads(request.content)['content']=={'type':'text','format':'plain','text':'Please pay'}
         return httpx.Response(202,json={'id':'message','status':'dispatched'})
     result=asyncio.run(Photon(httpx.MockTransport(handle)).send('+15555550123','Please pay','sms','rem-test'))
     assert result['provider_message_id']=='message'
-    assert len(requests)==3
+    assert len(requests)==4
 
 
 def test_simulated_yes_actions_and_installment_payment(monkeypatch):

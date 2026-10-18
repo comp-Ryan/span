@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 import httpx
+from urllib.parse import quote
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from google import genai
 from google.genai import types
@@ -41,8 +42,12 @@ class Photon:
         if not sender:
             raise ValueError(f'Photon {channel} sender is not configured')
         platform = 'email' if channel == 'email' else (settings.photon_platform or 'sms')  # a shared line may be iMessage
-        user = await self.request('POST', 'users', {'platform': platform, 'handle': recipient})
-        space = await self.request('POST', 'spaces', {'platform': platform, 'participantIds': [sender, user['id']]})
+        # A shared line may only answer a peer who texted it first, inside that conversation: reuse the Space when one exists.
+        found = await self.request('GET', f'spaces?platform={platform}&participantHandle={quote(recipient, safe="")}&pageSize=1')
+        space = (found.get('items') or [None])[0] if isinstance(found, dict) else None
+        if not space:
+            user = await self.request('POST', 'users', {'platform': platform, 'handle': recipient})
+            space = await self.request('POST', 'spaces', {'platform': platform, 'participantIds': [sender, user['id']]}, key + ':space')
         payload = {'senderId': sender, 'spaceId': space['id'], 'content': {'type': 'text', 'format': 'plain', 'text': body}}
         if channel == 'email':
             payload['email'] = {'subject': 'Payment reminder from Span'}
