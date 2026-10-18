@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Span</title>
+<meta name="description" content="Call Span. Ask if you’ll make payroll. Watch the answer get made.">
+<link rel="icon" href="img/logo.png">
+<style>
+  :root{--green:#2ca01c;--ink:#393a3d;--muted:#6b6c72;--line:#e3e5e8;--bg:#f4f5f8;--card:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 20px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+  header img{width:36px;height:36px}
+  header b{font-size:20px;letter-spacing:-.01em}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:0 0 14px;letter-spacing:-.02em}
+  .lead{font-size:19px;color:var(--muted);max-width:720px;margin:0 0 26px}
+  .cta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:44px}
+  .btn{display:inline-flex;align-items:center;height:42px;padding:0 18px;border-radius:21px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600}
+  .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:44px}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .step b{display:block;margin-bottom:6px}
+  .step span{color:var(--muted);font-size:14px}
+  .shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:40px}
+  figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  figure img{display:block;width:100%;height:auto}
+  figcaption{padding:10px 14px;font-size:13px;color:var(--muted)}
+  .honest{background:#fff8e6;border:1px solid #f1dfa4;border-radius:12px;padding:14px 16px;font-size:14px;color:#6a5a1e;margin-bottom:40px}
+  footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:18px}
+  footer a{color:inherit}
+  @media (prefers-color-scheme:dark){:root{--ink:#e8e9ec;--muted:#a6a8b0;--line:#2f3136;--bg:#141518;--card:#1d1f23}.honest{background:#2a2612;border-color:#4a4120;color:#e5d7a3}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img src="img/logo.png" alt=""><b>span</b></header>
+  <h1>Call Span. Ask if you’ll make payroll.<br>Watch the answer get made.</h1>
+  <p class="lead">A phone number for small business owners. Ask “am I making payroll in two weeks?” and Span reads the books, scores every open invoice by that customer’s payment history, forecasts cash on payday, and asks before it acts. Say yes and it texts the right customers, negotiates installments, takes the payment through a pay link, and the gap on screen ticks down.</p>
+  <p class="cta">
+    <a class="btn primary" href="https://github.com/comp-Ryan/span">Source on GitHub</a>
+    <a class="btn" href="https://github.com/comp-Ryan/span/blob/main/docs/demo-runbook.md">How the demo runs</a>
+  </p>
+  <div class="steps">
+    <div class="step"><b>1. Ask</b><span>By browser call, typed, or on the phone line. The planner picks tools: read books, score invoices, forecast cash.</span></div>
+    <div class="step"><b>2. See the verdict</b><span>“No. $385 short; $2,753 short if the slow payers slip.” Every number is from the books, dated.</span></div>
+    <div class="step"><b>3. Approve</b><span>Span never acts alone. “Yes, text them” sends reminders; the customer agents reply and negotiate under your rules.</span></div>
+    <div class="step"><b>4. Get paid</b><span>Pay links on Visa sandbox or Solana devnet. The forecast refreshes and the cushion turns green.</span></div>
+  </div>
+  <div class="shots">
+    <figure><img src="img/03-verdict-approval.png" alt="The verdict and the approval card"><figcaption>The verdict, and what would close the gap</figcaption></figure>
+    <figure><img src="img/04-messages-negotiation.png" alt="Reminders, replies and negotiation"><figcaption>Reminders, replies, and the agent-to-agent negotiation</figcaption></figure>
+    <figure><img src="img/07-outcome.png" alt="Outcome card turning green"><figcaption>After the installments: payroll covered</figcaption></figure>
+    <figure><img src="img/11-report.png" alt="One-page report"><figcaption>The one-page report, rebuilt from the same event stream</figcaption></figure>
+  </div>
+  <div class="honest">Honesty labels: customer agents are simulated from each customer’s real payment history in the Intuit dataset; card payments use a simulated or Visa sandbox rail; Solana runs on devnet; voice runs in the browser unless the phone line is configured. Nothing is sent or charged without the owner’s approval.</div>
+  <footer>Built solo at LA Hacks AI 2026 by Ryan Lee. Gemini · ElevenLabs · Tiger Data · Fetch.ai uAgents · Photon · Visa · Solana · Sentry · Intuit dataset. <a href="https://github.com/comp-Ryan/span">github.com/comp-Ryan/span</a></footer>
+</div>
+</body>
+</html>
