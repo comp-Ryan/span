@@ -67,7 +67,33 @@
   .cta{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0}
   .btn{display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:22px;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600}
   .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
-  .demo{margin-bottom:56px;max-width:920px;margin-left:auto;margin-right:auto}
+  .flow{margin:0 auto 64px;max-width:920px}
+  .wf{position:relative;display:flex;flex-direction:column;gap:34px;padding:8px 0}
+  .wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+  .wires path{fill:none;stroke:#a9aeb8;stroke-width:1.6}
+  .wires .arrow{fill:#a9aeb8}
+  .wrow{display:grid;gap:18px;position:relative}
+  .wrow.one{grid-template-columns:minmax(0,560px);justify-content:center}
+  .wrow.two{grid-template-columns:repeat(2,minmax(0,300px));justify-content:center}
+  .wrow.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .lane{display:flex;flex-direction:column;gap:14px}
+  .node{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600;line-height:1.3;box-shadow:0 2px 6px rgba(57,58,61,.06)}
+  .node .lbl{display:block;font-size:10px;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .node .lbl i{font-style:normal}
+  .node small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:4px}
+  .node.q{border-radius:20px;font-weight:500}
+  .node.verdict{border-left:4px solid #d93025}
+  .node.ask{border-color:var(--green);box-shadow:0 0 0 3px rgba(44,160,28,.12)}
+  .node .yes{display:inline-block;background:var(--green);color:#fff;border-radius:12px;padding:2px 9px;font-size:11px;margin-right:6px}
+  .node.mini{padding:8px 12px;font-size:13px}
+  .node.ok{border-color:#bfe0bb;background:#f0f9ef}
+  .node.paid{border-color:var(--green);background:#f0f9ef}
+  .node.done .lbl i{font-size:0}
+  .node.done .lbl i::before{content:"done ✓";color:var(--green);font-size:10px;letter-spacing:.06em}
+  .node.busy .lbl i::after{content:"";display:inline-block;width:6px;height:6px;border-radius:3px;background:var(--green);margin-left:5px;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.2}}
+  @media (max-width:700px){.wrow.three{grid-template-columns:1fr}.wrow.two{grid-template-columns:1fr}.wires{display:none}}
+  @media (prefers-color-scheme:dark){.node.ok,.node.paid{background:#1f3a1c;border-color:#2f5a2a}.wires path{stroke:#5a5e67}.wires .arrow{fill:#5a5e67}.node{box-shadow:none}}
   .demo video{display:block;width:100%;border-radius:14px;border:1px solid var(--line);background:#000}
   .demo .fine{font-size:13px;color:var(--muted);margin:10px 2px 0}
   .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:44px}
@@ -131,12 +157,12 @@
 </head>
 <body>
 <div class="wrap">
-  <header><img src="img/logo.png" alt=""><b>span</b><nav><a href="#demo">Demo</a><a href="https://github.com/comp-Ryan/span">GitHub</a></nav></header>
+  <header><img src="img/logo.png" alt=""><b>span</b><nav><a href="#demo">How it works</a><a href="https://github.com/comp-Ryan/span">GitHub</a></nav></header>
   <div class="hero">
     <div class="copy">
       <h1>Will I make payroll?</h1>
       <p class="lead">Ask Span out loud. It reads the books, forecasts payday, and asks before it texts anyone.</p>
-      <p class="cta"><a class="btn primary" href="#demo">Watch the demo</a><a class="btn" href="https://github.com/comp-Ryan/span">Source</a></p>
+      <p class="cta"><a class="btn primary" href="#demo">See it work</a><a class="btn" href="https://github.com/comp-Ryan/span">Source</a></p>
     </div>
     <div class="frame" aria-label="Span, as it looks while answering" role="img">
       <div class="top"><img src="img/logo.png" alt=""><span class="nm">span</span><span class="co">Palletbay Storage &amp; Warehousing</span><span class="srch">&#9906; Ask about your money, or search transactions, customers, reports</span><span class="live"><i></i>Live</span></div>
@@ -169,9 +195,28 @@
       </div>
     </div>
   </div>
-  <section id="demo" class="demo">
-    <video controls playsinline preload="metadata" poster="img/03-verdict-approval.png" src="demo.webm"></video>
-    <p class="fine">One unedited take. Real backend, real numbers.</p>
+  <section id="demo" class="flow" aria-label="How a run unfolds">
+    <div class="shead"><b>One question, end to end.</b><span>Every step is a node on the canvas. This is the real sequence.</span></div>
+    <div class="wf" id="wf">
+      <svg class="wires" id="wires" aria-hidden="true"></svg>
+      <div class="wrow one"><div class="node q" data-n="q"><span class="lbl">YOU</span>Am I going to make payroll these next two weeks?</div></div>
+      <div class="wrow three">
+        <div class="node" data-n="books"><span class="lbl">CONTEXT · <i>running</i></span>Reading the books<small>bank $6.5k · payroll $13.3k · bills $10.9k</small></div>
+        <div class="node" data-n="score"><span class="lbl">SCORING · <i>running</i></span>Scoring 204 invoices<small>payment history per customer</small></div>
+        <div class="node" data-n="fc"><span class="lbl">FORECAST · <i>running</i></span>Forecasting cash to Oct 20<small>cushion −$385</small></div>
+      </div>
+      <div class="wrow one"><div class="node verdict" data-n="verdict"><span class="lbl">ANSWER · <i>running</i></span>No. $385 short; $2,753 short if the slow payers slip.</div></div>
+      <div class="wrow one"><div class="node ask" data-n="ask"><span class="lbl">LEVERS · <i>running</i></span>Text 3 reliable late payers · + $845<small><b class="yes">Yes, text them</b> nothing is sent until you say so</small></div></div>
+      <div class="wrow three lanes">
+        <div class="lane"><div class="node mini" data-n="h1"><span class="lbl">TEXT</span>Hearth Trading</div><div class="node mini" data-n="h2"><span class="lbl">REPLY</span>“Can we split this?”</div><div class="node mini ok" data-n="h3"><span class="lbl">AGREED</span>2 payments · $282</div></div>
+        <div class="lane"><div class="node mini" data-n="m1"><span class="lbl">TEXT</span>Marchetti Textiles</div><div class="node mini" data-n="m2"><span class="lbl">REPLY</span>“Half now, half in two weeks”</div><div class="node mini ok" data-n="m3"><span class="lbl">AGREED</span>2 payments · $282</div></div>
+        <div class="lane"><div class="node mini" data-n="i1"><span class="lbl">TEXT</span>Ironbridge Goods</div><div class="node mini" data-n="i2"><span class="lbl">REPLY</span>“Two payments works”</div><div class="node mini ok" data-n="i3"><span class="lbl">AGREED</span>2 payments · $282</div></div>
+      </div>
+      <div class="wrow two">
+        <div class="node paid" data-n="paid"><span class="lbl">PAYMENT · <i>running</i></span>$1,691 received<small>cushion −$385 → <b>+$43</b> · payroll covered</small></div>
+        <div class="node" data-n="report"><span class="lbl">REPORT · <i>running</i></span>One-page report<small>numbers used · what it did · what is open</small></div>
+      </div>
+    </div>
   </section>
 
   <section class="show">
@@ -250,6 +295,12 @@
     var n = Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
     return (v < 0 ? '−' : (el.dataset.from ? '+' : '')) + prefix + n + suffix;
   };
+  var once = function (el, fn) {
+    if (!el) return;
+    if (!('IntersectionObserver' in window)) return fn();
+    var io = new IntersectionObserver(function (entries) { entries.forEach(function (e) { if (e.isIntersecting) { io.disconnect(); fn(); } }); }, { threshold: 0.2 });
+    io.observe(el);
+  };
   // 1. The product, unfolding like a real run: question, tool rows, verdict, the ask, the dock. Replays every 11 s.
   var hero = q('[data-anim="hero"]'); hide(hero);
   function playHero() {
@@ -264,12 +315,40 @@
     tl.finished.then(function () { setTimeout(function () { hide(hero); playHero(); }, 11000); });
   }
   playHero();
+  // 3. The workflow: nodes land in run order, wires draw between them, "running" turns into "done". Loops.
+  var wf = document.getElementById('wf'), wires = document.getElementById('wires');
+  var N = function (k) { return wf.querySelector('[data-n="' + k + '"]'); };
+  var order = ['q', 'books', 'score', 'fc', 'verdict', 'ask', ['h1', 'm1', 'i1'], ['h2', 'm2', 'i2'], ['h3', 'm3', 'i3'], 'paid', 'report'];
+  var links = [['q', 'books'], ['books', 'score'], ['score', 'fc'], ['fc', 'verdict'], ['verdict', 'ask'], ['ask', 'h1'], ['ask', 'm1'], ['ask', 'i1'], ['h1', 'h2'], ['h2', 'h3'], ['m1', 'm2'], ['m2', 'm3'], ['i1', 'i2'], ['i2', 'i3'], ['h3', 'paid'], ['m3', 'paid'], ['i3', 'paid'], ['paid', 'report']];
+  function wire() {
+    if (!wf || !wires) return;
+    var box = wf.getBoundingClientRect(); wires.innerHTML = '<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0 0.5 L8 4 L0 7.5 z"/></marker></defs>';
+    wires.setAttribute('viewBox', '0 0 ' + box.width + ' ' + box.height);
+    links.forEach(function (l) {
+      var a = N(l[0]).getBoundingClientRect(), b = N(l[1]).getBoundingClientRect();
+      var ax = a.left - box.left + a.width / 2, ay = a.bottom - box.top, bx = b.left - box.left + b.width / 2, by = b.top - box.top - 2;
+      var sameRow = Math.abs(a.top - b.top) < 4;
+      var d = sameRow ? 'M' + (a.right - box.left) + ' ' + (a.top - box.top + a.height / 2) + ' L' + (b.left - box.left) + ' ' + (b.top - box.top + b.height / 2)
+        : 'M' + ax + ' ' + ay + ' C' + ax + ' ' + (ay + (by - ay) / 2) + ' ' + bx + ' ' + (ay + (by - ay) / 2) + ' ' + bx + ' ' + by;
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', d); path.setAttribute('marker-end', 'url(#arrow)'); path.dataset.from = l[0]; path.dataset.to = l[1]; wires.appendChild(path);
+    });
+  }
+  var allNodes = q('.node', wf);
+  function resetFlow() { allNodes.forEach(function (n) { n.style.opacity = 0; n.classList.remove('done', 'busy'); }); q('path', wires).forEach(function (p) { p.style.opacity = 0; }); }
+  function playFlow() {
+    wire(); resetFlow();
+    var tl = anime.timeline({ easing: 'easeOutCubic' });
+    order.forEach(function (step) {
+      var keys = Array.isArray(step) ? step : [step]; var els = keys.map(N);
+      var into = q('path', wires).filter(function (p) { return keys.indexOf(p.dataset.to) >= 0; });
+      if (into.length) tl.add({ targets: into, opacity: [0, 1], strokeDashoffset: [anime.setDashoffset, 0], duration: 380, easing: 'easeInOutSine' });
+      tl.add({ targets: els, opacity: [0, 1], translateY: [10, 0], scale: [0.96, 1], duration: 340, delay: anime.stagger(90), begin: function () { els.forEach(function (e) { e.classList.add('busy'); }); } }, into.length ? '-=120' : '+=0');
+      tl.add({ targets: els, duration: 420, complete: function () { els.forEach(function (e) { e.classList.remove('busy'); e.classList.add('done'); }); } });
+    });
+    tl.finished.then(function () { setTimeout(playFlow, 5000); });
+  }
+  if (wf && wires) { resetFlow(); once(wf, function () { setTimeout(playFlow, 200); }); window.addEventListener('resize', wire); }
   // 2. Everything below plays once when it scrolls into view.
-  var once = function (el, fn) {
-    if (!('IntersectionObserver' in window)) return fn();
-    var io = new IntersectionObserver(function (entries) { entries.forEach(function (e) { if (e.isIntersecting) { io.disconnect(); fn(); } }); }, { threshold: 0.25 });
-    io.observe(el);
-  };
   var msgs = q('[data-anim="msgs"]'), chat = q('[data-anim="chat"]'); hide(msgs); hide(chat);
   once(document.querySelector('.msgs'), function () {
     anime.timeline({ easing: 'easeOutCubic' })
