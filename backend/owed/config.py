@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.8-flash"
     gemini_api_key: str = ""
     # Backup planner when Gemini cannot answer (credits, key, outage): OpenAI-compatible OpenRouter.
-    openrouter_api_key: str = ""
+    openrouter_api_key: str = Field("", validation_alias=AliasChoices("OPENROUTER_API_KEY", "OPENROUTER_KEY", "OPEN_ROUTER", "OPEN_ROUTER_API_KEY"))
     openrouter_model: str = "google/gemini-3.8-flash"
     environment: str = "development"
     release: str = "hackathon"

@@ -93,8 +93,8 @@ def to_openai_messages(system, contents):
 class OpenRouterClient:
     """Minimal stand-in for genai.Client: `aio.models.generate_content(model, contents, config)` and `aio.aclose()`."""
 
-    def __init__(self, api_key, model, base_url='https://openrouter.ai/api/v1', transport=None):
-        self.model = model
+    def __init__(self, api_key, model, base_url='https://openrouter.ai/api/v1', transport=None, max_tokens=4096):
+        self.model, self.max_tokens = model, max_tokens
         self._http = httpx.AsyncClient(base_url=base_url, timeout=90, transport=transport, headers={
             'Authorization': f'Bearer {api_key}', 'HTTP-Referer': 'https://github.com/comp-Ryan/span', 'X-Title': 'Span'})
         self.aio = NS(models=NS(generate_content=self.generate_content), aclose=self.aclose)
@@ -108,7 +108,7 @@ class OpenRouterClient:
         mode = getattr(getattr(getattr(config, 'tool_config', None), 'function_calling_config', None), 'mode', None)
         mode = str(getattr(mode, 'value', mode) or '').upper()
         body = {'model': model or self.model, 'messages': to_openai_messages(system if isinstance(system, str) else None, list(contents)),
-                'temperature': 0.2}
+                'temperature': 0.2, 'max_tokens': self.max_tokens}  # the cap is reserved against the balance up front
         if declarations:
             body['tools'] = to_openai_tools(declarations)
             body['tool_choice'] = 'none' if mode.endswith('NONE') else 'auto'

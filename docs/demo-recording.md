@@ -136,5 +136,7 @@ OPENROUTER_MODEL=google/gemini-3.8-flash    # optional; any OpenRouter model wit
 `/health` then reports `planner_backup: "openrouter"`. A run that failed over carries
 `planner: "openrouter"` on its context node and `provider: "openrouter"` on its answer; the
 canvas, approvals and reports are unchanged. The voice bridge (Gemini Live) has no backup.
-`owed/planner_backup.py` is unit-tested with a mocked transport; it has not been exercised
-against a live OpenRouter account from this machine.
+The key may also be spelled `OPEN_ROUTER`. Verified live on 2026-10-18: with Gemini credits
+depleted, battery questions failed over and answered with the same numbers as the earlier Gemini
+runs. Output is capped at 4,096 tokens per call because OpenRouter reserves the cap against the
+balance up front.

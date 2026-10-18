@@ -58,6 +58,7 @@ def test_openrouter_client_speaks_openai_and_returns_gemini_shaped_responses():
     response = asyncio.run(client.aio.models.generate_content(model='google/gemini-3.8-flash', contents=contents, config=config))
     assert seen['url'] == 'https://openrouter.ai/api/v1/chat/completions' and seen['auth'] == 'Bearer sk-or-test'
     assert seen['body']['model'] == 'google/gemini-3.8-flash' and seen['body']['tool_choice'] == 'auto' and len(seen['body']['tools']) == len(planner.TOOLS)
+    assert seen['body']['max_tokens'] == 4096  # OpenRouter reserves the cap against the balance; the planner never needs the model's 65k ceiling
     content = response.candidates[0].content
     call = [p.function_call for p in content.parts if p.function_call][0]
     assert call.name == 'forecast_cash' and call.args == {'target_date': '2026-10-20'} and call.id == 'call_1'
@@ -111,3 +112,11 @@ def test_planner_fails_over_to_openrouter_when_gemini_credits_are_depleted(monke
     answer = next(d for e, d in emitted if e == 'node.create' and d['node_id'] == 'answer')
     assert answer['data']['spoken'] == 'Fine.' and answer['data']['provider'] == 'openrouter'
     assert any(e == 'node.update' and d.get('node_id') == 'context' and d['data'].get('planner') == 'openrouter' for e, d in emitted)
+
+
+def test_settings_accept_the_open_router_key_spellings(monkeypatch):
+    from owed.config import Settings
+    for name in ('OPENROUTER_API_KEY', 'OPENROUTER_KEY', 'OPEN_ROUTER', 'OPEN_ROUTER_API_KEY'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv('OPEN_ROUTER', 'sk-or-alias')
+    assert Settings(_env_file=None).openrouter_api_key == 'sk-or-alias'
