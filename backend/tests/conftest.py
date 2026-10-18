@@ -11,7 +11,7 @@ for name in ('GEMINI_API_KEY', 'PHOTON_API_KEY', 'SENTRY_DSN', 'AGENTVERSE_API_K
              'OPENROUTER_API_KEY', 'OPENROUTER_KEY', 'OPEN_ROUTER', 'OPEN_ROUTER_API_KEY',
              'BROWSER_USE_API_KEY', 'VISA_USER_ID', 'VISA_PASSWORD'):
     os.environ[name] = ''
-DB_FREE = {'test_voice.py', 'test_version.py', 'test_chat_cli.py', 'test_planner_conversation.py', 'test_solana_reference.py', 'test_call_smoke.py', 'test_reset_demo.py', 'test_report_markdown.py', 'test_planner_backup.py',
+DB_FREE = {'test_voice.py', 'test_version.py', 'test_photon_platform.py', 'test_chat_cli.py', 'test_planner_conversation.py', 'test_solana_reference.py', 'test_call_smoke.py', 'test_reset_demo.py', 'test_report_markdown.py', 'test_planner_backup.py',
            'test_planner_workflow.py', 'test_demo_db.py'}
 
 

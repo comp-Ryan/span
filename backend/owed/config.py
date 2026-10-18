@@ -34,7 +34,8 @@ class Settings(BaseSettings):
     customer_agent_endpoint: str = "http://127.0.0.1:8001/submit"
     photon_owner_handle: str = ""
     photon_project_id: str = ""
-    photon_sms_sender_id: str = ""
+    photon_sms_sender_id: str = ""      # the line's agent user id (pho_usr_…), see scripts/photon_senders.py
+    photon_platform: str = "sms"         # "imessage" when the project's line is a shared iMessage number
     photon_email_sender_id: str = ""
     photon_demo_recipient: str = ""
     photon_webhook_token: str = ""

@@ -47,3 +47,21 @@ export VOICE_STREAM_TOKEN=$(openssl rand -hex 16)
 .venv/bin/uvicorn owed.main:app --host 127.0.0.1 --port 8000 &
 .venv/bin/python scripts/call_smoke.py      # six checks; report + assistant.wav in .local/call-smoke-<stamp>/
 ```
+
+## Real texts through Photon (optional)
+
+Without Photon keys every reminder is simulated and labeled so; the replies, negotiation and pay links still flow. To make
+the reminder land on a real phone:
+
+1. `PHOTON_PROJECT_ID` must be a Photon v2 id starting with `pho_prj_` (project settings at app.beta.photon.codes). A
+   36-character UUID is a v1 project id and every API call answers 403.
+2. `PHOTON_API_KEY` is the project's service key (`pho_sk_…`).
+3. The sender id is the line's agent user id (`pho_usr_…`). List it with
+   `backend/.venv/bin/python scripts/photon_senders.py`, which prints each line, its platform and the two `.env` lines to add
+   (`PHOTON_SMS_SENDER_ID`, and `PHOTON_PLATFORM=imessage` when the line is a shared iMessage number).
+4. `PHOTON_DEMO_RECIPIENT=+1…` is the only number reminders go to (the dataset's customers are synthetic). A shared line only
+   messages phones that were added to the project or texted it first, so text the line once from that phone.
+5. Replies back need `POST /inbound/photon?token=PHOTON_WEBHOOK_TOKEN` reachable from the internet (a tunnel to port 8000).
+   Without it, outbound texts are real and the reply side stays simulated.
+
+Restart the backend after editing `.env`; `/api/health` shows `photon: true` when the key, project and sender are set.

@@ -40,8 +40,9 @@ class Photon:
         sender = settings.photon_email_sender_id if channel == 'email' else settings.photon_sms_sender_id
         if not sender:
             raise ValueError(f'Photon {channel} sender is not configured')
-        user = await self.request('POST', 'users', {'platform': channel, 'handle': recipient})
-        space = await self.request('POST', 'spaces', {'platform': channel, 'participantIds': [sender, user['id']]})
+        platform = 'email' if channel == 'email' else (settings.photon_platform or 'sms')  # a shared line may be iMessage
+        user = await self.request('POST', 'users', {'platform': platform, 'handle': recipient})
+        space = await self.request('POST', 'spaces', {'platform': platform, 'participantIds': [sender, user['id']]})
         payload = {'senderId': sender, 'spaceId': space['id'], 'content': {'type': 'text', 'format': 'plain', 'text': body}}
         if channel == 'email':
             payload['email'] = {'subject': 'Payment reminder from Span'}
