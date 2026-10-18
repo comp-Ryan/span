@@ -142,7 +142,7 @@ async function chatAndDecisions(browser: Browser) {
     if (await page.locator('.dock .bubble').count()) await page.locator('.dock .bubble').click()  // browser-voice opens the dock by itself
     const mic = page.getByRole('button', { name: /Speak one follow-up|Listening for one follow-up/ })
     await mic.waitFor()
-    if (await mic.isEnabled()) await mic.click()  // resting: arm it by hand; otherwise the call armed it after speaking
+    if (await mic.isEnabled()) await mic.click({ timeout: 3000 }).catch(() => {})  // resting: arm it by hand; if the call armed it meanwhile, the button is already disabled
     const status = page.locator('.browser-voice-control [role="status"], .browser-voice-control [role="alert"]')
     await until(async () => (await status.textContent()) || '', t => t.trim().length > 0, 'voice status', 10000)
     const first = (await status.textContent())!.trim()

@@ -24,20 +24,27 @@ through the normal API.
 - Browser call mode (Call Span → greeting → listen → answer aloud via ElevenLabs → listen
   again → Hang up); `/health.voice`; `docs/voice-setup.md` for the Twilio phone path.
 - Planner explains Gemini 402/401 errors and retries 429/5xx.
+- Fresh-context review (7 Important findings) fixed: the clarifying question uses the signed
+  payroll buffer, survives abbreviated customer names, is asked once per conversation
+  (context and ancestor chain); customer scenarios never replace the baseline snapshot;
+  payment refreshes keep each forecast node's own assumption; verdict cues never jump over
+  another dollar amount; Home trend uses cash-before-payroll minus need; the phone smoke test
+  counts only completed tools. A payroll chat now closes once the owner decides, so its report
+  is generated.
 - Devpost: Veri claim removed (reminders use the template drafter).
 
 ## Results
 
 | Check | Result |
 |---|---|
-| Backend full suite, isolated DB | 192 passed (`pytest -q`) |
-| Backend DB-free subset | 105 passed |
+| Backend full suite, isolated DB | 208 passed (`pytest -q`, after the review fixes) |
+| Backend DB-free subset | 119 passed |
 | Frontend | vitest 54 passed · branches 4 passed · build OK · lint 11 pre-existing warnings, none new |
 | Live question battery (20 questions incl. follow-up) | 20/20 answered, no failed nodes, numbers grounded in tool results |
 | Planner voice routing | plain payroll question → one clarifying question → "no" → $668.96 short + one action; "go with your estimate" → $384.94 short + one action |
 | Phone bridge without Twilio (`call_smoke.py`) | gemini-3.8-live accepted; greeting, transcription, tools, clarifying question, spoken answer, follow-up all PASS; 31 s of assistant audio |
 | Live recorder (`npm run record`) | full take `frontend/demo-out/live-20261018050748376/` (11 stills, demo.webm, thumbnail, report.pdf, evidence.json); 1 of 3 reminders negotiated at that commit, $183.10 paid, outcome honestly not green |
-| Chrome e2e (`npm run e2e`) | rail pages, customer detail, new chat / past chat / rename / reload, typed "yes" resolves the decision, reminders → negotiation → pay link, pay page updates Get paid, report generate/print/PDF: PASS. Home mic recognized the fake-microphone WAV in one run; Web Speech is otherwise not reliable headless (informational) |
+| Chrome e2e (`npm run e2e`, runs 5 and 6) | rail pages, customer detail, new chat / past chat / rename / reload, typed "yes" resolves the decision, three simulated reminders → negotiation → pay link, pay page updates Get paid, Generate report → report opens, Print observed, PDF downloads, no console errors: PASS (16 checks). Home mic recognized the fake-microphone WAV in two of four runs (informational); the dock mic check lost a click race with the call's own auto-listen (script, fixed); the browser-call check needs a planner answer and so needs Gemini credits |
 
 ## Known limits
 
