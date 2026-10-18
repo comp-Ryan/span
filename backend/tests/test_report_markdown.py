@@ -44,3 +44,11 @@ def test_pdf_renders_a_narrative_table_without_error():
               'narrative': '### Numbers used\n| Customer | Overdue |\n|---|---|\n| Evergreen | $1,156.20 |\n| Yeoman | $668.58 |\n'}
     pdf = render_pdf(report)
     assert pdf[:4] == b'%PDF' and len(pdf) > 1500
+
+
+def test_pdf_text_swaps_glyphs_helvetica_lacks():
+    """The planner writes U+2011 (non-breaking hyphen) and U+2212 (minus); the PDF's core fonts have neither."""
+    from owed.reports.pdf import markdown_paragraphs, pdf_text
+    assert pdf_text('7‑day terms, −15 days') == '7-day terms, -15 days'
+    assert pdf_text('<b> & en–dash') == '&lt;b&gt; &amp; en–dash'  # escaped, en dash kept
+    assert markdown_paragraphs('All have 7‑day terms.')[0]['text'] == 'All have 7-day terms.'

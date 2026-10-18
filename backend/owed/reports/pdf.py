@@ -47,6 +47,17 @@ def _workflow(svg: str, max_w: float, max_h: float):
     return d
 
 
+GLYPH_SWAPS = {"\u2011": "-", "\u2010": "-", "\u2212": "-", "\u00a0": " ", "\u202f": " ", "\u2009": " "}
+
+
+def pdf_text(raw) -> str:
+    """Escape for reportlab markup and swap characters Helvetica/Times lack (non-breaking hyphen, minus sign, thin spaces)."""
+    out = str(raw if raw is not None else "")
+    for ch, plain in GLYPH_SWAPS.items():
+        out = out.replace(ch, plain)
+    return escape(out)
+
+
 def markdown_paragraphs(text: str) -> list[dict]:
     """Planner narratives are light markdown; turn them into reportlab-safe blocks (heading, bullet, text, table)."""
     blocks, para = [], []
@@ -58,7 +69,7 @@ def markdown_paragraphs(text: str) -> list[dict]:
             para.clear()
 
     def _inline(raw):
-        out = escape(raw.replace("`", ""))
+        out = pdf_text(raw.replace("`", ""))
         return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", out)
 
     for line in (text or "").splitlines():
@@ -101,7 +112,7 @@ def render_pdf(report: dict) -> bytes:
     except (KeyError, TypeError, ValueError):
         when = report.get("generated_at", "")
 
-    head = Table([[Paragraph("OWED", BRAND), Paragraph(f"{escape(report['company'])}<br/>{when}", META)]],
+    head = Table([[Paragraph("SPAN", BRAND), Paragraph(f"{pdf_text(report['company'])}<br/>{when}", META)]],
                  colWidths=[fw / 2, fw / 2])
     head.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
                               ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("LINEBELOW", (0, 0), (-1, 0), 0.6, RULE),
@@ -126,11 +137,11 @@ def render_pdf(report: dict) -> bytes:
 
     left_w = fw * 0.46
     left = [Paragraph("WHAT I DID", H)]
-    left += [Paragraph(f"<b>{escape(a['title'])}</b> \u2014 {escape(a['result'])}", ITEM, bulletText="\u2022")
+    left += [Paragraph(f"<b>{pdf_text(a['title'])}</b> \u2014 {pdf_text(a['result'])}", ITEM, bulletText="\u2022")
              for a in report["actions"]] or [Paragraph("Nothing yet." if any(x.get("type") == "levers" for x in report["workflow"]["nodes"])
                                                        else "No actions were needed for this question.", BODY)]
     left.append(Paragraph("STILL OPEN", H))
-    left += [Paragraph(escape(i), ITEM, bulletText="\u2022") for i in report["open_items"]] or \
+    left += [Paragraph(pdf_text(i), ITEM, bulletText="\u2022") for i in report["open_items"]] or \
         [Paragraph("Nothing open.", BODY)]
     left.append(Paragraph("SUMMARY", H))
     for block in markdown_paragraphs(report["narrative"]):
@@ -143,7 +154,8 @@ def render_pdf(report: dict) -> bytes:
             pad = lambda cells: cells + [""] * (ncols - len(cells))
             data = [[Paragraph(f"<b>{c}</b>", FINE) for c in pad(block["header"])]]
             data += [[Paragraph(c, FINE) for c in pad(row)] for row in block["rows"]]
-            grid = Table(data, colWidths=[left_w / ncols] * ncols)
+            widths = [left_w / ncols] * ncols if ncols < 3 else [left_w * 0.34] + [left_w * 0.66 / (ncols - 1)] * (ncols - 1)  # names need room
+            grid = Table(data, colWidths=widths)
             grid.setStyle(TableStyle([("LINEBELOW", (0, 0), (-1, 0), 0.6, RULE), ("LINEBELOW", (0, 1), (-1, -1), 0.3, RULE),
                                       ("LEFTPADDING", (0, 0), (-1, -1), 3), ("RIGHTPADDING", (0, 0), (-1, -1), 3),
                                       ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
@@ -159,8 +171,8 @@ def render_pdf(report: dict) -> bytes:
     cols.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
                               ("RIGHTPADDING", (0, 0), (0, 0), 18), ("RIGHTPADDING", (1, 0), (1, 0), 0)]))
 
-    story = [head, Spacer(1, 14), Paragraph(escape(report["question"]), QUESTION), Spacer(1, 4),
-             Paragraph(escape(report["answer"]), ANSWER), Spacer(1, 14), numbers, Spacer(1, 4), cols,
-             Spacer(1, 10), Paragraph(" \u00b7 ".join(escape(d) for d in report["disclosures"]), FINE)]
+    story = [head, Spacer(1, 14), Paragraph(pdf_text(report["question"]), QUESTION), Spacer(1, 4),
+             Paragraph(pdf_text(report["answer"]), ANSWER), Spacer(1, 14), numbers, Spacer(1, 4), cols,
+             Spacer(1, 10), Paragraph(" \u00b7 ".join(pdf_text(d) for d in report["disclosures"]), FINE)]
     doc.build([KeepInFrame(fw, fh, story, mode="shrink")])
     return buf.getvalue()
