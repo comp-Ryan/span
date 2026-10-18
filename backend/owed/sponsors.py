@@ -105,7 +105,7 @@ async def check_photon():
             async with httpx.AsyncClient(timeout=4) as c:
                 r = await c.get(settings.spectrum_bridge_url.rstrip('/') + '/health')
             if r.status_code == 200:
-                return 'pass', f"Spectrum bridge up ({r.json().get('platform', 'imessage')}); reminders go to {settings.photon_demo_recipient or 'no recipient set!'}", True
+                return 'pass', f"Spectrum bridge up ({r.json().get('platform', 'imessage')}); reminders go to {"the owner's phone" if settings.photon_demo_recipient else 'no recipient set!'}", True
             return 'fail', f'bridge answered {r.status_code}', True
         except httpx.HTTPError:
             return 'fail', 'SPECTRUM_BRIDGE_URL set but the bridge is not running (backend/scripts/spectrum_bridge.sh)', True

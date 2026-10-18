@@ -65,7 +65,7 @@ def test_senders_script_lists_agent_users_without_printing_the_key():
     mod = importlib.util.module_from_spec(spec); sys.modules['photon_senders'] = mod; spec.loader.exec_module(mod)
     page = {'items': [
         {'id': 'pho_usr_agent1', 'kind': 'agent', 'platform': 'imessage', 'handle': '+16287896792', 'details': {'type': 'shared'}},
-        {'id': 'pho_usr_human1', 'kind': 'user', 'platform': 'imessage', 'handle': '+19499759452'},
+        {'id': 'pho_usr_human1', 'kind': 'user', 'platform': 'imessage', 'handle': '+19495550000'},
         {'id': 'pho_usr_agent2', 'kind': 'agent', 'platform': 'sms', 'handle': '+14155550123', 'details': {'type': 'dedicated'}},
     ]}
     lines = mod.describe(page)
@@ -82,8 +82,8 @@ def test_spectrum_bridge_sends_without_a_v2_sender_id(monkeypatch):
 
     def handle(request):
         seen['url'] = str(request.url); seen['body'] = json.loads(request.content)
-        return httpx.Response(200, json={'message_id': 'spectrum:abc', 'space_id': 'any;-;+19499759452', 'status': 'sent'})
+        return httpx.Response(200, json={'message_id': 'spectrum:abc', 'space_id': 'any;-;+19495550000', 'status': 'sent'})
 
-    receipt = asyncio.run(Photon(httpx.MockTransport(handle)).send('+19499759452', 'Please pay', 'sms', 'rem-9'))
-    assert seen['url'] == 'http://127.0.0.1:8071/send' and seen['body'] == {'to': '+19499759452', 'text': 'Please pay', 'key': 'rem-9'}
-    assert receipt == {'provider_message_id': 'spectrum:abc', 'space_id': 'any;-;+19499759452', 'provider_status': 'sent'}
+    receipt = asyncio.run(Photon(httpx.MockTransport(handle)).send('+19495550000', 'Please pay', 'sms', 'rem-9'))
+    assert seen['url'] == 'http://127.0.0.1:8071/send' and seen['body'] == {'to': '+19495550000', 'text': 'Please pay', 'key': 'rem-9'}
+    assert receipt == {'provider_message_id': 'spectrum:abc', 'space_id': 'any;-;+19495550000', 'provider_status': 'sent'}
