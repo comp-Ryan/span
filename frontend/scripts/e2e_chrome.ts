@@ -147,11 +147,15 @@ async function chatAndDecisions(browser: Browser) {
     const status = page.locator('.browser-voice-control [role="status"], .browser-voice-control [role="alert"]')
     await until(async () => (await status.textContent()) || '', t => t.trim().length > 0, 'voice status', 10000)
     const first = (await status.textContent())!.trim()
-    const final = await until(async () => (await status.textContent()) || '', t => !t.startsWith('Listening'), 'speech result or error', 25000).catch(() => 'still listening after 25 s')
-    const outcome = page.url().includes('run=') && final !== first ? final : final
-    throw Object.assign(new Error(outcome.trim() || first), { info: true })
+    const moved = (await until(async () => (await status.textContent()) || '', t => !t.startsWith('Listening'), 'speech result or error', 25000).catch(() => '')).trim()
+    if (!moved) throw Object.assign(new Error('still listening after 25 s: no transcript from the fake microphone'), { info: true })
+    if (/working on it|speaking/i.test(moved)) {  // Span heard something: after it speaks, the microphone must be live again
+      await until(async () => (await status.textContent()) || '', t => t.startsWith('Listening'), 'listening again after Span spoke', 90000)
+      return `heard → "${moved}" → listening again`
+    }
+    throw Object.assign(new Error(moved || first), { info: true })
   }).catch(() => {})
-  if (results.at(-1)?.check.startsWith('dock')) { const r = results.at(-1)!; r.ok = /Listening/.test(r.detail) || /denied|not available|unexpectedly|No speech|Could not|network/i.test(r.detail) ? null : r.ok; if (r.ok === null) r.detail = `Web Speech in automated Chrome: ${r.detail}` }
+  if (results.at(-1)?.check.startsWith('dock')) { const r = results.at(-1)!; r.ok = r.ok === false && /listening|denied|not available|unexpectedly|No speech|Could not|network/i.test(r.detail) ? null : r.ok; if (r.ok === null) r.detail = `Web Speech in automated Chrome: ${r.detail}` }
   await check('Home mic (browser voice, Chrome fake audio)', async () => {
     await page.goto(`${BASE}/home?company=${COMPANY}`)
     await page.getByRole('button', { name: 'Speak one question' }).click()

@@ -23,7 +23,7 @@ export default function ChatSidebar({ company, active, revision, onRename }: { c
     catch { setError('Your browser could not save this name') }
   }
   return <aside className="chat-sidebar" aria-label="Chat history">
-    <a className="btn primary" href={`/?live&new=1&company=${encodeURIComponent(company)}`}>+ New chat</a>
+    <a className="btn new-chat" href={`/?live&new=1&company=${encodeURIComponent(company)}`}>+ New chat</a>
     <h2>Past chats</h2>
     {error && <div role="alert" className="fine">{error}</div>}
     {!error && !runs.length && <p className="fine">Your conversations will appear here.</p>}

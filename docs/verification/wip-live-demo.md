@@ -55,3 +55,17 @@ through the normal API.
   bridge (Gemini Live) still needs Gemini credits.
 - Real phone calls need a Twilio number and a public URL (see `docs/voice-setup.md`).
 - Nothing was deployed; no secrets or `.env` files were changed.
+
+## 2026-10-18 08:30–09:00 UTC — New chat, mute, terminal chat, free-model backup
+
+| What | Evidence |
+|---|---|
+| New chat page had no composer in its body (only the header search box; the dock needs a run) | `FreshChat` renders an input, three suggestions and "Call Span instead" on `/?live&new=1`; e2e "new chat" check types into it |
+| Sidebar listed every test-battery run (120 roots, 28 distinct questions) | `rootChats(runs, keep)` shows one entry per question, newest run; the open chat always stays (`chatHistory.test.ts`) |
+| "+ New chat" rendered with an underline | `.chat-sidebar > .btn { text-decoration: none }` |
+| Mute on a browser call | reducer `mute`/`unmute` (`voiceCall.test.ts`): muted turns skip `speaking` and re-arm the mic; remembered in `localStorage` (`span.voiceMuted`); e2e browser-call check toggles Mute → Unmute |
+| Which build is running | `/health.version` = git short SHA, `/health.branch`; `SPAN_VERSION` overrides (`test_version.py`) |
+| Terminal chat for local testing | `backend/scripts/chat.py`: `/ask` → poll `/runs/{id}` → prompt on `decision` → `POST /decisions`; prints the backend commit first (`test_chat_cli.py`, 7 tests). Live: "Who should I chase today?" answered, approval left pending; `--decide no` resolves it and the run closes |
+| Both LLM providers at $0 (Gemini 402 since 05:26 UTC; OpenRouter trial at 3,485 affordable tokens) | `OpenRouterClient` walks a model chain: 402 "can only afford N" → retry with N−64 tokens; 402/404/429/5xx → next model; 429 → one 1.5 s retry. Default chain ends in free tool-capable models (`nvidia/nemotron-3-ultra-550b-a55b:free`, `…-super-120b-a12b:free`, probed live: tool calls returned, cost 0). Context node records `planner_model` actually used |
+| Chrome e2e run 8 (`demo-out/e2e-20261018085023479`) | 17 passed, 0 failed, 1 informational (Home mic transcript in headless Chrome). Dock-call check now passes only when the mic re-arms after Span speaks ("heard → Span is speaking → listening again") |
+| Backend DB-free suite | 118 passed (`test_version`, `test_chat_cli`, `test_planner_backup` +5) |
