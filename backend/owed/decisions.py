@@ -1,5 +1,6 @@
 """Atomic human/timeout decisions with a durable action queue."""
 import asyncio
+import json
 import logging
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
@@ -37,6 +38,16 @@ class Choice(BaseModel):
     note: str | None = Field(None, max_length=4000)
 
 
+def selected_customers(note):
+    """Customer ids the owner kept selected on a lever card, sent as {"selected_customers": [...]} in the note."""
+    try:
+        parsed = json.loads(note) if note else None
+    except (TypeError, ValueError):
+        return None
+    ids = parsed.get('selected_customers') if isinstance(parsed, dict) else None
+    return [str(i) for i in ids][:50] if isinstance(ids, list) else None
+
+
 def resolve(decision_id, option, company, note=None):
     with conn() as c:
         row = c.execute('''select d.*,r.company_id from decisions d join runs r using(run_id)
@@ -50,6 +61,10 @@ def resolve(decision_id, option, company, note=None):
         if option not in {o['id'] for o in row['options']}:
             raise HTTPException(422, 'Invalid decision option')
         c.execute('update decisions set resolved=%s,resolved_at=now() where decision_id=%s', (option, decision_id))
+        selected = selected_customers(note)
+        if selected is not None:
+            c.execute("update decisions set payload=coalesce(payload,'{}'::jsonb)||%s where decision_id=%s",
+                      (Jsonb({'selected_customers': selected}), decision_id))
         c.execute('insert into action_jobs(decision_id) values (%s) on conflict do nothing', (decision_id,))
         emit(row['run_id'], 'decision.resolved', {'decision_id': decision_id, 'node_id': row['node_id'], 'option_id': option}, connection=c)
         emit(row['run_id'], 'node.update', {'node_id': row['node_id'], 'data': {

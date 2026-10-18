@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getBrief, getCash, getCompanies, getRuns, startRun } from './api'
 import type { Brief, CashProjection, Company, RunSummary } from './types'
 import { money as moneyPos } from './events'
+import { listenOnce, type VoiceStatus } from './browserVoice'
+import { PaymentHeatmap } from './PaymentHeatmap'
 
 /** `money` from events.ts renders negatives as "$-7,457"; the home page shows a proper minus sign. */
 const money = (v?: number) => v != null && v < 0 ? `−${moneyPos(-v)}` : moneyPos(v)
@@ -47,7 +49,8 @@ export const verdictTone = (title?: string | null): 'green' | 'amber' | 'red' | 
 const sourceLabel = (s: string) => s === 'call' ? 'by phone' : s === 'sms' ? 'by text' : s === 'asi_one' ? 'via ASI:One' : 'on the web'
 
 /** Send the owner to the canvas: `/?run=<id>` replays a run and keeps listening for new events. */
-const canvasUrl = (runId: string, company: string) => `/?run=${encodeURIComponent(runId)}${company !== DEFAULT_COMPANY ? `&company=${encodeURIComponent(company)}` : ''}`
+const canvasUrl = (runId: string, company: string, browserVoice = false) =>
+  `/?run=${encodeURIComponent(runId)}${company !== DEFAULT_COMPANY ? `&company=${encodeURIComponent(company)}` : ''}${browserVoice ? '&voice=browser' : ''}`
 
 function Tile({ icon, cls, label, value, sub, loading }: { icon: React.ReactNode; cls: string; label: string; value?: string; sub?: string; loading?: boolean }) {
   return <div className="card tile">
@@ -90,6 +93,9 @@ export default function Home() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [q, setQ] = useState('')
   const [asking, setAsking] = useState<string | null>(null)
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
+  const [voiceMessage, setVoiceMessage] = useState('')
+  const stopListening = useRef<() => void>(() => {})
   const fail = (key: string) => (e: unknown) => setErrors(prev => ({ ...prev, [key]: e instanceof Error ? e.message : String(e) }))
   const clear = (key: string) => setErrors(prev => { const { [key]: _drop, ...rest } = prev; return rest })
 
@@ -107,25 +113,35 @@ export default function Home() {
     return () => { stale = true }
   }, [company])
 
-  const ask = async (question: string) => {
+  useEffect(() => () => stopListening.current(), [])
+
+  const ask = async (question: string, source = 'web', browserVoice = false) => {
     const text = question.trim(); if (!text || asking) return
     setAsking(text); clear('ask')
-    try { const { run_id } = await startRun(company, text); location.href = canvasUrl(run_id, company) }
+    try { const { run_id } = await startRun(company, text, source); location.href = canvasUrl(run_id, company, browserVoice) }
     catch (e) { fail('ask')(e); setAsking(null) }
+  }
+  const startVoiceQuestion = () => {
+    setVoiceMessage('')
+    stopListening.current()
+    stopListening.current = listenOnce(
+      text => { stopListening.current(); setVoiceStatus('idle'); void ask(text, 'call', true) },
+      (status, message) => { setVoiceStatus(status); setVoiceMessage(message || '') },
+    )
   }
 
   const name = brief?.company.name || companies.find(c => c.id === company)?.name || 'Loading…'
   const recent = (runs || []).filter(r => !r.parent_run_id).slice(0, 8)
   return <div className="app">
     <header className="topbar">
-      <div className="brand"><div className="mark">{BRAND[0]}</div><div className="name">{BRAND.toLowerCase()}</div></div>
+      <div className="brand"><img className="mark" src="/logo.png" alt="" /><div className="name">{BRAND.toLowerCase()}</div></div>
       <div className="company">{name}</div>
       <div className="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><input placeholder="Ask about your money, or search transactions, customers, reports" value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(q) }} /></div>
       <div className="status"><i className="dot" />Books as of {fmtShort(brief?.as_of)}</div>
     </header>
     <div className="body">
       <nav className="rail">
-        <a href="/">{I.chat}Ask</a><a className="on" href="/home">{I.book}Home</a><a>{I.card}Get paid</a><a>{I.trend}Reports</a><a>{I.person}Customers</a>
+        <a href="/">{I.chat}Ask</a><a className="on" href="/home">{I.book}Home</a><a href={`/get-paid${company !== DEFAULT_COMPANY ? `?company=${encodeURIComponent(company)}` : ''}`}>{I.card}Get paid</a><a href={`/reports${company !== DEFAULT_COMPANY ? `?company=${encodeURIComponent(company)}` : ''}`}>{I.trend}Reports</a><a href={`/customers${company !== DEFAULT_COMPANY ? `?company=${encodeURIComponent(company)}` : ''}`}>{I.person}Customers</a>
       </nav>
       <main className="main home" data-testid="home">
         <div className="hhead">
@@ -150,15 +166,18 @@ export default function Home() {
           <Tile icon={I.card} cls="amber" label="Bills due this week" loading={!brief && !errors.brief} value={brief ? money(brief.bills_due_week.total) : undefined} sub={brief ? `${brief.bills_due_week.count} bill${brief.bills_due_week.count === 1 ? '' : 's'} through ${fmtDay(brief.bills_due_week.through)}` : undefined} />
         </div>
 
+        <PaymentHeatmap company={company} limit={12} compact />
+
         <div className="hgrid">
           <section className="card ask" data-testid="ask-card">
             <h2>Ask {BRAND}</h2>
-            <div className="fine">Type it, or call and say it. {BRAND} reasons on the canvas and acts when you say yes.</div>
+            <div className="fine">Type it, or try browser voice. {BRAND} reasons on the canvas and acts when you say yes. Browser voice is a turn-based demo, not a phone call.</div>
             <div className="big-input">
               <input autoFocus placeholder={`What do you want to know about your money?`} value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(q) }} disabled={!!asking} />
-              <button className="mic" type="button" title="Say it on the call" aria-label="Microphone">{I.mic}</button>
+              <button className={`mic ${voiceStatus === 'listening' ? 'listening' : ''}`} type="button" title="Speak one question" aria-label={voiceStatus === 'listening' ? 'Listening for one question' : 'Speak one question'} aria-pressed={voiceStatus === 'listening'} disabled={!!asking || voiceStatus === 'listening'} onClick={startVoiceQuestion}>{I.mic}</button>
               <button className="btn primary" onClick={() => ask(q)} disabled={!q.trim() || !!asking}>{asking ? 'Starting…' : 'Ask'}</button>
             </div>
+            <div className="fine" role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'listening' ? 'Listening… Speak one question.' : voiceMessage}</div>
             <div className="sugg" style={{ marginTop: 12 }}>
               {SUGGESTIONS.map(s => <button key={s} onClick={() => ask(s)} disabled={!!asking}>{asking === s ? 'Starting…' : s}</button>)}
             </div>

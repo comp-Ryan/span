@@ -16,6 +16,7 @@ from google import genai
 from google.genai import types
 
 from owed.config import settings
+from owed.db import conn
 from owed.events import emit
 from owed.planner import TOOLS, ToolContext, system_prompt
 from owed.runs import create, finish
@@ -23,6 +24,101 @@ from owed.runs.payroll import target_for
 
 router = APIRouter()
 log = logging.getLogger(__name__)
+LIVE_CALL_PLACEHOLDER = 'Live phone call'
+RUN_QUESTION_LIMIT = 4000
+
+
+def persist_first_caller_question(run_id, text):
+    """Replace the live-call placeholder once, keeping the runs question bounded."""
+    question = ' '.join((text or '').split())[:RUN_QUESTION_LIMIT]
+    if not question:
+        return False
+    with conn() as c:
+        result = c.execute(
+            'update runs set question=%s where run_id=%s and question=%s',
+            (question, run_id, LIVE_CALL_PLACEHOLDER),
+        )
+    return result.rowcount == 1
+
+VOICE_INSTRUCTIONS = """\
+You are speaking live on a phone call. Speak only in short, natural, plain spoken turns.
+Never use Markdown, headings, lists, a written report, or a report delimiter. The caller must
+hear only what you would say aloud. Ask exactly one clarifying question at a time, then stop
+and wait for the caller's answer before continuing or using the answer. If the caller corrects
+or redoes an answer, the latest correction replaces the earlier assumption; redo only that step.
+When the caller gives an explicit forecast horizon (such as "the next two weeks"), calculate
+the end date from the dataset clock in your instructions and pass that exact ISO date as
+forecast_cash.target_date. Do not silently replace an explicit horizon with next Friday.
+When an Evergreen payday assumption is relevant, ask whether to assume Evergreen will pay by
+payday or treat them as not paying, then wait for the answer. Handle only one owner approval or
+action at a time and wait for the owner's explicit answer before proposing another.
+Begin by asking how you can help."""
+
+
+def live_system_instruction(company, target):
+    """Keep planner grounding, but deliberately exclude its written-report contract."""
+    prompt = system_prompt(company, target)
+    prompt = prompt.split('\nReply in two parts separated by a line containing only ---', 1)[0]
+    return f'{prompt}\n{VOICE_INSTRUCTIONS}'
+
+
+class SpokenTranscript:
+    """Incrementally pass only speech before a planner report delimiter."""
+
+    delimiter = '---'
+
+    def __init__(self):
+        self.buffer = ''
+        self.in_report = False
+
+    def feed(self, chunk):
+        if self.in_report:
+            return ''
+        text = self.buffer + chunk
+        delimiter_at = text.find(self.delimiter)
+        if delimiter_at >= 0:
+            self.in_report = True
+            self.buffer = ''
+            return text[:delimiter_at]
+        # Hold a possible delimiter prefix so a marker split over chunks cannot leak.
+        keep = 0
+        for size in range(1, len(self.delimiter)):
+            if text.endswith(self.delimiter[:size]):
+                keep = size
+        if keep:
+            self.buffer = text[-keep:]
+            return text[:-keep]
+        self.buffer = ''
+        return text
+
+    def finish(self):
+        if self.in_report:
+            self.buffer = ''
+            return ''
+        text, self.buffer = self.buffer, ''
+        return text
+
+
+ACTION_TOOLS = {'send_message', 'defer_bill', 'rank_chase', 'resolve_decision'}
+
+
+async def respond_to_tool_calls(ctx, session, calls):
+    """Execute calls serially and do not run a second tool after an owner action."""
+    responses = []
+    owner_action_requested = False
+    for call in calls:
+        if owner_action_requested:
+            result = {'status': 'waiting_for_owner',
+                      'message': 'Wait for the owner to answer the pending action before continuing.'}
+        else:
+            result = await ctx.execute(call.name, call.args or {})
+            if call.name in ACTION_TOOLS:
+                owner_action_requested = True
+        responses.append(types.FunctionResponse(
+            id=call.id, name=call.name, response=result))
+    if responses:
+        # The Live SDK accepts a sequence of FunctionResponse objects for one tool-call event.
+        await session.send_tool_response(function_responses=responses)
 
 
 async def tts_chunks(text):
@@ -66,6 +162,8 @@ class Playback:
             except asyncio.CancelledError:
                 if asyncio.current_task().cancelling():
                     raise
+            except Exception:
+                log.exception('Live call TTS failed while playing an utterance')
             finally:
                 self.current = None
                 self.queue.task_done()
@@ -123,7 +221,7 @@ async def live_call(ws: WebSocket):
             await ws.close(code=1003, reason='Expected mono mulaw 8kHz')
             return
         company = params.get('company', settings.demo_company)
-        run_id = await asyncio.to_thread(create, company, 'Live phone call', 'call', 'free_question')
+        run_id = await asyncio.to_thread(create, company, LIVE_CALL_PLACEHOLDER, 'call', 'free_question')
         await asyncio.to_thread(emit, run_id, 'node.create', {'node_id': 'context', 'type': 'context',
             'title': 'Live phone call', 'status': 'running', 'parent': None})
         ctx = ToolContext(run_id, company, target_for('Friday'))
@@ -132,7 +230,7 @@ async def live_call(ws: WebSocket):
         use_eleven = bool(settings.elevenlabs_api_key and settings.elevenlabs_voice_id)
         config = {'response_modalities': ['AUDIO'], 'input_audio_transcription': {},
                   'output_audio_transcription': {}, 'tools': [{'function_declarations': TOOLS}],
-                  'system_instruction': system_prompt(company, ctx.target) + '\nKeep spoken turns brief. Begin by asking how you can help.'}
+                  'system_instruction': live_system_instruction(company, ctx.target)}
         async with client.aio.live.connect(model=settings.gemini_live_model, config=config) as session:
             async def receive_caller():
                 state = None
@@ -146,37 +244,60 @@ async def live_call(ws: WebSocket):
                         await session.send_realtime_input(audio=types.Blob(data=pcm, mime_type='audio/pcm;rate=16000'))
 
             async def receive_gemini():
-                pending_text, audio_state = '', None
+                pending_text, spoken_text, audio_state = '', '', None
+                caller_question_saved = False
+                transcript = SpokenTranscript()
                 while True:
                     async for response in session.receive():
                         content = response.server_content
                         if content:
                             if content.interrupted:
                                 pending_text = ''
+                                spoken_text = ''
+                                transcript = SpokenTranscript()
                                 await playback.interrupt()
                             if content.input_transcription and content.input_transcription.text:
+                                caller_text = content.input_transcription.text.strip()
+                                if caller_text:
+                                    if not caller_question_saved:
+                                        await asyncio.to_thread(persist_first_caller_question, run_id, caller_text)
+                                        caller_question_saved = True
+                                    await asyncio.to_thread(emit, run_id, 'speech', {
+                                        'kind': 'caller', 'speaker': 'caller', 'text': caller_text,
+                                        'audio_url': None,
+                                    })
                                 await asyncio.to_thread(emit, run_id, 'node.update', {'node_id': 'context',
-                                    'data': {'caller_text': content.input_transcription.text}})
+                                    'data': {'caller_text': caller_text}})
                             if content.output_transcription and content.output_transcription.text:
-                                text = content.output_transcription.text
-                                await asyncio.to_thread(emit, run_id, 'speech', {'text': text, 'audio_url': None})
-                                pending_text += text
-                                if use_eleven and (pending_text.rstrip().endswith(('.', '?', '!')) or len(pending_text) > 180):
-                                    await playback.queue.put(pending_text)
-                                    pending_text = ''
+                                text = transcript.feed(content.output_transcription.text)
+                                if text:
+                                    pending_text += text
+                                    spoken_text += text
+                                    if use_eleven and (pending_text.rstrip().endswith(('.', '?', '!')) or len(pending_text) > 180):
+                                        await playback.queue.put(pending_text)
+                                        pending_text = ''
                             if not use_eleven and content.model_turn:
+                                # Inline audio cannot be retracted after streaming; the voice-only
+                                # instruction above is the protection for this audio path.
                                 for part in content.model_turn.parts or []:
                                     if part.inline_data:
                                         pcm, audio_state = audioop.ratecv(part.inline_data.data, 2, 1, 24000, 8000, audio_state)
                                         await playback.media(audioop.lin2ulaw(pcm, 2))
-                            if content.turn_complete and pending_text:
+                            if content.turn_complete:
+                                remainder = transcript.finish()
+                                if remainder:
+                                    pending_text += remainder
+                                    spoken_text += remainder
+                                if spoken_text:
+                                    await asyncio.to_thread(emit, run_id, 'speech', {'text': spoken_text, 'audio_url': None})
                                 if use_eleven:
-                                    await playback.queue.put(pending_text)
+                                    if pending_text:
+                                        await playback.queue.put(pending_text)
                                 pending_text = ''
+                                spoken_text = ''
+                                transcript = SpokenTranscript()
                         if response.tool_call:
-                            for call in response.tool_call.function_calls:
-                                result = await ctx.execute(call.name, call.args or {})
-                                await session.send_tool_response(function_responses=[types.FunctionResponse(id=call.id, name=call.name, response=result)])
+                            await respond_to_tool_calls(ctx, session, response.tool_call.function_calls)
             await session.send_client_content(turns=types.Content(role='user', parts=[types.Part(text='The owner is on the line. Greet them briefly.')]), turn_complete=True)
             tasks = [asyncio.create_task(receive_caller()), asyncio.create_task(receive_gemini()), asyncio.create_task(playback.worker())]
             done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)

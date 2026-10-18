@@ -8,6 +8,7 @@ import json
 import secrets
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, Body, HTTPException, Request
@@ -72,13 +73,27 @@ def _receipt_response(p: dict) -> dict:
 
 def _public(tok: dict, payment: dict | None = None) -> dict:
     amount = float(tok["amount"])
+    recipient = settings.solana_recipient.strip()
+    reference = solana.reference_for_token(tok["pay_token"])
+    solana_uri = None
+    if recipient:
+        query = urlencode({
+            "amount": f"{amount:.2f}",
+            "spl-token": settings.solana_usdc_mint,
+            "reference": reference,
+            "label": tok["company_name"],
+            "message": f"Invoice {tok['doc_number'] or ''}".strip(),
+            "cluster": "devnet",
+        })
+        solana_uri = f"solana:{recipient}?{query}"
     out = {
         "company_name": tok["company_name"],
         "invoice": {"doc_number": tok["doc_number"], "amount": amount,
                     "due_date": tok["due_date"].isoformat() if tok["due_date"] else None},
         "status": tok["status"],
         "payer_name": tok["customer_name"],
-        "solana": {"recipient": settings.solana_recipient, "mint": settings.solana_usdc_mint, "amount": amount},
+        "solana": {"recipient": recipient, "mint": settings.solana_usdc_mint,
+                   "amount": amount, "reference": reference, "uri": solana_uri},
         "visa": {"sandbox_mode": "sandbox" if visa.configured() else "simulated"},
     }
     if payment:
@@ -142,7 +157,8 @@ def post_pay(token: str, body: dict = Body(...)):
                 receipt.update(visa.charge(body.get("card") or {}, amount, payment_id))
             else:
                 receipt.update(solana.verify_transfer(body.get("signature") or "", settings.solana_recipient,
-                                                      settings.solana_usdc_mint, amount))
+                                                      settings.solana_usdc_mint, amount,
+                                                      solana.reference_for_token(token)))
         except (visa.CardError, solana.SolanaError) as e:
             raise HTTPException(402, str(e)) from None
         except httpx.HTTPError as e:  # RPC transport failure

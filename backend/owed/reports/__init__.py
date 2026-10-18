@@ -232,7 +232,7 @@ def gemini_narrative(r: dict) -> str | None:
               "Separate the paragraphs with one blank line.\n\n" + json.dumps(brief))
     try:
         res = httpx.post(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+            f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent",
             headers={"x-goog-api-key": settings.gemini_api_key},
             json={"contents": [{"parts": [{"text": prompt}]}],
                   "generationConfig": {"temperature": 0.3, "thinkingConfig": {"thinkingBudget": 0}}},
@@ -266,8 +266,11 @@ def build_report(con, run_id: str, report_id: str | None = None, narrate: bool =
     report = {
         "report_id": report_id, "run_id": run_id, "generated_at": datetime.now(UTC).isoformat(),
         "company": company, "question": run["question"] or st["run_start"].get("question", ""),
-        "answer": _answer(answer.get("answer"), gap_then, gap_now),
-        "numbers": {"bank_balance": ctx.get("bank_balance"), "payroll": ctx.get("payroll_amount", first_fc.get("need")),
+        # Planner (Gemini) answers carry their own spoken verdict; payroll runs carry a yes/no and a gap.
+        "answer": (answer["spoken"] if answer.get("spoken") and not answer.get("answer")
+                   else _answer(answer.get("answer"), gap_then, gap_now)),
+        "numbers": {"bank_balance": ctx.get("bank_balance", first_fc.get("bank_balance")),
+                    "payroll": ctx.get("payroll_amount", first_fc.get("need")),
                     "owed": first_fc.get("owed_total"), "expected_by_target": first_fc.get("expected_by_target"),
                     "gap_then": gap_then, "gap_now": gap_now},
         "workflow": {"nodes": list(nodes.values()),

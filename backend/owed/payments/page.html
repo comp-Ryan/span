@@ -38,9 +38,10 @@
   input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .btn { display: block; width: 100%; margin-top: 18px; padding: 14px; border: 0; border-radius: 12px; cursor: pointer;
-    background: var(--accent); color: #fff; font: inherit; font-size: 16px; font-weight: 600; }
+    background: var(--accent); color: #fff; font: inherit; font-size: 16px; font-weight: 600; text-align: center; text-decoration: none; }
   .btn:disabled { opacity: .55; cursor: default; }
   .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .grid .btn { margin-top: 0; }
   .note { font-size: 12px; color: var(--muted); margin-top: 12px; text-align: center; }
   .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--muted); vertical-align: middle; }
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; word-break: break-all; }
@@ -95,6 +96,12 @@
       <div class="mono"><span id="sol-recipient"></span> <button class="copy" type="button" id="copy-recipient">copy</button></div>
       <label>Mint (devnet USDC)</label>
       <div class="mono" id="sol-mint"></div>
+      <label>Pay-link reference</label>
+      <div class="mono" id="sol-reference"></div>
+      <div class="grid">
+        <button class="btn ghost" type="button" id="copy-solana-uri">Copy Solana Pay link</button>
+        <a class="btn" id="open-solana-wallet" href="#" rel="noopener">Open in wallet</a>
+      </div>
       <button class="btn" type="button" id="phantom-btn">Pay with Phantom (devnet)</button>
       <div class="note hidden" id="no-wallet">No Solana wallet detected. Send the transfer from any devnet wallet, then paste the signature below.</div>
       <form id="sig-form" novalidate>
@@ -145,6 +152,14 @@
     $('sol-amount').textContent = `${info.solana.amount.toFixed(2)} USDC`;
     $('sol-recipient').textContent = info.solana.recipient || '(recipient not configured)';
     $('sol-mint').textContent = info.solana.mint;
+    $('sol-reference').textContent = info.solana.reference;
+    if (info.solana.uri) {
+      $('open-solana-wallet').href = info.solana.uri;
+      $('copy-solana-uri').disabled = false;
+    } else {
+      $('open-solana-wallet').classList.add('hidden');
+      $('copy-solana-uri').disabled = true;
+    }
     if (info.status === 'paid') { if (info.payment) showReceipt(info.payment); else $('pay').classList.add('hidden'); }
     const provider = window.phantom?.solana || window.solana;
     if (!(provider && provider.isPhantom)) { $('phantom-btn').classList.add('hidden'); $('no-wallet').classList.remove('hidden'); }
@@ -204,6 +219,7 @@
   });
 
   $('copy-recipient').addEventListener('click', () => navigator.clipboard?.writeText(info.solana.recipient));
+  $('copy-solana-uri').addEventListener('click', () => navigator.clipboard?.writeText(info.solana.uri));
 
   $('sig-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -229,10 +245,13 @@
       const { publicKey: payer } = await provider.connect();
       const connection = new web3.Connection('https://api.devnet.solana.com', 'confirmed');
       const mint = new web3.PublicKey(info.solana.mint), recipient = new web3.PublicKey(info.solana.recipient);
+      const reference = new web3.PublicKey(info.solana.reference);
       const from = spl.getAssociatedTokenAddressSync(mint, payer), to = spl.getAssociatedTokenAddressSync(mint, recipient);
       const tx = new web3.Transaction();
       if (!(await connection.getAccountInfo(to))) tx.add(spl.createAssociatedTokenAccountInstruction(payer, to, recipient, mint));
-      tx.add(spl.createTransferCheckedInstruction(from, mint, to, payer, BigInt(Math.round(info.solana.amount * 1e6)), 6));
+      const transfer = spl.createTransferCheckedInstruction(from, mint, to, payer, BigInt(Math.round(info.solana.amount * 1e6)), 6);
+      transfer.keys.push({ pubkey: reference, isSigner: false, isWritable: false });
+      tx.add(transfer);
       tx.feePayer = payer;
       tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
       btn.textContent = 'Confirm in Phantom…';

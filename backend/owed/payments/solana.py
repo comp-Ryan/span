@@ -1,15 +1,35 @@
 """Solana devnet rail: verify a USDC SPL transfer to our recipient via getTransaction."""
 from __future__ import annotations
 
+import hashlib
+
 import httpx
 
 from owed.config import settings
 
 DECIMALS = 6
+_BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 
 class SolanaError(ValueError):
     pass
+
+
+def _base58_encode(value: bytes) -> str:
+    """Encode bytes with the Bitcoin/Solana base58 alphabet, preserving leading zero bytes."""
+    zeros = len(value) - len(value.lstrip(b"\0"))
+    number = int.from_bytes(value, "big")
+    encoded = ""
+    while number:
+        number, digit = divmod(number, 58)
+        encoded = _BASE58_ALPHABET[digit] + encoded
+    return "1" * zeros + encoded
+
+
+def reference_for_token(pay_token: str) -> str:
+    """Return a deterministic, 32-byte public-key reference unique to a random pay token."""
+    digest = hashlib.sha256(b"owed-solana-pay-reference:v1:" + pay_token.encode("utf-8")).digest()
+    return _base58_encode(digest)
 
 
 def get_transaction(signature: str, rpc_url: str | None = None) -> dict | None:
@@ -39,7 +59,20 @@ def received_amount(tx: dict, recipient: str, mint: str) -> int:
     return gained
 
 
-def verify_transfer(signature: str, recipient: str, mint: str, amount: float, rpc_url: str | None = None) -> dict:
+def _account_key_strings(tx: dict) -> set[str]:
+    message = ((tx.get("transaction") or {}).get("message") or {})
+    keys = message.get("accountKeys") or []
+    values = []
+    for key in keys:
+        if isinstance(key, str):
+            values.append(key)
+        elif isinstance(key, dict) and key.get("pubkey"):
+            values.append(key["pubkey"])
+    return set(values)
+
+
+def verify_transfer(signature: str, recipient: str, mint: str, amount: float, reference: str,
+                    rpc_url: str | None = None) -> dict:
     if not signature or len(signature) < 60:
         raise SolanaError("invalid signature")
     tx = get_transaction(signature, rpc_url)
@@ -47,6 +80,8 @@ def verify_transfer(signature: str, recipient: str, mint: str, amount: float, rp
         raise SolanaError("transaction not found on devnet (wait a few seconds and retry)")
     if (tx.get("meta") or {}).get("err"):
         raise SolanaError("transaction failed on chain")
+    if reference not in _account_key_strings(tx):
+        raise SolanaError("transaction is missing the expected pay-link reference")
     got = received_amount(tx, recipient, mint)
     need = round(amount * 10**DECIMALS)
     if got < need:

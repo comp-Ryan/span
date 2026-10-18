@@ -114,6 +114,24 @@ describe('reduce edge cases', () => {
     expect(run.nodes['tool-1']).toMatchObject({ status: 'failed', doneAt: undefined, data: { error: 'x' } })
     expect(reduce(run, { event: 'run.end', data: { status: 'closed' } }).status).toBe('closed')
   })
+
+  it('does not treat the live-call placeholder as a caller turn', () => {
+    const live = reduce(emptyRun(), { event: 'run.start', run_id: 'call-1', data: { question: 'Live phone call', source: 'call' } }, 1)
+    expect(live.question).toBe('Live phone call')
+    expect(live.turns).toEqual([])
+  })
+
+  it('adds caller speech as you turns and replaces only the placeholder question', () => {
+    let live = reduce(emptyRun(), { event: 'run.start', run_id: 'call-1', data: { question: 'Live phone call', source: 'call' } }, 1)
+    live = reduce(live, { event: 'speech', data: { kind: 'caller', speaker: 'caller', text: 'Can I make payroll next Friday?' } }, 2)
+    live = reduce(live, { event: 'speech', data: { speaker: 'caller', text: 'What if the customer pays late?' } }, 3)
+
+    expect(live.question).toBe('Can I make payroll next Friday?')
+    expect(live.turns).toEqual([
+      { kind: 'you', text: 'Can I make payroll next Friday?', at: 2 },
+      { kind: 'you', text: 'What if the customer pays late?', at: 3 },
+    ])
+  })
 })
 
 describe('formatters', () => {

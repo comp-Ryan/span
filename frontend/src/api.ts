@@ -1,4 +1,4 @@
-import type { Brief, CashProjection, Company, RawEvent, ReportDoc, RunSummary } from './types'
+import type { Brief, CashProjection, Company, CustomerDetail, CustomerRow, Health, HeatmapResponse, PaymentsResponse, RawEvent, ReportDoc, ReportsResponse, RunSummary } from './types'
 
 const BASE = '/api'
 
@@ -15,8 +15,8 @@ export async function resolveDecision(decisionId: string, optionId: string, comp
 export async function replay(runId: string, company?: string): Promise<RawEvent[]> {
   const r = await fetch(`${BASE}/runs/${runId}?company=${encodeURIComponent(company || "company-020")}`); if (!r.ok) throw new Error('Could not replay this thread'); const j = await r.json(); return j.events || []
 }
-export async function getReport(id: string): Promise<ReportDoc> {
-  const r = await fetch(`${BASE}/reports/${encodeURIComponent(id)}`)
+export async function getReport(id: string, company = 'company-020'): Promise<ReportDoc> {
+  const r = await fetch(`${BASE}/reports/${encodeURIComponent(id)}?company=${encodeURIComponent(company)}`)
   if (!r.ok) throw new Error(`${r.status}`)
   return r.json()
 }
@@ -29,6 +29,12 @@ export const getCompanies = () => getJson<{ companies: Company[] }>('/companies'
 export const getBrief = (company: string) => getJson<Brief>(`/brief?company=${encodeURIComponent(company)}`)
 export const getRuns = (company: string) => getJson<{ runs: RunSummary[] }>(`/runs?company=${encodeURIComponent(company)}`).then(j => j.runs)
 export const getCash = (company: string, target: string) => getJson<CashProjection>(`/cash?${new URLSearchParams({ company, target })}`)
+export const getPayments = (company: string) => getJson<PaymentsResponse>(`/payments?company=${encodeURIComponent(company)}`)
+export const getReports = (company: string) => getJson<ReportsResponse>(`/reports?company=${encodeURIComponent(company)}`)
+export const getCustomers = (company: string) => getJson<{ customers: CustomerRow[] }>(`/customers?company=${encodeURIComponent(company)}`).then(j => j.customers)
+export const getCustomer = (id: string, company: string) => getJson<CustomerDetail>(`/customers/${encodeURIComponent(id)}?company=${encodeURIComponent(company)}`)
+export const getHeatmap = (company: string) => getJson<HeatmapResponse>(`/customers/heatmap?company=${encodeURIComponent(company)}`)
+export const getHealth = () => getJson<Health>('/health')
 export function subscribe(company: string, onEvent: (e: RawEvent) => void): () => void {
   const es = new EventSource(`${BASE}/events?company=${encodeURIComponent(company)}`)
   const kinds = ['run.start', 'node.create', 'node.update', 'decision', 'decision.resolved', 'speech', 'report.ready', 'run.end', 'card.updated']

@@ -76,11 +76,13 @@ function DidRow({ n }: { n: ReportNode }) {
   </div>
 }
 
+const COMPANY = new URLSearchParams(location.search).get('company') || 'company-020'
+
 export default function Report({ id }: { id: string }) {
   const [r, setR] = useState<ReportDoc | null>(null)
   const [err, setErr] = useState(false)
   const load = useCallback(() => {
-    getReport(id).then(setR).catch(() => setErr(true))
+    getReport(id, COMPANY).then(setR).catch(() => setErr(true))
   }, [id])
   useEffect(() => { load() }, [load])
   const retry = () => { setErr(false); load() }
@@ -114,7 +116,7 @@ export default function Report({ id }: { id: string }) {
       <span className="rco">{r.company}</span>
       <span className="fine rgen">Generated {fmtGen(r.generated_at)}</span>
       <span className="noprint" style={{ display: 'flex', gap: 8 }}>
-        <a className="btn" href={`/api/reports/${encodeURIComponent(r.report_id)}.pdf`}>{I.dl}Download PDF</a>
+        <a className="btn" href={`/api/reports/${encodeURIComponent(r.report_id)}.pdf?company=${encodeURIComponent(COMPANY)}`}>{I.dl}Download PDF</a>
         <button className="btn primary" onClick={() => window.print()}>{I.print}Print</button>
       </span>
     </header>

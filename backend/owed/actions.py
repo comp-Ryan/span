@@ -35,9 +35,12 @@ async def execute_decision(row):
         await asyncio.to_thread(defer_bill,run_id,company,payload['bill_id'],parent,row['decision_id'])
         return
     sent = []
+    keep = payload.get('selected_customers')
     for lever in approved_levers(row):
         if lever['id']=='chase':
             for target in lever['targets']:
+                if keep is not None and target['customer_id'] not in keep:
+                    continue
                 sent.append(await send_reminder(run_id,company,target['invoice_id'],parent,operation_id=row['decision_id']+'-'+target['invoice_id']))
         elif lever['id']=='defer_bill' and option=='yes':
             await asyncio.to_thread(defer_bill,run_id,company,lever['bill_id'],parent,row['decision_id'])

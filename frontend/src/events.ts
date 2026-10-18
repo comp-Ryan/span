@@ -7,13 +7,16 @@ export const emptyRun = (): RunState => ({
 const TOOL_LABEL: Record<string, string> = {
   context: 'read books', scoring: 'score invoices', forecast: 'forecast cash', levers: 'find levers', answer: 'answer', action: 'act',
 }
+const LIVE_CALL_PLACEHOLDER = 'Live phone call'
 
 export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState {
   const d = ev.data || {}
   switch (ev.event) {
     case 'run.start':
       return { ...emptyRun(), run_id: d.run_id || ev.run_id || '', parent_run_id: d.parent_run_id, question: d.question || '', source: d.source || 'web', company_id: d.company_id || '', status: 'open', startedAt: now,
-        turns: [{ kind: 'you', text: d.question || '', at: now }] }
+        turns: d.question && d.question !== LIVE_CALL_PLACEHOLDER
+          ? [{ kind: 'you', text: d.question, at: now }]
+          : [] }
     case 'node.create': {
       const n: GraphNode = { node_id: d.node_id, type: d.type, title: d.title, status: d.status || 'running', parent: d.parent ?? null, parent_run_id: d.parent_run_id, data: d.data || {}, rows: [], rounds: [], createdAt: now, doneAt: d.status === 'done' ? now : undefined }
       const turns = run.turns.slice()
@@ -41,8 +44,18 @@ export function reduce(run: RunState, ev: RawEvent, now = Date.now()): RunState 
       const dec = run.decisions[d.decision_id]; if (!dec) return run
       return { ...run, decisions: { ...run.decisions, [d.decision_id]: { ...dec, resolved: d.option_id || d.resolved } } }
     }
-    case 'speech':
+    case 'speech': {
+      if (d.kind === 'caller' || d.speaker === 'caller') {
+        const text = String(d.text || '').trim()
+        if (!text) return run
+        return {
+          ...run,
+          question: !run.question || run.question === LIVE_CALL_PLACEHOLDER ? text.slice(0, 4000) : run.question,
+          turns: [...run.turns, { kind: 'you', text, at: now }],
+        }
+      }
       return { ...run, turns: [...run.turns, { kind: 'owed', text: plain(String(d.text || '')).split(/(?<=[.!?])\s/).slice(0, 3).join(' '), at: now }] }
+    }
     case 'report.ready':
       return { ...run, report_id: d.report_id }
     case 'run.end':

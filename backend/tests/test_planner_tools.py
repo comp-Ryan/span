@@ -5,7 +5,7 @@ import pytest
 from fastapi.encoders import jsonable_encoder
 
 from owed.db import conn
-from owed.decisions import request_decision
+from owed.decisions import request_decision, resolve
 from owed.planner import TOOLS, ToolContext
 from owed.runs import create, replay_run
 from owed.runs.payroll import levers_for, snapshot
@@ -57,6 +57,26 @@ def test_forecast_cash_returns_snapshot_forecast(ctx, snap):
     assert created[0]['type'] == 'forecast' and created[0]['title'] == 'Forecast cash'
     assert created[0]['status'] == 'running' and created[0]['parent'] == 'context'
     assert updated[-1]['status'] == 'done' and updated[-1]['data']['gap'] == result['gap']
+
+
+def test_forecast_cash_uses_the_owners_customer_assumption(ctx, snap):
+    assert run(ctx, 'forecast_cash', {'customer_id': EVERGREEN, 'will_pay': 'yes'}) == {
+        'error': 'Specify whether the customer will pay'}
+    assert run(ctx, 'forecast_cash', {'customer_id': 'customer-not-in-this-company', 'will_pay': False}) == {
+        'error': 'Customer not found in this company'}
+    result_no = run(ctx, 'forecast_cash', {'customer_id': EVERGREEN, 'will_pay': False})
+    result_yes = run(ctx, 'forecast_cash', {'customer_id': EVERGREEN, 'will_pay': True})
+    baseline = snap['forecast']
+    scenario_no = snapshot(COMPANY, TARGET, EVERGREEN)
+    scenario_yes = snapshot(COMPANY, TARGET, assumed_customer_id=EVERGREEN)
+    assert result_no['excluded_customer_id'] == EVERGREEN
+    assert result_yes['assumed_customer_id'] == EVERGREEN
+    assert result_no['bank_balance'] == result_yes['bank_balance'] == snap['bank']
+    assert result_no['bank_balance'] == scenario_no['bank'] == scenario_yes['bank']
+    assert result_no['expected_by_target'] < baseline['expected_by_target'] < result_yes['expected_by_target']
+    assert result_no['bills_due_by_target'] == result_yes['bills_due_by_target'] == baseline['bills_due_by_target']
+    assert result_no['need'] == result_yes['need'] == baseline['need']
+    assert result_no['cash_at_target'] < baseline['cash_at_target'] < result_yes['cash_at_target']
 
 
 def test_rank_chase_matches_payroll_levers(ctx, snap):
@@ -112,6 +132,9 @@ def test_actions_require_approval_and_never_send(ctx, snap):
     assert sent['status'] == 'approval_required' and sent['invoice_id'] == invoice
     bill = snap['bills'][0]['bill_id']
     deferred = run(ctx, 'defer_bill', {'bill_id': bill})
+    assert deferred == {'status': 'waiting_for_owner', 'decision_id': sent['decision_id']}
+    resolve(sent['decision_id'], 'no', COMPANY)
+    deferred = run(ctx, 'defer_bill', {'bill_id': bill})
     assert deferred['status'] == 'approval_required' and deferred['bill_id'] == bill
     assert run(ctx, 'defer_bill', {'bill_id': 'bill-nope'}) == {'error': 'Unpaid bill not found in forecast window'}
     with conn() as c:
@@ -119,9 +142,9 @@ def test_actions_require_approval_and_never_send(ctx, snap):
                          (ctx.run_id,)).fetchall()
     assert [r['decision_id'] for r in rows] == [sent['decision_id'], deferred['decision_id']]
     assert [r['payload'] for r in rows] == [{'kind': 'send_message', 'invoice_id': invoice}, {'kind': 'defer_bill', 'bill_id': bill}]
-    assert all(r['resolved'] is None for r in rows)
+    assert [r['resolved'] for r in rows] == ['no', None]
     created, _ = node_events(ctx)
-    assert [r['node_id'] for r in rows] == [created[0]['node_id'], created[1]['node_id']]
+    assert [r['node_id'] for r in rows] == [created[0]['node_id'], created[2]['node_id']]
     assert all(n['type'] == 'action' for n in created)
 
 

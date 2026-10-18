@@ -5,6 +5,7 @@ import { emptyRun, k, money, plain, reduce } from './events'
 import { generateReport, playFixture, resolveDecision, startRun } from './api'
 import DailyCashChart from './DailyCashChart'
 import { connectLive } from './live'
+import { approvalChoice, assistantSpeechText, claimSpeechEvent, listenOnce, type VoiceStatus } from './browserVoice'
 
 const PARAMS = new URLSearchParams(location.search)
 const COMPANY = PARAMS.get('company') || 'company-020'
@@ -13,6 +14,7 @@ const LIVE = new URLSearchParams(location.search).has('live') || new URLSearchPa
 const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1)
 const RUN = new URLSearchParams(location.search).get('run')
 const STATIC = new URLSearchParams(location.search).has('static')
+const BROWSER_VOICE = PARAMS.get('voice') === 'browser'
 
 /* ---------- icons ---------- */
 const I = {
@@ -23,6 +25,7 @@ const I = {
   cal: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="2.5" y="3.5" width="11" height="10" rx="1"/><path d="M2.5 7h11M5.5 2v3M10.5 2v3"/></svg>,
   person: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 14c.8-3 2.6-4 5-4s4.2 1 5 4"/></svg>,
   phone: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3.5 2.5h2.5l1.2 3-1.6 1a8 8 0 0 0 4 4l1-1.6 3 1.2v2.5a1.5 1.5 0 0 1-1.6 1.5A11.5 11.5 0 0 1 2 4.1 1.5 1.5 0 0 1 3.5 2.5z"/></svg>,
+  mic: <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg>,
   check: <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 8.5l3 3 7-7"/></svg>,
   star: <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5l1.6 4.1 4.4.3-3.4 2.8 1.1 4.3L8 10.6 4.3 13l1.1-4.3L2 5.9l4.4-.3z"/></svg>,
   arrow: <svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M0 6h20M16 2l4 4-4 4"/></svg>,
@@ -324,38 +327,41 @@ function Reasoning({ detail }: { detail: string }) {
     {open && <Detail text={detail} />}
   </div>
 }
+/** Gemini/voice runs use context, tool-*, answer and planner-error ids; payroll runs use n1…n5, branches f1… or late-scoring. */
+const isPlannerRun = (r: RunState) => r.order.some(id => id.startsWith('tool-') || id === 'context' || id === 'answer' || id === 'planner-error')
+function QuestionNode({ question }: { question: string }) {
+  return <div className="node question-node"><h3><span className="ic grey">{I.chat}</span>Your question</h3><div>{question}</div></div>
+}
 function BranchHeading({ run, parent }: { run: RunState; parent?: RunState }) {
   if (!run.parent_run_id) return null
-  return <>
-    <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span><span>Follow-up · branches from <a href={`#thread-${run.parent_run_id}`}>{parent?.question || run.parent_run_id}</a></span></div>
-    <h2 className="q" style={{ fontSize: 22, lineHeight: '28px', marginBottom: 14 }}>{run.question}</h2>
-  </>
+  return <div className="branch"><span className="ic grey" style={{ width: 20, height: 20 }}>{I.chat}</span><span>Follow-up · branches from <a href={`#thread-${run.parent_run_id}`}>{parent?.question || run.parent_run_id}</a></span></div>
 }
-function PlannerThread({ run, parent, onAsk, reportFailedFor, retryReportFor }: { run: RunState; parent?: RunState; onAsk: (q: string) => void; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
+function PlannerThread({ run, parent, onDecide, reportFailedFor, retryReportFor }: { run: RunState; parent?: RunState; onDecide: (d: Decision, opt: string, selected?: string[]) => void; reportFailedFor?: (r: RunState) => boolean; retryReportFor?: (r: RunState) => void }) {
   const nodes = run.order.map(id => run.nodes[id])
   const ans = nodes.find(n => n.type === 'answer')
-  const tools = nodes.filter(n => n.type !== 'answer')
+  // the planner's "context" node only echoes the question, which the question card already shows
+  const tools = nodes.filter(n => n.type !== 'answer' && !(n.node_id === 'context' && !n.data?.company && !n.data?.customers))
   const fcNode = nodes.find(n => n.data?.cash_at_target != null)
   const leverNode = nodes.find(n => n.data?.levers)
-  const levers: Lever[] = leverNode?.data.levers || []
-  const [chosen, setChosen] = useState<string | undefined>()
-  const fakeDecision: Decision | undefined = levers.length ? { decision_id: 'ask-' + run.run_id, node_id: leverNode!.node_id, prompt: 'Text them?', options: [{ id: 'yes', label: 'Yes, text them' }, { id: 'no', label: 'Not now' }], auto_resolves_in_s: null } : undefined
+  // the real owner decision the backend opened on this levers node
+  const decision = leverNode ? Object.values(run.decisions).find(d => d.node_id === leverNode.node_id) : undefined
+  const chosen = decision?.resolved
+  const actions = nodes.filter(n => n.type === 'action')
   const ctxLike: GraphNode | undefined = fcNode ? { ...fcNode, data: { ...fcNode.data, payroll_due_by_target: fcNode.data.need } } : undefined
   return <section className="thread">
     <BranchHeading run={run} parent={parent} />
     <div className="workspace">
       <aside className="live">
-        <div className={`card status ${ans ? 'ok' : 'pending'}`} style={{ borderColor: ans ? 'var(--green)' : undefined, background: ans ? 'var(--green-bg)' : undefined }}>
-          <div className="fine" style={{ textTransform: 'uppercase', letterSpacing: '.06em', fontWeight: 600 }}>Answer</div>
-          <div style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{ans ? plain(ans.data.spoken || ans.title) : 'Working it out…'}</div>
-        </div>
         {ctxLike && <CashChart ctx={ctxLike} fc={fcNode} W={420} />}
-        <div className={`card report ${run.report_id ? 'ready' : ''}`}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>{run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : reportFailedFor?.(run) ? <button className="btn" onClick={() => retryReportFor?.(run)}>Generate report</button> : run.status === 'closed' ? <div className="thinking"><i/><i/><i/> writing</div> : <div className="fine">Builds itself when this run finishes.</div>}</div>
+        <div className={`card report ${run.report_id ? 'ready' : ''}`}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>{run.report_id ? <a className="btn" href={`/report/${run.report_id}?company=${encodeURIComponent(COMPANY)}`}>Open report</a> : ans?.data.awaiting_input ? <div className="fine">Waiting for your answer before continuing.</div> : reportFailedFor?.(run) ? <button className="btn" onClick={() => retryReportFor?.(run)}>Generate report</button> : run.status === 'closed' ? <div className="thinking"><i/><i/><i/> writing</div> : <div className="fine">Builds itself when this run finishes.</div>}</div>
       </aside>
       <div className="steps">
-        {tools.map((n, i) => { const el = <ToolNode n={n} />; if (el === null && !n.data?.levers) return null; return <div key={n.node_id}>{i > 0 && <div className="vconn" />}{n.data?.levers
-          ? <div className="levers">{(n.data.levers as Lever[]).map((l, li) => <div key={l.id} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={li === 0} decision={fakeDecision} chosen={chosen} onChoose={(opt, selected) => { setChosen(opt); if (opt !== 'no') { const names = (l.targets || []).filter(t => !selected || selected.includes(t.customer_id)).map(t => t.customer.split(' ')[0]); onAsk(`Yes, text ${names.join(', ')} with a pay link.`) } }} /></div>)}</div>
+        <div className="vstep"><QuestionNode question={run.question} /></div>
+        {tools.map(n => { const el = <ToolNode n={n} />; if (el === null && !n.data?.levers) return null; return <div key={n.node_id}><div className="vconn" />{n.data?.levers
+          ? <div className="levers">{(n.data.levers as Lever[]).map((l, li) => <div key={l.id} style={{ flex: 1, display: 'flex', minWidth: 0 }}><LeverCard l={l} rec={li === 0} decision={decision} chosen={chosen} onChoose={(opt, selected) => decision && onDecide(decision, opt, selected)} /></div>)}</div>
           : <div className="vstep">{el}</div>}</div> })}
+        {ans && <><div className="vconn" /><div className="vstep"><div className={`node ${ans.status}`}><h3><span className={`ic ${ans.status === 'failed' ? 'grey' : 'green'}`}>{I.chat}</span>{ans.data.awaiting_input ? `${BRAND} needs one answer` : ans.status === 'failed' ? `${BRAND} couldn’t finish` : `${BRAND}’s answer`}</h3><div style={{ flex: 1, fontSize: 14, lineHeight: '20px' }}>{plain(ans.data.spoken || ans.title)}</div></div></div></>}
+        {actions.length > 0 && <><div className="vconn" /><Conversations actions={actions} decisions={Object.values(run.decisions)} onDecide={onDecide} /></>}
         {ans?.data.detail && <><div className="vconn" /><div className="vstep"><Reasoning detail={ans.data.detail} /></div></>}
         {!ans && <div className="thinking" style={{ marginTop: 14 }}><i/><i/><i/> {BRAND} is thinking</div>}
       </div>
@@ -381,6 +387,7 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
     return <section className="thread followup">
       <BranchHeading run={run} parent={parent} />
       <div className="steps" ref={contRef}>
+        <div className="vstep"><QuestionNode question={run.question} /></div>
         {scenario && <div className="fine" style={{ marginBottom: 10 }}>Scenario: {scenario.title.replace(/^What-if scenario\s*/i, '')}{scenario.data?.excluded_customer ? ` · without ${scenario.data.excluded_customer}` : ''}</div>}
         {fc && fc.status === 'done' && gapNow != null && <div className="vstep"><div className={`node verdict ${gapNow < 0 ? 'bad' : gapNow < (fc.data.need || 1) * 0.1 ? '' : 'ok'}`}>
           <Gauge cushion={gapNow} need={fc.data.need || 20000} />
@@ -409,11 +416,12 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
         <div className={`card report ${run.report_id ? 'ready' : ''}`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className={`ic ${run.report_id ? 'green' : 'grey'}`} style={{ width: 22, height: 22 }}>{I.book}</span><b style={{ fontSize: 14 }}>One-page report</b></div>
           <div className="fine">{run.report_id ? 'Ready. Share it with your bookkeeper or print it.' : run.status === 'closed' ? 'Putting the page together.' : 'Builds itself when this run finishes.'}</div>
-          {run.report_id ? <a className="btn" href={`/report/${run.report_id}`}>Open report</a> : reportFailedFor?.(run) ? <button className="btn" onClick={() => retryReportFor?.(run)}>Generate report</button> : run.status === 'closed' ? <div className="thinking"><i/><i/><i/> writing</div> : <div className="fine" style={{ color: 'var(--muted2)' }}>waiting for the run to finish</div>}
+          {run.report_id ? <a className="btn" href={`/report/${run.report_id}?company=${encodeURIComponent(COMPANY)}`}>Open report</a> : reportFailedFor?.(run) ? <button className="btn" onClick={() => retryReportFor?.(run)}>Generate report</button> : run.status === 'closed' ? <div className="thinking"><i/><i/><i/> writing</div> : <div className="fine" style={{ color: 'var(--muted2)' }}>waiting for the run to finish</div>}
         </div>
       </aside>
       <div className="steps" ref={contRef}>
-        {ctx && <div className="vstep"><BooksNode n={ctx} /></div>}
+        <div className="vstep"><QuestionNode question={run.question} /></div>
+        {ctx && <><div className="vconn" /><div className="vstep"><BooksNode n={ctx} /></div></>}
         {sc && <><div className="vconn" /><div className="vstep"><ScoredNode n={sc} /></div></>}
         {fc && <><div className="vconn" /><div className="vstep"><CashNode n={fc} ctx={ctx} /></div></>}
         {ans && <><div className="vconn" /><div className="vstep" ref={verdictRef}><VerdictNode n={ans} fc={fc} /></div></>}
@@ -430,8 +438,11 @@ function Thread({ run, onDecide, isFollowUp, parent, reportFailedFor, retryRepor
 }
 
 /* ---------- bottom-right dock: call transcript + chat ---------- */
-function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay }: { run: RunState; elapsed: number; input: string; setInput: (s: string) => void; onAsk: (q: string) => void; live: boolean; onReplay: (speed: number) => void }) {
-  const [open, setOpen] = useState(false)
+function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay, browserVoice }: { run: RunState; elapsed: number; input: string; setInput: (s: string) => void; onAsk: (q: string) => void; live: boolean; onReplay: (speed: number) => void; browserVoice: boolean }) {
+  const [open, setOpen] = useState(browserVoice)
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
+  const [voiceMessage, setVoiceMessage] = useState('')
+  const stopListening = useRef<() => void>(() => {})
   const onCall = run.status === 'open'
   const lastOwed = [...run.turns].reverse().find(t => t.kind === 'owed')
   const [preview, setPreview] = useState<string | null>(null)
@@ -443,12 +454,22 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay }: { run: R
   const mm = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`
   const scroller = useRef<HTMLDivElement | null>(null)
   useEffect(() => { scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' }) }, [run.turns.length, open])
+  useEffect(() => () => stopListening.current(), [])
   const send = () => { const q = input.trim(); if (q) onAsk(q) }
+  const startVoiceFollowUp = () => {
+    setVoiceMessage('')
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    stopListening.current()
+    stopListening.current = listenOnce(
+      text => { stopListening.current(); setVoiceStatus('idle'); onAsk(text) },
+      (status, message) => { setVoiceStatus(status); setVoiceMessage(message || '') },
+    )
+  }
   return <div className={`dock ${open ? 'open' : ''}`}>
     {open && <div className="dpanel">
       <div className="dhead" onClick={() => setOpen(false)}>
         <span className="ic green">{I.phone}</span>
-        <div style={{ flex: 1 }}><b>{onCall ? `On a call · ${mm}` : 'Call ended'}</b><div className="fine">{onCall ? 'Listening · tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
+        <div style={{ flex: 1 }}><b>{browserVoice ? 'Browser voice demo' : onCall ? `On a call · ${mm}` : 'Call ended'}</b><div className="fine">{browserVoice ? 'Tap the mic to speak one follow-up. Browser speech, not telephony.' : onCall ? 'Listening · tool rows show what ' + BRAND + ' did between sentences' : 'Transcript saved'}</div></div>
         <div className={`wave ${onCall ? '' : 'idle'}`}>{Array.from({ length: 7 }).map((_, i) => <i key={i} style={{ height: 4 + ((i * 7) % 14) }} />)}</div>
         <span className="fine" style={{ marginLeft: 8 }}>▾</span>
       </div>
@@ -460,6 +481,10 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay }: { run: R
       </div>
       <div className="sugg">{['What if Evergreen doesn’t pay?', 'Show me who’s late', 'Can I afford a hire in January?'].map(q => <button key={q} onClick={() => onAsk(q)}>{q}</button>)}</div>
       <div className="dinput"><input placeholder={`Ask ${BRAND} a follow-up, or just say it…`} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }} /><button className="btn primary" style={{ height: 32, padding: '0 14px' }} onClick={send}>Ask</button></div>
+      {browserVoice && <div className="browser-voice-control">
+        <button className={`mic ${voiceStatus === 'listening' ? 'listening' : ''}`} type="button" aria-label={voiceStatus === 'listening' ? 'Listening for one follow-up' : 'Speak one follow-up'} aria-pressed={voiceStatus === 'listening'} disabled={voiceStatus === 'listening'} onClick={startVoiceFollowUp}>{I.mic} Speak follow-up</button>
+        <span role={voiceStatus === 'error' ? 'alert' : 'status'} aria-live="polite">{voiceStatus === 'listening' ? 'Listening…' : voiceMessage}</span>
+      </div>}
       {!live && <div className="controls" style={{ justifyContent: 'flex-end' }}>demo replay · <button onClick={() => onReplay(1)}>restart</button><button onClick={() => onReplay(3)}>3× speed</button><a href="?live">connect live</a></div>}
     </div>}
     {!open && preview && <div className="preview" onClick={() => setOpen(true)}><span className="av">{BRAND[0]}</span><span style={{ flex: 1 }}>{preview}</span><button className="x" aria-label="close" onClick={e => { e.stopPropagation(); setPreview(null) }}>×</button></div>}
@@ -475,6 +500,10 @@ function Dock({ run, elapsed, input, setInput, onAsk, live, onReplay }: { run: R
 /* ---------- app ---------- */
 export default function App() {
   const [runs, setRuns] = useState<RunState[]>([])
+  const [chatTitle, setChatTitle] = useState(() => localStorage.getItem('span.chatTitle') || 'General chat')
+  const [editingChatTitle, setEditingChatTitle] = useState(false)
+  const [chatTitleDraft, setChatTitleDraft] = useState(chatTitle)
+  const cancelChatTitleEdit = useRef(false)
   const [elapsed, setElapsed] = useState(42)
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
@@ -488,7 +517,18 @@ export default function App() {
   })
   // sequential presentation: never mount two nodes in the same instant, even if the backend bursts
   const queue = useRef<RawEvent[]>([]); const draining = useRef(false)
-  const apply = (ev: RawEvent) => { queue.current.push(ev); if (!draining.current) drain() }
+  const apply = (ev: RawEvent) => {
+    if (BROWSER_VOICE) {
+      const text = assistantSpeechText(ev)
+      if (text && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          const eventId = ev.data?.id == null ? undefined : String(ev.data.id)
+          if (claimSpeechEvent(eventId, window.sessionStorage)) window.speechSynthesis.speak(new SpeechSynthesisUtterance(text))
+        } catch { /* speech is an enhancement; the transcript remains available */ }
+      }
+    }
+    queue.current.push(ev); if (!draining.current) drain()
+  }
   const drain = async () => {
     draining.current = true
     while (queue.current.length) {
@@ -505,20 +545,47 @@ export default function App() {
     if (!playing.current) play(); return () => stopRef.current()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  useEffect(() => {
+    if (!BROWSER_VOICE || !('speechSynthesis' in window)) return
+    const stopSpeech = () => window.speechSynthesis.cancel()
+    window.addEventListener('pagehide', stopSpeech)
+    return () => { window.removeEventListener('pagehide', stopSpeech); stopSpeech() }
+  }, [])
   useEffect(() => { const t = setInterval(() => setElapsed(e => e + 1), 1000); return () => clearInterval(t) }, [])
 
-  const onDecide = async (d: Decision, opt: string) => {
+  const onDecide = async (d: Decision, opt: string, selected?: string[]) => {
     try {
-      if (LIVE) await resolveDecision(d.decision_id, opt, COMPANY)
+      if (LIVE) await resolveDecision(d.decision_id, opt, COMPANY, selected)
       apply({ event: 'decision.resolved', data: { decision_id: d.decision_id, option_id: opt, run_id: runs.find(r => r.decisions[d.decision_id])?.run_id } })
       setError('')
     } catch (e) { setError(String(e)) }
   }
   const followUp = async (q: string) => {
     setInput('')
-    if (LIVE) { try { await startRun(COMPANY, q, 'web', runs[0]?.run_id); setError('') } catch (e) { setError(String(e)) } return }
+    if (BROWSER_VOICE && 'speechSynthesis' in window) window.speechSynthesis.cancel()
+    if (LIVE && BROWSER_VOICE) {
+      const latest = runs[runs.length - 1]
+      const pending = latest && Object.values(latest.decisions).filter(decision => !decision.resolved).slice(-1)[0]
+      const optionId = pending && approvalChoice(q, pending.options)
+      if (pending && optionId) {
+        try {
+          await resolveDecision(pending.decision_id, optionId, COMPANY)
+          apply({ event: 'decision.resolved', data: { decision_id: pending.decision_id, option_id: optionId, run_id: latest.run_id } })
+          setError('')
+        } catch (e) { setError(String(e)) }
+        return
+      }
+    }
+    if (LIVE) {
+      try {
+        const parent = BROWSER_VOICE ? runs[runs.length - 1] : runs[0]
+        await startRun(COMPANY, q, BROWSER_VOICE ? 'call' : 'web', parent?.run_id)
+        setError('')
+      } catch (e) { setError(String(e)) }
+      return
+    }
     // demo: synthesize a follow-up branch from the current run
-    const base = runs[0]; if (!base) return
+    const base = BROWSER_VOICE ? runs[runs.length - 1] : runs[0]; if (!base) return
     const ctx = Object.values(base.nodes).find(n => n.type === 'context'), fc = Object.values(base.nodes).find(n => n.type === 'forecast')
     const rid = 'run-follow-' + Date.now(); const now = Date.now()
     const drop = 1156.04
@@ -531,9 +598,8 @@ export default function App() {
       { event: 'speech', data: { run_id: rid, text: `If Evergreen doesn’t pay, you’d be about $${Math.round(drop - (fc?.data.cash_at_target || 0)).toLocaleString()} short on the twentieth. Two things would cover it.` } },
       { event: 'node.create', data: { run_id: rid, node_id: 'f5', type: 'levers', title: 'What covers it', status: 'done', parent: 'f4', data: { recommended: ['chase'], levers: [
         { id: 'chase', label: 'Also text Yeoman Roasters', recovers: 669.12, targets: [{ customer_id: 'c50', customer: 'Yeoman Roasters Co.', amount: 669.12 }] },
-        { id: 'defer_bill', label: 'Slide the Utilities bill', recovers: 322, bills: [{ bill_id: 'b1', vendor: 'Utilities', amount: 322, due_date: '2026-10-15' }] },
       ] } } },
-      { event: 'decision', data: { run_id: rid, decision_id: 'd-follow', node_id: 'f5', prompt: 'Approve?', options: [{ id: 'yes', label: 'Approve both' }, { id: 'no', label: 'Not now' }], auto_resolves_in_s: null } },
+      { event: 'decision', data: { run_id: rid, decision_id: 'd-follow', node_id: 'f5', prompt: 'Text Yeoman Roasters?', options: [{ id: 'yes', label: 'Yes, text Yeoman' }, { id: 'no', label: 'Not now' }], auto_resolves_in_s: null } },
     ]
     let t = 0; for (const e of evs) { t += 650; setTimeout(() => apply({ ...e, data: { ...e.data, ts: now } }), t) }
   }
@@ -544,6 +610,7 @@ export default function App() {
     if (!LIVE && !RUN) return
     for (const r of runs) {
       if (r.status !== 'closed' || r.report_id || asked.current.has(r.run_id)) continue
+      if (Object.values(r.nodes).some(node => node.type === 'answer' && node.data.awaiting_input)) continue
       asked.current.add(r.run_id)
       generateReport(r.run_id, COMPANY).then(res => {
         if (res?.report_id) apply({ event: 'report.ready', data: { run_id: r.run_id, report_id: res.report_id } })
@@ -552,31 +619,66 @@ export default function App() {
     }
   }, [runs])
   const retryReport = (r: RunState) => { asked.current.delete(r.run_id); setReportFailed(f => ({ ...f, [r.run_id]: false })); setRuns(x => x.slice()) }
-  const main = runs[0]
+  const saveChatTitle = () => {
+    if (cancelChatTitleEdit.current) {
+      cancelChatTitleEdit.current = false
+      return
+    }
+    const title = chatTitleDraft.trim() || 'General chat'
+    setChatTitle(title)
+    localStorage.setItem('span.chatTitle', title)
+    setEditingChatTitle(false)
+  }
+  const main = BROWSER_VOICE ? runs[runs.length - 1] : runs[0]
   return <div className="app">
     <header className="topbar">
       <div className="brand"><img className="mark" src="/logo.png" alt="" /><div className="name">{BRAND.toLowerCase()}</div></div>
       <div className="company">Palletbay Storage &amp; Warehousing</div>
       <div className="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><input placeholder="Ask about your money, or search transactions, customers, reports" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && input.trim()) followUp(input.trim()) }} /></div>
-      <div className="status"><i className="dot" />{main?.status === 'open' ? 'On a call' : LIVE ? 'Live' : 'Demo replay'}</div>
+      <div className="status"><i className="dot" />{BROWSER_VOICE ? 'Browser voice demo' : main?.status === 'open' ? 'On a call' : LIVE ? 'Live' : 'Demo replay'}</div>
     </header>
     <div className="body">
       <nav className="rail">
-        <a className="on" href="/">{I.chat}Ask</a><a href="/home">{I.book}Home</a><a>{I.card}Get paid</a><a>{I.trend}Reports</a><a>{I.person}Customers</a>
+        <a className="on" href="/">{I.chat}Ask</a><a href="/home">{I.book}Home</a><a href={`/get-paid${COMPANY !== 'company-020' ? `?company=${encodeURIComponent(COMPANY)}` : ''}`}>{I.card}Get paid</a><a href={`/reports${COMPANY !== 'company-020' ? `?company=${encodeURIComponent(COMPANY)}` : ''}`}>{I.trend}Reports</a><a href={`/customers${COMPANY !== 'company-020' ? `?company=${encodeURIComponent(COMPANY)}` : ''}`}>{I.person}Customers</a>
       </nav>
       <main className="main">
         {error && <div role="alert">{error}</div>}
         {main ? <>
-          <div className="eyebrow"><span className="av">R</span><span>Ryan · by {main.source === 'call' ? 'phone' : main.source} · Sat 3:52 PM</span><span className="sep" /><span>Thread 1 of 3 today</span><span className="sep" /><span className="link">Through Oct 20</span></div>
-          <h1 className="q">{main.question}</h1>
+          <div className="eyebrow"><span className="av">R</span><span>Ryan · {BROWSER_VOICE && main.source === 'call' ? 'via browser voice' : main.source === 'call' ? 'by phone' : main.source} · Sat 3:52 PM</span><span className="sep" /><span>Thread 1 of 3 today</span><span className="sep" /><span className="link">Through Oct 20</span></div>
+          {editingChatTitle
+            ? <input
+                autoFocus
+                aria-label="Rename chat"
+                className="chat-title-input"
+                value={chatTitleDraft}
+                onChange={e => setChatTitleDraft(e.target.value)}
+                onBlur={saveChatTitle}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') saveChatTitle()
+                  if (e.key === 'Escape') {
+                    cancelChatTitleEdit.current = true
+                    setChatTitleDraft(chatTitle)
+                    setEditingChatTitle(false)
+                  }
+                }}
+              />
+            : <h1
+                className="q"
+                title="Double-click to rename"
+                tabIndex={0}
+                onDoubleClick={() => { setChatTitleDraft(chatTitle); setEditingChatTitle(true) }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === 'F2') { setChatTitleDraft(chatTitle); setEditingChatTitle(true) }
+                }}
+              >{chatTitle}</h1>}
         </> : <div className="thinking"><i/><i/><i/> connecting</div>}
         {runs.map(r => <div key={r.run_id} id={`thread-${r.run_id}`} data-run-id={r.run_id}>
-          {(r.order.some(id => id.startsWith('tool-')) || (r.order.length > 0 && !r.order.some(id => ['context', 'scoring', 'forecast'].includes(r.nodes[id].type))))
-            ? <PlannerThread run={r} parent={runs.find(p => p.run_id === r.parent_run_id)} onAsk={followUp} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />
+          {isPlannerRun(r)
+            ? <PlannerThread run={r} parent={runs.find(p => p.run_id === r.parent_run_id)} onDecide={onDecide} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />
             : <Thread run={r} onDecide={onDecide} isFollowUp={!!r.parent_run_id} parent={runs.find(p => p.run_id === r.parent_run_id)} reportFailedFor={x => !!reportFailed[x.run_id]} retryReportFor={retryReport} />}
         </div>)}
       </main>
     </div>
-    {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} />}
+    {main && <Dock run={main} elapsed={elapsed} input={input} setInput={setInput} onAsk={followUp} live={LIVE} onReplay={(sp) => { setSpeed(sp); play(sp) }} browserVoice={BROWSER_VOICE} />}
   </div>
 }

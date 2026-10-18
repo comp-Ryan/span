@@ -64,10 +64,10 @@ async function followUp(page: Page) {
   await openDock(page)
   await page.locator('.dock .sugg button', { hasText: 'Evergreen' }).first().click()
   await page.locator('.thread').nth(1).waitFor()
-  const approve = page.getByRole('button', { name: 'Approve both' })
-  await approve.waitFor()
+  const nextAction = page.getByRole('button', { name: 'Yes, text Yeoman' })
+  await nextAction.waitFor()
   await sleep(2000)
-  await approve.click()
+  await closeDock(page)
 }
 
 /* ---------- pass 1: screen recording ---------- */

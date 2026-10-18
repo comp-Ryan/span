@@ -36,8 +36,13 @@ def target_for(question: str) -> date:
         return q.AS_OF_DEFAULT + timedelta(days=14)
     return q.AS_OF_DEFAULT + timedelta(days=(4 - q.AS_OF_DEFAULT.weekday()) % 7 or 7)
 
+
+def planner_for_call(source: str, intent: str, gemini_configured: bool) -> bool:
+    """Use the conversational planner for configured voice payroll questions only."""
+    return source == 'call' and intent == 'payroll_check' and gemini_configured
+
 @sentry_sdk.trace(op="finance.snapshot")
-def snapshot(company: str, target: date, excluded_customer_id=None):
+def snapshot(company: str, target: date, excluded_customer_id=None, assumed_customer_id=None):
     with conn() as c:
         company_row = q.company(c, company)
         bank = q.bank_balance(c, company, q.AS_OF_DEFAULT)
@@ -57,6 +62,11 @@ def snapshot(company: str, target: date, excluded_customer_id=None):
         draw_due = 0 if held else draw
 
     scored = payment_model().score_open(invoices, (target - q.AS_OF_DEFAULT).days)
+    if assumed_customer_id:
+        horizon = (target - q.AS_OF_DEFAULT).days
+        scored = [{**r, 'p_paid_by_target': 1.0, 'p_never': 0.0,
+                   'expected_days_to_pay': min(r['expected_days_to_pay'], horizon),
+                   'band': band(1.0, 0.0)} if r['customer_id'] == assumed_customer_id else r for r in scored]
     expected = round(sum(q.f(r['open_balance']) * r['p_paid_by_target'] for r in scored), 2)
     bills_total = round(sum(q.f(b['open_amount']) for b in bills), 2)
     cash = round(bank + expected - bills_total - draw_due, 2)
@@ -73,6 +83,8 @@ def snapshot(company: str, target: date, excluded_customer_id=None):
     forecast['owner_draw_by_target'] = draw_due
     if excluded_customer_id:
         forecast['excluded_customer_id'] = excluded_customer_id
+    if assumed_customer_id:
+        forecast['assumed_customer_id'] = assumed_customer_id
     return {'draw':draw_due,'company': company_row, 'bank': bank, 'payroll': payroll, 'bills': bills,
             'scored': scored, 'forecast': forecast}
 
@@ -175,10 +187,23 @@ def ask(body: Ask, tasks: BackgroundTasks, company: str = settings.demo_company)
     customer = branch_customer(company, body.question) if intent == 'what_if_customer' else None
     run_id = create(company, body.question, body.source, intent, body.parent_run_id, target,
                     customer['id'] if customer else None)
-    if intent in ('payroll_check', 'what_if_customer'):
+    parent_context = None
+    if parent:
+        with conn() as c:
+            prior = c.execute('''select data from events where run_id=%s and event='speech'
+                                 and coalesce(data->>'speaker','') <> 'caller'
+                                 and coalesce(data->>'kind','') <> 'caller'
+                                 order by id desc limit 1''', (body.parent_run_id,)).fetchone()
+        parent_context = {
+            'parent_question': parent['question'],
+            'parent_speech': (prior['data'].get('text') if prior else None),
+        }
+    if intent == 'payroll_check' and planner_for_call(body.source, intent, bool(settings.gemini_api_key)):
+        tasks.add_task(run_planner, run_id, company, body.question, target, parent_context=parent_context)
+    elif intent in ('payroll_check', 'what_if_customer'):
         tasks.add_task(run_payroll, run_id, company, target, body.parent_run_id, customer)
     elif intent == 'show_late':
         tasks.add_task(show_late, run_id, company, target, body.parent_run_id)
     else:
-        tasks.add_task(run_planner, run_id, company, body.question, target)
+        tasks.add_task(run_planner, run_id, company, body.question, target, parent_context=parent_context)
     return {'run_id': run_id, 'intent': intent, 'target_date': target.isoformat()}

@@ -56,3 +56,28 @@ export interface Brief {
 export interface RunSummary { run_id: string; question: string; source: string; started_at: string; status: string; answer_title: string | null; report_id: string | null; parent_run_id?: string | null }
 export interface CashDay { date: string; inflow: number; outflow: number; balance: number }
 export interface CashProjection { start: string; target: string; opening_balance: number; days: CashDay[]; pessimistic_days: CashDay[]; payroll_dates: string[]; low_point: { date: string; balance: number }; pessimistic_low_point: { date: string; balance: number } }
+
+/* ---------- get paid / reports / customers (GET /payments, /reports, /customers) ---------- */
+export interface PayLink { pay_token: string; invoice_id: string; doc_number: string | null; customer_id: string; customer_name: string; status: string; created_at: string; run_id: string | null; amount: number; pay_url: string }
+export interface Payment { payment_id: string; invoice_id: string; customer_name: string; amount: number; rail: string; reference: string | null; paid_at: string; run_id: string | null }
+export interface PaymentsResponse { pay_links: PayLink[]; payments: Payment[]; totals: { links: number; unpaid: number; collected: number; outstanding: number } }
+export interface ReportSummary { report_id: string; run_id: string; question: string; answer: string; generated_at: string; pdf_url: string }
+export interface UnreportedRun { run_id: string; question: string; answer_title: string | null; started_at: string }
+export interface ReportsResponse { reports: ReportSummary[]; unreported: UnreportedRun[] }
+export type Reliability = 'green' | 'amber' | 'red' | null
+export interface CustomerRow { id: string; display_name: string; open_balance: number; overdue_balance: number; open_invoices: number; avg_days_late: number | null; paid_invoices: number; written_off: number; reliability: Reliability }
+export interface CustomerHistoryItem { invoice_id: string; amount: number; due_date: string; days_late: number | null; status: string }
+export interface CustomerInvoice { invoice_id: string; doc_number: string | null; open_balance: number; due_date: string; days_past_due: number; p_paid_by_target: number; p_never: number; band: 'green' | 'amber' | 'red' }
+export interface CustomerActivity { kind: 'reminder' | 'reply' | 'negotiation' | 'payment'; at: string; title: string; detail: string | null; run_id: string | null }
+export interface CustomerDetail {
+  customer: CustomerRow & { payment_terms: string | null; payment_terms_days: number | null }
+  target_date: string; history: CustomerHistoryItem[]; invoices: CustomerInvoice[]; activity: CustomerActivity[]
+}
+export type HeatmapStatus = 'paid_on_time' | 'paid_late' | 'very_late' | 'unpaid' | 'overdue' | 'written_off' | 'none'
+export interface HeatmapCell {
+  month: string; invoices: number; amount: number; status: HeatmapStatus
+  paid_on_time: number; paid_late: number; very_late: number; unpaid: number; overdue: number; written_off: number
+}
+export interface HeatmapCustomer { id: string; display_name: string; open_balance: number; cells: HeatmapCell[] }
+export interface HeatmapResponse { months: string[]; customers: HeatmapCustomer[] }
+export interface Health { ok: boolean; visa?: string; solana?: string; [k: string]: unknown }
